@@ -1,0 +1,37 @@
+name: fingle_app
+description: Fitness-focused social media app
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: ">=3.16.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # UI & Animations
+  flutter_animate: ^4.5.0
+  cached_network_image: ^3.3.0
+  
+  # Storage & Network
+  shared_preferences: ^2.2.2
+  http: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  
+  # fonts:
+  #   - family: SpaceMono
+  #     fonts:
+  #       - asset: assets/fonts/SpaceMono-Regular.ttf
+  #       - asset: assets/fonts/SpaceMono-Bold.ttf
+  #         weight: 700
