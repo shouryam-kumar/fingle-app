@@ -1,8 +1,11 @@
+// lib/screens/fingle/fingle_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/tab_visibility_detector.dart';
 import '../../providers/video_feed_provider.dart';
+import '../../providers/app_provider.dart';
 import 'widgets/video_player_widget.dart';
 import 'package:fingle_app/models/video_models.dart';
 
@@ -13,53 +16,291 @@ class FingleScreen extends StatefulWidget {
   State<FingleScreen> createState() => _FingleScreenState();
 }
 
-class _FingleScreenState extends State<FingleScreen> {
+class _FingleScreenState extends State<FingleScreen> 
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   late PageController _pageController;
   late VideoFeedProvider _videoProvider;
   bool _isInitialized = false;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
+    
+    WidgetsBinding.instance.addObserver(this);
+    
     _pageController = PageController(
-      viewportFraction: 1.0, // FIXED: Ensure only one video is visible
-      keepPage: false, // FIXED: Don't keep pages in memory unnecessarily
+      viewportFraction: 1.0,
+      keepPage: false,
     );
     
-    // Initialize video provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeVideoFeed();
     });
   }
 
-  Future<void> _initializeVideoFeed() async {
-    _videoProvider = Provider.of<VideoFeedProvider>(context, listen: false);
-    await _videoProvider.initialize();
-    setState(() {
-      _isInitialized = true;
-    });
-  }
-
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
   }
 
-  void _onPageChanged(int index) {
-    _videoProvider.setCurrentIndex(index);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    if (!_isInitialized) return;
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        debugPrint('📱 App resumed');
+        // Tab visibility will handle video playback
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        debugPrint('📱 App paused/inactive - pausing video');
+        _videoProvider.pauseCurrentVideo();
+        break;
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
+
+  /// FIXED: Called when the Fingle tab becomes visible
+  void _onTabVisible() {
+    debugPrint('🟢 Fingle tab became VISIBLE');
+    
+    // FIXED: Update provider's tab visibility state
+    _videoProvider.setTabVisibility(true);
+    
+    // FIXED: Initialize and play first video if not done yet
+    if (_isInitialized && _videoProvider.videos.isNotEmpty) {
+      // Ensure we're on the first video if this is first time becoming visible
+      if (_videoProvider.currentIndex == 0) {
+        debugPrint('🎬 First time visible - setting up first video');
+        // FIXED: Explicitly play the current video after setting index
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          await _videoProvider.setCurrentIndex(0);
+          await _videoProvider.playCurrentVideo();
+        });
+      } else {
+        // FIXED: For other videos, just play the current one
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          await _videoProvider.playCurrentVideo();
+        });
+      }
+    }
+  }
+
+  /// FIXED: Called when the Fingle tab becomes invisible
+  void _onTabInvisible() {
+    debugPrint('🔴 Fingle tab became INVISIBLE');
+    
+    // FIXED: Update provider's tab visibility state
+    _videoProvider.setTabVisibility(false);
+  }
+
+  Future<void> _initializeVideoFeed() async {
+    debugPrint('=== 🚀 INITIALIZING VIDEO FEED ===');
+    
+    _videoProvider = Provider.of<VideoFeedProvider>(context, listen: false);
+    await _videoProvider.initialize();
+    
+    setState(() {
+      _isInitialized = true;
+    });
+    
+    debugPrint('✅ Initialized: $_isInitialized, Videos: ${_videoProvider.videos.length}');
+    
+    // FIXED: Set up first video but don't play yet (wait for tab visibility)
+    if (_videoProvider.videos.isNotEmpty) {
+      await _videoProvider.setCurrentIndex(0);
+      debugPrint('📹 Set current index to 0');
+      
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          0,
+          duration: const Duration(milliseconds: 1),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+    
+    debugPrint('=== ✅ VIDEO FEED INITIALIZATION COMPLETE ===');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    
+    return Consumer<AppProvider>(
+      builder: (context, appProvider, child) {
+        // FIXED: Check if this tab is currently visible
+        final isFingleTabVisible = appProvider.currentIndex == 2; // Fingle is at index 2
+        
+        // FIXED: Update tab visibility based on AppProvider
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_isInitialized) {
+            if (isFingleTabVisible && !_videoProvider.isTabVisible) {
+              debugPrint('🟢 Fingle tab became visible via AppProvider');
+              _onTabVisible();
+            } else if (!isFingleTabVisible && _videoProvider.isTabVisible) {
+              debugPrint('🔴 Fingle tab became invisible via AppProvider');
+              _onTabInvisible();
+            }
+          }
+        });
+        
+        return TabVisibilityDetector(
+          tabName: 'Fingle',
+          onTabVisible: _onTabVisible,
+          onTabInvisible: _onTabInvisible,
+          enableDebugLogs: true,
+          child: Scaffold(
+            backgroundColor: Colors.black,
+            body: Consumer<VideoFeedProvider>(
+              builder: (context, provider, child) {
+                if (!_isInitialized || provider.isLoading && provider.videos.isEmpty) {
+                  return _buildLoadingScreen();
+                }
+
+                if (provider.videos.isEmpty) {
+                  return _buildEmptyScreen();
+                }
+
+                return Stack(
+                  children: [
+                    // Black background
+                    Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.black,
+                    ),
+                    
+                    // Main video feed
+                    PageView.builder(
+                      controller: _pageController,
+                      scrollDirection: Axis.vertical,
+                      onPageChanged: _onPageChanged,
+                      itemCount: provider.videos.length,
+                      itemBuilder: (context, index) {
+                        final video = provider.videos[index];
+                        final controller = provider.getController(video.id);
+                        final isActive = index == provider.currentIndex;
+
+                        return Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          color: Colors.black,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              // Black background for each video
+                              Container(
+                                width: double.infinity,
+                                height: double.infinity,
+                                color: Colors.black,
+                              ),
+                              
+                              // FIXED: Always show VideoPlayerWidget for active video
+                              if (isActive) ...[
+                                VideoPlayerWidget(
+                                  video: video,
+                                  controller: controller,
+                                  isActive: isActive,
+                                  isTabVisible: provider.isTabVisible, // ADDED: Pass tab visibility
+                                  onTap: _onVideoTap,
+                                  onDoubleTap: _onVideoDoubleTap,
+                                ),
+                                
+                                // Video overlays - ONLY show on active video
+                                _buildVideoOverlays(video, provider),
+                              ] else ...[
+                                // For non-active videos, just show thumbnail
+                                Container(
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  color: Colors.black,
+                                  child: Image.network(
+                                    video.thumbnailUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.black,
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.video_library,
+                                            color: Colors.white54,
+                                            size: 48,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    // Loading indicator for loading more videos
+                    if (provider.isLoading && provider.videos.isNotEmpty)
+                      Positioned(
+                        bottom: 120,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _onPageChanged(int index) async {
+    debugPrint('📄 Page changed to index: $index');
+    await _videoProvider.setCurrentIndex(index);
     
     // Load more videos when approaching end
     if (_videoProvider.shouldLoadMore) {
+      debugPrint('📥 Loading more videos...');
       _videoProvider.loadMoreVideos();
     }
   }
 
   void _onVideoTap() {
+    debugPrint('👆 Video tapped - toggling play/pause');
     _videoProvider.togglePlayPause();
   }
 
   void _onVideoDoubleTap() {
+    debugPrint('👆👆 Video double-tapped - toggling like');
     final currentVideo = _videoProvider.currentVideo;
     if (currentVideo != null) {
       _videoProvider.toggleLike(currentVideo.id);
@@ -68,10 +309,8 @@ class _FingleScreenState extends State<FingleScreen> {
   }
 
   void _showLikeAnimation() {
-    // Add haptic feedback
     HapticFeedback.mediumImpact();
     
-    // Create floating heart animation
     OverlayEntry? overlayEntry;
     overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
@@ -99,127 +338,6 @@ class _FingleScreenState extends State<FingleScreen> {
     );
     
     Overlay.of(context).insert(overlayEntry);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Consumer<VideoFeedProvider>(
-        builder: (context, provider, child) {
-          if (!_isInitialized || provider.isLoading && provider.videos.isEmpty) {
-            return _buildLoadingScreen();
-          }
-
-          if (provider.videos.isEmpty) {
-            return _buildEmptyScreen();
-          }
-
-          return Stack(
-            children: [
-              // FIXED: Ensure black background covers everything
-              Container(
-                width: double.infinity,
-                height: double.infinity,
-                color: Colors.black,
-              ),
-              
-              // Main video feed
-              PageView.builder(
-                controller: _pageController,
-                scrollDirection: Axis.vertical,
-                onPageChanged: _onPageChanged,
-                itemCount: provider.videos.length,
-                itemBuilder: (context, index) {
-                  final video = provider.videos[index];
-                  final controller = provider.getController(video.id);
-                  final isActive = index == provider.currentIndex;
-
-                  return Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    color: Colors.black, // FIXED: Ensure each page has black background
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // FIXED: Black background for each video
-                        Container(
-                          width: double.infinity,
-                          height: double.infinity,
-                          color: Colors.black,
-                        ),
-                        
-                        // Video player - ONLY show if this is the active video
-                        if (isActive) ...[
-                          VideoPlayerWidget(
-                            video: video,
-                            controller: controller,
-                            isActive: isActive,
-                            onTap: _onVideoTap,
-                            onDoubleTap: _onVideoDoubleTap,
-                          ),
-                          
-                          // Video overlays - ONLY show on active video
-                          _buildVideoOverlays(video, provider),
-                        ] else ...[
-                          // For non-active videos, just show thumbnail
-                          Container(
-                            width: double.infinity,
-                            height: double.infinity,
-                            color: Colors.black,
-                            child: Image.network(
-                              video.thumbnailUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.black,
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.video_library,
-                                      color: Colors.white54,
-                                      size: 48,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                },
-              ),
-              
-              // Loading indicator for loading more videos
-              if (provider.isLoading && provider.videos.isNotEmpty)
-                Positioned(
-                  bottom: 120,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
-    );
   }
 
   Widget _buildVideoOverlays(VideoPost video, VideoFeedProvider provider) {

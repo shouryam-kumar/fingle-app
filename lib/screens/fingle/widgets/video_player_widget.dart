@@ -8,6 +8,7 @@ class VideoPlayerWidget extends StatefulWidget {
   final VideoPost video;
   final VideoPlayerController? controller;
   final bool isActive;
+  final bool isTabVisible; // ADDED: Tab visibility
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
 
@@ -16,6 +17,7 @@ class VideoPlayerWidget extends StatefulWidget {
     required this.video,
     this.controller,
     required this.isActive,
+    required this.isTabVisible, // ADDED: Required parameter
     this.onTap,
     this.onDoubleTap,
   });
@@ -131,34 +133,33 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
   }
 
   Widget _buildVideoContent() {
-    if (widget.controller == null || !widget.controller!.value.isInitialized) {
+    // FIXED: Improved logic for when to show video vs thumbnail
+    final bool isControllerReady = widget.controller != null && 
+                                  widget.controller!.value.isInitialized;
+    
+    // FIXED: Show video if controller is ready AND video is active AND tab is visible
+    final bool shouldShowVideo = isControllerReady && 
+                                widget.isActive && 
+                                widget.isTabVisible;
+
+    debugPrint('🎬 VideoPlayerWidget - Video: ${widget.video.id}, '
+               'Controller Ready: $isControllerReady, '
+               'Active: ${widget.isActive}, '
+               'Tab Visible: ${widget.isTabVisible}, '
+               'Should Show Video: $shouldShowVideo');
+
+    if (shouldShowVideo) {
+      // Show video player ONLY
+      return Center(
+        child: AspectRatio(
+          aspectRatio: widget.controller!.value.aspectRatio,
+          child: VideoPlayer(widget.controller!),
+        ),
+      );
+    } else {
+      // Show thumbnail ONLY
       return _buildThumbnail();
     }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Thumbnail as background while video loads
-        _buildThumbnail(),
-        
-        // Video player
-        Center(
-          child: AspectRatio(
-            aspectRatio: widget.controller!.value.aspectRatio,
-            child: VideoPlayer(widget.controller!),
-          ),
-        ),
-        
-        // Loading indicator
-        if (!widget.controller!.value.isInitialized)
-          const Center(
-            child: CircularProgressIndicator(
-              color: AppColors.primary,
-              strokeWidth: 3,
-            ),
-          ),
-      ],
-    );
   }
 
   Widget _buildThumbnail() {
@@ -168,7 +169,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
       width: double.infinity,
       height: double.infinity,
       placeholder: (context, url) => Container(
-        color: Colors.grey[900],
+        color: Colors.black,
         child: const Center(
           child: CircularProgressIndicator(
             color: AppColors.primary,
@@ -177,7 +178,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
         ),
       ),
       errorWidget: (context, url, error) => Container(
-        color: Colors.grey[900],
+        color: Colors.black,
         child: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
