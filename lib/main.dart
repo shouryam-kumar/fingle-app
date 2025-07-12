@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'navigation/main_navigation.dart';
 import 'providers/app_provider.dart';
+import 'providers/video_feed_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,7 @@ class FingleApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),
+        ChangeNotifierProvider(create: (_) => VideoFeedProvider()), // Added video provider
       ],
       child: Consumer<AppProvider>(
         builder: (context, appProvider, child) {

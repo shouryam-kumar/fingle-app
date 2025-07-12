@@ -79,16 +79,16 @@ class ProfileHeader extends StatelessWidget {
               
               const SizedBox(width: 20),
               
-              // Name, Age, Bio
+              // Name & Bio (removed age)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name & Age
+                    // Name only (removed age)
                     Row(
                       children: [
                         Text(
-                          '${user.name}, ${user.age}',
+                          user.name, // Removed age
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
