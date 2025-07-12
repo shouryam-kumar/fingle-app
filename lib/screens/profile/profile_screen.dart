@@ -29,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this); // Changed from 4 to 3
     _scrollController = ScrollController();
     
     _scrollController.addListener(_onScroll);

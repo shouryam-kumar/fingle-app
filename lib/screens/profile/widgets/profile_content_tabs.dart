@@ -46,7 +46,7 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
       ),
       child: Column(
         children: [
-          // Tab Bar
+          // Tab Bar (removed Likes tab)
           Container(
             margin: const EdgeInsets.all(20),
             padding: const EdgeInsets.all(4),
@@ -116,16 +116,6 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.favorite, size: 16),
-                      SizedBox(width: 6),
-                      Text('Likes'),
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
                       Icon(Icons.local_offer, size: 16),
                       SizedBox(width: 6),
                       Text('Tagged'),
@@ -136,7 +126,7 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
             ),
           ),
           
-          // Tab Content
+          // Tab Content (removed Likes tab content)
           SizedBox(
             height: 600, // Fixed height for the tab content
             child: TabBarView(
@@ -148,10 +138,7 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
                 // Videos Tab
                 _buildVideosTab(),
                 
-                // Likes Tab
-                _buildLikesTab(),
-                
-                // Tagged Tab
+                // Tagged Tab (moved to position 2)
                 _buildTaggedTab(),
               ],
             ),
@@ -509,38 +496,6 @@ Widget _buildGridItem(Post post) {
     );
   }
 
-  Widget _buildLikesTab() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.favorite_border,
-            size: 64,
-            color: AppColors.textLight,
-          ),
-          SizedBox(height: 16),
-          Text(
-            'No likes yet',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Posts you like will appear here',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTaggedTab() {
     return const Center(
       child: Column(
@@ -591,24 +546,24 @@ Widget _buildGridItem(Post post) {
   }
 
   void _viewPost(Post post) {
-  final postIndex = widget.user.posts.indexOf(post);
-  
-  Navigator.of(context).push(
-    PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => PostViewerScreen(
-        posts: widget.user.posts,
-        initialIndex: postIndex,
-        user: widget.user,
+    final postIndex = widget.user.posts.indexOf(post);
+    
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => PostViewerScreen(
+          posts: widget.user.posts,
+          initialIndex: postIndex,
+          user: widget.user,
+          useAppTheme: false, // Use black background for better media viewing
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(
-          opacity: animation,
-          child: child,
-        );
-      },
-      transitionDuration: const Duration(milliseconds: 300),
-    ),
-  );
-}
-
+    );
+  }
 }
