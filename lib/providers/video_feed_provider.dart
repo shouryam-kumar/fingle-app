@@ -8,6 +8,7 @@ class VideoFeedProvider extends ChangeNotifier {
   int _currentIndex = 0;
   bool _isLoading = false;
   bool _hasReachedEnd = false;
+  bool _isTabVisible = false; // ADDED: Track tab visibility
   
   // Video controllers management
   final Map<String, VideoPlayerController> _controllers = {};
@@ -18,6 +19,7 @@ class VideoFeedProvider extends ChangeNotifier {
   int get currentIndex => _currentIndex;
   bool get isLoading => _isLoading;
   bool get hasReachedEnd => _hasReachedEnd;
+  bool get isTabVisible => _isTabVisible; // ADDED: Expose tab visibility
   VideoPost? get currentVideo => _videos.isNotEmpty ? _videos[_currentIndex] : null;
   
   // Get video controller for specific video
@@ -27,6 +29,24 @@ class VideoFeedProvider extends ChangeNotifier {
   
   bool isControllerInitialized(String videoId) {
     return _controllersInitialized[videoId] ?? false;
+  }
+
+  // ADDED: Set tab visibility from UI
+  void setTabVisibility(bool isVisible) {
+    if (_isTabVisible != isVisible) {
+      debugPrint('📱 Provider: Tab visibility changed to $isVisible');
+      _isTabVisible = isVisible;
+      
+      if (isVisible && _videos.isNotEmpty) {
+        // Play current video when tab becomes visible
+        playCurrentVideo();
+      } else if (!isVisible) {
+        // Pause current video when tab becomes invisible
+        pauseCurrentVideo();
+      }
+      
+      notifyListeners();
+    }
   }
 
   // Initialize with mock data
@@ -78,7 +98,7 @@ class VideoFeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Navigate to specific video index
+  // FIXED: Navigate to specific video index without auto-playing
   Future<void> setCurrentIndex(int index) async {
     if (index < 0 || index >= _videos.length) return;
     
@@ -87,14 +107,21 @@ class VideoFeedProvider extends ChangeNotifier {
     notifyListeners();
     
     // Pause previous video
-    final oldVideo = _videos[oldIndex];
-    final oldController = _controllers[oldVideo.id];
-    if (oldController != null && oldController.value.isPlaying) {
-      await oldController.pause();
+    if (oldIndex != index && oldIndex < _videos.length) {
+      final oldVideo = _videos[oldIndex];
+      final oldController = _controllers[oldVideo.id];
+      if (oldController != null && oldController.value.isPlaying) {
+        await oldController.pause();
+        debugPrint('⏸️ Paused previous video: ${oldVideo.id}');
+      }
     }
     
-    // Play current video
-    await _playCurrentVideo();
+    // FIXED: Only play if tab is visible
+    if (_isTabVisible) {
+      await playCurrentVideo();
+    } else {
+      debugPrint('📱 Not playing video - tab not visible (index: $index)');
+    }
     
     // Preload surrounding videos
     await _preloadVideos(index);
@@ -103,22 +130,34 @@ class VideoFeedProvider extends ChangeNotifier {
     _cleanupDistantControllers(index);
   }
 
-  // Play current video
-  Future<void> _playCurrentVideo() async {
+  // FIXED: Play current video only if tab is visible
+  Future<void> playCurrentVideo() async {
     if (_videos.isEmpty) return;
     
     final video = _videos[_currentIndex];
+    debugPrint('🎬 Attempting to play video: ${video.id} at index: $_currentIndex (tab visible: $_isTabVisible)');
+    
+    // FIXED: Check tab visibility before playing
+    if (!_isTabVisible) {
+      debugPrint('⏸️ Not playing - tab not visible');
+      return;
+    }
+    
     VideoPlayerController? controller = _controllers[video.id];
     
     if (controller == null) {
+      debugPrint('🔄 Controller is null, creating new one for ${video.id}');
       await _createController(video);
       controller = _controllers[video.id];
     }
     
     if (controller != null && _controllersInitialized[video.id] == true) {
+      debugPrint('▶️ Playing video: ${video.id}');
       if (!controller.value.isPlaying) {
         await controller.play();
       }
+    } else {
+      debugPrint('⚠️ Controller not ready for video: ${video.id}');
     }
   }
 
@@ -130,13 +169,14 @@ class VideoFeedProvider extends ChangeNotifier {
     final controller = _controllers[video.id];
     
     if (controller != null && controller.value.isPlaying) {
+      debugPrint('⏸️ Pausing video: ${video.id}');
       await controller.pause();
     }
   }
 
-  // Toggle play/pause for current video
+  // FIXED: Toggle play/pause respects tab visibility
   Future<void> togglePlayPause() async {
-    if (_videos.isEmpty) return;
+    if (_videos.isEmpty || !_isTabVisible) return;
     
     final video = _videos[_currentIndex];
     final controller = _controllers[video.id];
@@ -144,8 +184,10 @@ class VideoFeedProvider extends ChangeNotifier {
     if (controller != null && _controllersInitialized[video.id] == true) {
       if (controller.value.isPlaying) {
         await controller.pause();
+        debugPrint('⏸️ Toggled to pause: ${video.id}');
       } else {
         await controller.play();
+        debugPrint('▶️ Toggled to play: ${video.id}');
       }
       notifyListeners();
     }
@@ -156,6 +198,7 @@ class VideoFeedProvider extends ChangeNotifier {
     if (_controllers.containsKey(video.id)) return;
     
     try {
+      debugPrint('🔄 Creating controller for ${video.id}');
       final controller = VideoPlayerController.networkUrl(Uri.parse(video.videoUrl));
       _controllers[video.id] = controller;
       _controllersInitialized[video.id] = false;
@@ -166,10 +209,11 @@ class VideoFeedProvider extends ChangeNotifier {
       await controller.setLooping(true);
       
       _controllersInitialized[video.id] = true;
+      debugPrint('✅ Controller ready for ${video.id}');
       notifyListeners();
       
     } catch (e) {
-      debugPrint('Error creating video controller for ${video.id}: $e');
+      debugPrint('❌ Error creating video controller for ${video.id}: $e');
       _controllersInitialized[video.id] = false;
     }
   }
@@ -212,6 +256,7 @@ class VideoFeedProvider extends ChangeNotifier {
       controller?.dispose();
       _controllers.remove(videoId);
       _controllersInitialized.remove(videoId);
+      debugPrint('🗑️ Cleaned up controller for $videoId');
     }
   }
 
