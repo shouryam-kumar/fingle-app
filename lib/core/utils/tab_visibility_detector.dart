@@ -132,7 +132,7 @@ class _TabVisibilityDetectorState extends State<TabVisibilityDetector>
       _updateVisibility();
     }
     
-    // FIXED: Mark that we've checked initial visibility
+    // FIXED: Mark that we've checked initial visibility 
     if (!_hasCheckedInitialVisibility) {
       _hasCheckedInitialVisibility = true;
       // FIXED: Schedule another check to catch delayed tab switches
