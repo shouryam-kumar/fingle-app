@@ -1,3 +1,4 @@
+// lib/screens/fingle/widgets/video_player_widget.dart
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -8,7 +9,7 @@ class VideoPlayerWidget extends StatefulWidget {
   final VideoPost video;
   final VideoPlayerController? controller;
   final bool isActive;
-  final bool isTabVisible; // ADDED: Tab visibility
+  final bool isTabVisible;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
 
@@ -17,7 +18,7 @@ class VideoPlayerWidget extends StatefulWidget {
     required this.video,
     this.controller,
     required this.isActive,
-    required this.isTabVisible, // ADDED: Required parameter
+    required this.isTabVisible,
     this.onTap,
     this.onDoubleTap,
   });
@@ -133,11 +134,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
   }
 
   Widget _buildVideoContent() {
-    // FIXED: Improved logic for when to show video vs thumbnail
+    // Improved logic for when to show video vs thumbnail
     final bool isControllerReady = widget.controller != null && 
                                   widget.controller!.value.isInitialized;
     
-    // FIXED: Show video if controller is ready AND video is active AND tab is visible
+    // Show video if controller is ready AND video is active AND tab is visible
     final bool shouldShowVideo = isControllerReady && 
                                 widget.isActive && 
                                 widget.isTabVisible;

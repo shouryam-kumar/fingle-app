@@ -116,6 +116,16 @@ class _TabVisibilityDetectorState extends State<TabVisibilityDetector>
     final ModalRoute? route = ModalRoute.of(context);
     final bool isCurrentRoute = route?.isCurrent ?? false;
     final bool shouldBeVisible = isCurrentRoute && _isAppInForeground;
+
+     // 🐛 DEBUG: Enhanced logging
+    debugPrint('🔍 ${widget.tabName} TabVisibilityDetector:');
+    debugPrint('  📍 Route: ${route?.settings.name ?? 'unnamed'}');
+    debugPrint('  📍 Route isCurrent: $isCurrentRoute');
+    debugPrint('  📍 App in foreground: $_isAppInForeground');
+    debugPrint('  📍 Should be visible: $shouldBeVisible');
+    debugPrint('  📍 Current visibility state: $_isVisible');
+    debugPrint('  📍 Stack trace: ${StackTrace.current.toString().split('\n').take(3).join('\n')}');
+
     
     if (widget.enableDebugLogs) {
       debugPrint('${widget.tabName}: Checking visibility - '

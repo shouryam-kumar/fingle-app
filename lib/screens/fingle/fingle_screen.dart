@@ -72,7 +72,20 @@ class _FingleScreenState extends State<FingleScreen>
 
   /// FIXED: Called when the Fingle tab becomes visible
   void _onTabVisible() {
-    debugPrint('🟢 Fingle tab became VISIBLE');
+    // 🐛 SIMPLE DEBUG: Just check app provider
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final currentTab = appProvider.currentIndex;
+    
+    print('🟢 Fingle._onTabVisible() called - App tab: $currentTab');
+    
+    // ✅ SAFETY CHECK: Only proceed if we're actually on Fingle tab
+    if (currentTab != 2) {
+      print('🚫 BLOCKED: App says we\'re on tab $currentTab, not Fingle (2)');
+      return; // DON'T set visibility if we're not on Fingle tab
+    }
+    
+    print('✅ ALLOWED: Setting Fingle visibility to true');
+    _videoProvider.setTabVisibility(true);
     
     // FIXED: Update provider's tab visibility state
     _videoProvider.setTabVisibility(true);
@@ -98,7 +111,9 @@ class _FingleScreenState extends State<FingleScreen>
 
   /// FIXED: Called when the Fingle tab becomes invisible
   void _onTabInvisible() {
-    debugPrint('🔴 Fingle tab became INVISIBLE');
+    debugPrint('🔴 FingleScreen._onTabInvisible() called');
+    debugPrint('  📊 App current index: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
+    debugPrint('  📊 Current route: ${ModalRoute.of(context)?.settings.name}');
     
     // FIXED: Update provider's tab visibility state
     _videoProvider.setTabVisibility(false);
@@ -141,6 +156,12 @@ class _FingleScreenState extends State<FingleScreen>
       builder: (context, appProvider, child) {
         // FIXED: Check if this tab is currently visible
         final isFingleTabVisible = appProvider.currentIndex == 2; // Fingle is at index 2
+
+        // 🐛 DEBUG: Log every build
+        debugPrint('🏗️ FingleScreen.build() called');
+        debugPrint('  📊 App index: ${appProvider.currentIndex}');
+        debugPrint('  📊 Is Fingle tab visible: $isFingleTabVisible');
+        debugPrint('  📊 Provider tab visibility: ${_isInitialized ? _videoProvider.isTabVisible : 'not initialized'}');
         
         // FIXED: Update tab visibility based on AppProvider
         WidgetsBinding.instance.addPostFrameCallback((_) {
