@@ -1,3 +1,4 @@
+// lib/providers/video_feed_provider.dart
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../models/video_models.dart';
@@ -8,7 +9,7 @@ class VideoFeedProvider extends ChangeNotifier {
   int _currentIndex = 0;
   bool _isLoading = false;
   bool _hasReachedEnd = false;
-  bool _isTabVisible = false; // ADDED: Track tab visibility
+  bool _isTabVisible = false; // Track tab visibility
   
   // Video controllers management
   final Map<String, VideoPlayerController> _controllers = {};
@@ -19,7 +20,7 @@ class VideoFeedProvider extends ChangeNotifier {
   int get currentIndex => _currentIndex;
   bool get isLoading => _isLoading;
   bool get hasReachedEnd => _hasReachedEnd;
-  bool get isTabVisible => _isTabVisible; // ADDED: Expose tab visibility
+  bool get isTabVisible => _isTabVisible; // Expose tab visibility
   VideoPost? get currentVideo => _videos.isNotEmpty ? _videos[_currentIndex] : null;
   
   // Get video controller for specific video
@@ -31,8 +32,14 @@ class VideoFeedProvider extends ChangeNotifier {
     return _controllersInitialized[videoId] ?? false;
   }
 
-  // ADDED: Set tab visibility from UI
+  // Set tab visibility from UI
   void setTabVisibility(bool isVisible) {
+
+    debugPrint('📱 VideoFeedProvider.setTabVisibility($isVisible) called');
+    debugPrint('  📊 Current visibility: $_isTabVisible');
+    debugPrint('  📊 Videos count: ${_videos.length}');
+    debugPrint('  📊 Current index: $_currentIndex');
+
     if (_isTabVisible != isVisible) {
       debugPrint('📱 Provider: Tab visibility changed to $isVisible');
       _isTabVisible = isVisible;
@@ -98,7 +105,7 @@ class VideoFeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // FIXED: Navigate to specific video index without auto-playing
+  // Navigate to specific video index without auto-playing
   Future<void> setCurrentIndex(int index) async {
     if (index < 0 || index >= _videos.length) return;
     
@@ -116,7 +123,7 @@ class VideoFeedProvider extends ChangeNotifier {
       }
     }
     
-    // FIXED: Only play if tab is visible
+    // Only play if tab is visible
     if (_isTabVisible) {
       await playCurrentVideo();
     } else {
@@ -130,14 +137,21 @@ class VideoFeedProvider extends ChangeNotifier {
     _cleanupDistantControllers(index);
   }
 
-  // FIXED: Play current video only if tab is visible
+  // Play current video only if tab is visible
   Future<void> playCurrentVideo() async {
-    if (_videos.isEmpty) return;
+    if (_videos.isEmpty) {
+      debugPrint('⚠️ playCurrentVideo: No videos available');
+      return;
+    }
     
     final video = _videos[_currentIndex];
-    debugPrint('🎬 Attempting to play video: ${video.id} at index: $_currentIndex (tab visible: $_isTabVisible)');
+    debugPrint('🎬 playCurrentVideo called:');
+    debugPrint('  📹 Video ID: ${video.id}');
+    debugPrint('  📊 Index: $_currentIndex');
+    debugPrint('  📱 Tab visible: $_isTabVisible');
+    debugPrint('  🎮 Controller exists: ${_controllers.containsKey(video.id)}');
     
-    // FIXED: Check tab visibility before playing
+    // Check tab visibility before playing
     if (!_isTabVisible) {
       debugPrint('⏸️ Not playing - tab not visible');
       return;
@@ -174,7 +188,7 @@ class VideoFeedProvider extends ChangeNotifier {
     }
   }
 
-  // FIXED: Toggle play/pause respects tab visibility
+  // Toggle play/pause respects tab visibility
   Future<void> togglePlayPause() async {
     if (_videos.isEmpty || !_isTabVisible) return;
     
@@ -274,9 +288,6 @@ class VideoFeedProvider extends ChangeNotifier {
     );
     
     notifyListeners();
-    
-    // TODO: Send API request to backend
-    // await _videoService.toggleLike(videoId);
   }
 
   // Follow/unfollow user
@@ -290,9 +301,6 @@ class VideoFeedProvider extends ChangeNotifier {
     }
     
     notifyListeners();
-    
-    // TODO: Send API request to backend
-    // await _userService.toggleFollow(userId);
   }
 
   // Refresh feed

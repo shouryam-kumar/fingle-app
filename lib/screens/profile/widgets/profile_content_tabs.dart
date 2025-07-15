@@ -1,7 +1,10 @@
+// lib/screens/profile/widgets/profile_content_tabs.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart'; // ✅ Added missing import
 import '../../../core/theme/app_colors.dart';
 import '../../../models/user_model.dart';
+import '../../../providers/app_provider.dart'; // ✅ Added missing import
 import '../../post_viewer/post_viewer_screen.dart';
 
 class ProfileContentTabs extends StatefulWidget {
@@ -548,6 +551,11 @@ Widget _buildGridItem(Post post) {
   void _viewPost(Post post) {
     final postIndex = widget.user.posts.indexOf(post);
     
+    // 🐛 DEBUG: Log navigation (✅ Fixed Provider usage)
+    debugPrint('🚀 Navigating to PostViewerScreen');
+    debugPrint('  📊 Current app tab: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
+    debugPrint('  📹 Post index: $postIndex');
+    
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => PostViewerScreen(
@@ -564,6 +572,11 @@ Widget _buildGridItem(Post post) {
         },
         transitionDuration: const Duration(milliseconds: 300),
       ),
-    );
+    ).then((_) {
+      // 🐛 DEBUG: Log return from navigation (✅ Fixed Provider usage)
+      debugPrint('🔙 Returned from PostViewerScreen');
+      debugPrint('  📊 Current app tab: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
+      debugPrint('  📊 Expected tab: Profile (4)');
+    });
   }
 }
