@@ -1,9 +1,10 @@
-// lib/screens/fingle/widgets/video_player_widget.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/video_models.dart';
+import 'video_progress_indicator.dart';
 
 class VideoPlayerWidget extends StatefulWidget {
   final VideoPost video;
@@ -28,18 +29,33 @@ class VideoPlayerWidget extends StatefulWidget {
 }
 
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _playPauseAnimationController;
+  late AnimationController _controlsAnimationController;
   late Animation<double> _playPauseAnimation;
+  late Animation<double> _controlsAnimation;
+  
   bool _showPlayPauseIcon = false;
+  bool _showControls = false;
+  bool _isInitialLoad = true;
+
+  // Timer for hiding controls
+  Timer? _hideControlsTimer;
 
   @override
   void initState() {
     super.initState();
+    
     _playPauseAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+    
+    _controlsAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
     _playPauseAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -47,17 +63,45 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
       parent: _playPauseAnimationController,
       curve: Curves.easeInOut,
     ));
+    
+    _controlsAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controlsAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Show controls initially for a short time
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.isActive && widget.isTabVisible) {
+        _showControlsTemporarily();
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(VideoPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Show controls when video becomes active
+    if (widget.isActive && !oldWidget.isActive && widget.isTabVisible) {
+      _showControlsTemporarily();
+    }
   }
 
   @override
   void dispose() {
+    _hideControlsTimer?.cancel();
     _playPauseAnimationController.dispose();
+    _controlsAnimationController.dispose();
     super.dispose();
   }
 
   void _onTap() {
     widget.onTap?.call();
     _showPlayPauseIndicator();
+    _toggleControls();
   }
 
   void _showPlayPauseIndicator() {
@@ -76,6 +120,45 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
         }
       });
     });
+  }
+
+  void _toggleControls() {
+    if (_showControls) {
+      _hideControls();
+    } else {
+      _showControlsTemporarily();
+    }
+  }
+
+  void _showControlsTemporarily() {
+    setState(() {
+      _showControls = true;
+    });
+    _controlsAnimationController.forward();
+    
+    // Reset the timer
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        _hideControls();
+      }
+    });
+  }
+
+  void _hideControls() {
+    _hideControlsTimer?.cancel();
+    _controlsAnimationController.reverse().then((_) {
+      if (mounted) {
+        setState(() {
+          _showControls = false;
+        });
+      }
+    });
+  }
+
+  void _onProgressTap() {
+    // Keep controls visible when interacting with progress bar
+    _showControlsTemporarily();
   }
 
   @override
@@ -128,6 +211,62 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
                 },
               ),
             ),
+          
+          // Video progress indicator
+          if (widget.isActive && widget.controller != null)
+            Positioned(
+              bottom: 20,
+              left: 0,
+              right: 0,
+              child: AnimatedBuilder(
+                animation: _controlsAnimation,
+                builder: (context, child) {
+                  return Opacity(
+                    opacity: _controlsAnimation.value,
+                    child: FingleVideoProgressIndicator(
+                      controller: widget.controller,
+                      isVisible: _showControls,
+                      onTap: _onProgressTap,
+                    ),
+                  );
+                },
+              ),
+            ),
+          
+          // Loading indicator overlay
+          if (widget.controller != null && 
+              widget.controller!.value.isInitialized && 
+              widget.controller!.value.isBuffering)
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Buffering...',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -150,7 +289,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
                'Should Show Video: $shouldShowVideo');
 
     if (shouldShowVideo) {
-      // Show video player ONLY
+      // Show video player
       return Center(
         child: AspectRatio(
           aspectRatio: widget.controller!.value.aspectRatio,
@@ -158,7 +297,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
         ),
       );
     } else {
-      // Show thumbnail ONLY
+      // Show thumbnail
       return _buildThumbnail();
     }
   }
