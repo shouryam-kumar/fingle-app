@@ -59,18 +59,25 @@ class _FingleScreenState extends State<FingleScreen>
     
     switch (state) {
       case AppLifecycleState.resumed:
-        debugPrint('📱 App resumed');
+        debugPrint('📱 App resumed - checking tab visibility');
         _checkAndUpdateTabVisibility();
+        
+        // ✅ NEW: Re-enable wakelock if needed
+        ScreenTimeoutService.onAppResumed();
         break;
+        
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
-        debugPrint('📱 App paused/inactive - pausing video and disabling wakelock');
+        debugPrint('📱 App paused/inactive - pausing video');
         _videoProvider.pauseCurrentVideo();
-        ScreenTimeoutService.disableExtendedTimeout();
+        
+        // ✅ NEW: Handle app going to background
+        ScreenTimeoutService.onAppPaused();
         break;
+        
       case AppLifecycleState.detached:
-        debugPrint('📱 App detached - cleaning up wakelock');
+        debugPrint('📱 App detached - cleaning up');
         ScreenTimeoutService.dispose();
         break;
     }
@@ -95,7 +102,7 @@ class _FingleScreenState extends State<FingleScreen>
     debugPrint('🟢 Fingle tab became VISIBLE - enabling screen timeout');
     _videoProvider.setTabVisibility(true);
     
-    // Enable extended screen timeout when tab becomes visible
+    // ✅ IMPROVED: Enable extended screen timeout when tab becomes visible
     ScreenTimeoutService.enableExtendedTimeout();
     
     if (_isInitialized && _videoProvider.videos.isNotEmpty) {
@@ -116,7 +123,7 @@ class _FingleScreenState extends State<FingleScreen>
     debugPrint('🔴 Fingle tab became INVISIBLE - disabling screen timeout');
     _videoProvider.setTabVisibility(false);
     
-    // Disable extended screen timeout when tab becomes invisible
+    // ✅ IMPROVED: Disable extended screen timeout when tab becomes invisible
     ScreenTimeoutService.disableExtendedTimeout();
   }
 
@@ -150,7 +157,7 @@ class _FingleScreenState extends State<FingleScreen>
     debugPrint('=== ✅ VIDEO FEED INITIALIZATION COMPLETE ===');
   }
 
-  // Reset screen timeout on user interactions
+  // ✅ IMPROVED: Reset screen timeout on user interactions
   void _onUserInteraction() {
     ScreenTimeoutService.resetTimer();
     debugPrint('👆 User interaction detected - resetting 3min timer');
