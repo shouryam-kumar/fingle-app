@@ -8,6 +8,9 @@ import '../../services/screen_timeout_service.dart';
 import 'widgets/video_player_widget.dart';
 import 'widgets/video_progress_indicator.dart';
 import 'package:fingle_app/models/video_models.dart';
+import '../../providers/comments_provider.dart';
+import 'widgets/comments_bottom_sheet.dart';
+
 
 class FingleScreen extends StatefulWidget {
   const FingleScreen({super.key});
@@ -81,6 +84,26 @@ class _FingleScreenState extends State<FingleScreen>
         ScreenTimeoutService.dispose();
         break;
     }
+  }
+
+
+  Future<void> _showCommentsSheet(VideoPost video) async {
+    // Reset timeout when opening comments
+    _onUserInteraction();
+    
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => CommentsBottomSheet(
+        video: video,
+        onClose: () {
+          // Reset timeout when closing comments
+          _onUserInteraction();
+        },
+      ),
+    );
   }
 
   void _checkAndUpdateTabVisibility() {
@@ -475,6 +498,7 @@ class _FingleScreenState extends State<FingleScreen>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Creator Avatar with Follow Button
         GestureDetector(
           onTap: () {
             _onUserInteraction(); // Reset timeout on tap
@@ -513,6 +537,7 @@ class _FingleScreenState extends State<FingleScreen>
         
         const SizedBox(height: 24),
         
+        // Like Button
         GestureDetector(
           onTap: () {
             _onUserInteraction(); // Reset timeout on like
@@ -544,15 +569,11 @@ class _FingleScreenState extends State<FingleScreen>
         
         const SizedBox(height: 24),
         
+        // Comment Button - UPDATED WITH COMMENTS FUNCTIONALITY
         GestureDetector(
           onTap: () {
             _onUserInteraction(); // Reset timeout on comment
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Comments feature coming soon!'),
-                duration: Duration(seconds: 1),
-              ),
-            );
+            _showCommentsSheet(video);
           },
           child: Container(
             padding: const EdgeInsets.all(8),
@@ -565,13 +586,19 @@ class _FingleScreenState extends State<FingleScreen>
                   size: 32,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  _formatCount(video.comments),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                // Show actual comment count from provider
+                Consumer<CommentsProvider>(
+                  builder: (context, commentsProvider, child) {
+                    final totalComments = commentsProvider.getTotalComments(video.id);
+                    return Text(
+                      _formatCount(totalComments > 0 ? totalComments : video.comments),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -580,6 +607,7 @@ class _FingleScreenState extends State<FingleScreen>
         
         const SizedBox(height: 24),
         
+        // Share Button
         GestureDetector(
           onTap: () {
             _onUserInteraction(); // Reset timeout on share
