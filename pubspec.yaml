@@ -17,6 +17,7 @@ dependencies:
   flutter_animate: ^4.5.0
   cached_network_image: ^3.3.0
   video_player: ^2.7.0
+  screen_brightness: ^0.2.2+1
   
   # Storage & Network
   shared_preferences: ^2.2.2
