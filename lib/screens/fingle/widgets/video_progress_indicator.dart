@@ -1,17 +1,14 @@
-// lib/screens/fingle/widgets/video_progress_indicator.dart
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/theme/app_colors.dart';
 
 class FingleVideoProgressIndicator extends StatefulWidget {
   final VideoPlayerController? controller;
-  final bool isVisible;
   final VoidCallback? onTap;
 
   const FingleVideoProgressIndicator({
     super.key,
     required this.controller,
-    this.isVisible = true,
     this.onTap,
   });
 
@@ -19,49 +16,51 @@ class FingleVideoProgressIndicator extends StatefulWidget {
   State<FingleVideoProgressIndicator> createState() => _FingleVideoProgressIndicatorState();
 }
 
-class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndicator> {
   bool _isDragging = false;
   Duration _dragPosition = Duration.zero;
+  VideoPlayerController? _currentController;
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
-
-    if (widget.isVisible) {
-      _fadeController.forward();
-    }
+    _setupVideoListener();
   }
 
   @override
   void didUpdateWidget(FingleVideoProgressIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isVisible != oldWidget.isVisible) {
-      if (widget.isVisible) {
-        _fadeController.forward();
-      } else {
-        _fadeController.reverse();
-      }
+    if (oldWidget.controller != widget.controller) {
+      _setupVideoListener();
     }
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _removeVideoListener();
     super.dispose();
+  }
+
+  void _setupVideoListener() {
+    _removeVideoListener();
+    _currentController = widget.controller;
+    if (_currentController != null) {
+      _currentController!.addListener(_onVideoUpdate);
+    }
+  }
+
+  void _removeVideoListener() {
+    if (_currentController != null) {
+      _currentController!.removeListener(_onVideoUpdate);
+    }
+  }
+
+  void _onVideoUpdate() {
+    if (mounted && !_isDragging) {
+      setState(() {
+        // This will rebuild the widget with updated position
+      });
+    }
   }
 
   @override
@@ -70,138 +69,103 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
       return const SizedBox.shrink();
     }
 
-    return AnimatedBuilder(
-      animation: _fadeAnimation,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _fadeAnimation.value,
-          child: _buildProgressBar(),
-        );
-      },
-    );
+    return _buildProgressBar();
   }
 
   Widget _buildProgressBar() {
+    final controller = widget.controller!;
+    final duration = controller.value.duration;
+    final position = _isDragging ? _dragPosition : controller.value.position;
+    
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Progress bar
-          _buildSeekBar(),
-          
-          const SizedBox(height: 8),
-          
-          // Time indicators
-          _buildTimeRow(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSeekBar() {
-    final controller = widget.controller!;
-    final duration = controller.value.duration;
-    final position = _isDragging ? _dragPosition : controller.value.position;
-    
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onPanStart: _onPanStart,
-      onPanUpdate: _onPanUpdate,
-      onPanEnd: _onPanEnd,
-      child: Container(
-        height: 40, // Larger hit area
-        child: Center(
-          child: Container(
-            height: 4,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(2),
-              color: Colors.white.withOpacity(0.3),
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final progress = duration.inMilliseconds > 0
-                    ? position.inMilliseconds / duration.inMilliseconds
-                    : 0.0;
-                
-                return Stack(
-                  children: [
-                    // Background track
+      height: 4, // Slightly thicker for better visibility
+      margin: const EdgeInsets.symmetric(horizontal: 0),
+      child: GestureDetector(
+        onTapDown: _onTapDown,
+        onPanStart: _onPanStart,
+        onPanUpdate: _onPanUpdate,
+        onPanEnd: _onPanEnd,
+        child: Container(
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.transparent, // Transparent background for better touch
+            borderRadius: BorderRadius.circular(2),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final progress = duration.inMilliseconds > 0
+                  ? position.inMilliseconds / duration.inMilliseconds
+                  : 0.0;
+              
+              final bufferedProgress = _getBufferedProgress(duration);
+              
+              return Stack(
+                children: [
+                  // Background track
+                  Container(
+                    width: constraints.maxWidth,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                  ),
+                  
+                  // Buffered progress (shows what's loaded)
+                  if (bufferedProgress > 0)
                     Container(
-                      width: constraints.maxWidth,
+                      width: constraints.maxWidth * bufferedProgress,
                       height: 4,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(2),
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withOpacity(0.5),
                       ),
                     ),
-                    
-                    // Progress track
-                    Container(
-                      width: constraints.maxWidth * progress.clamp(0.0, 1.0),
-                      height: 4,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(2),
-                        color: AppColors.primary,
-                      ),
+                  
+                  // Progress track (shows current position)
+                  Container(
+                    width: constraints.maxWidth * progress.clamp(0.0, 1.0),
+                    height: 4,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(2),
+                      color: AppColors.primary,
                     ),
-                    
-                    // Thumb/handle
-                    Positioned(
-                      left: (constraints.maxWidth * progress.clamp(0.0, 1.0)) - 8,
-                      top: -4,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTimeRow() {
-    final controller = widget.controller!;
-    final duration = controller.value.duration;
-    final position = _isDragging ? _dragPosition : controller.value.position;
+  double _getBufferedProgress(Duration duration) {
+    if (widget.controller == null || !widget.controller!.value.isInitialized) {
+      return 0.0;
+    }
     
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          _formatDuration(position),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        Text(
-          _formatDuration(duration),
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
+    final buffered = widget.controller!.value.buffered;
+    if (buffered.isEmpty || duration.inMilliseconds == 0) {
+      return 0.0;
+    }
+    
+    // Find the buffered range that contains the current position
+    final currentPosition = widget.controller!.value.position;
+    DurationRange? relevantRange;
+    
+    for (final range in buffered) {
+      if (range.start <= currentPosition && currentPosition <= range.end) {
+        relevantRange = range;
+        break;
+      }
+    }
+    
+    // If no relevant range found, use the last buffered range
+    relevantRange ??= buffered.last;
+    
+    final bufferedEnd = relevantRange.end;
+    return (bufferedEnd.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
   }
 
   void _onTapDown(TapDownDetails details) {
@@ -217,15 +181,20 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    _seekToPosition(details.localPosition);
+    if (_isDragging) {
+      _seekToPosition(details.localPosition);
+    }
   }
 
   void _onPanEnd(DragEndDetails details) {
-    setState(() {
-      _isDragging = false;
-    });
-    // Actually seek the video to the final position
-    widget.controller?.seekTo(_dragPosition);
+    if (_isDragging) {
+      // Actually seek the video to the final position
+      widget.controller?.seekTo(_dragPosition);
+      
+      setState(() {
+        _isDragging = false;
+      });
+    }
   }
 
   void _seekToPosition(Offset localPosition) {
@@ -233,8 +202,8 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
     if (!controller.value.isInitialized) return;
 
     final RenderBox box = context.findRenderObject() as RenderBox;
-    final double seekWidth = box.size.width - 32; // Account for margins
-    final double seekPosition = (localPosition.dx - 16).clamp(0.0, seekWidth);
+    final double seekWidth = box.size.width;
+    final double seekPosition = localPosition.dx.clamp(0.0, seekWidth);
     final double seekPercent = seekPosition / seekWidth;
     
     final Duration newPosition = Duration(
@@ -244,18 +213,10 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
     setState(() {
       _dragPosition = newPosition;
     });
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
     
-    if (hours > 0) {
-      return '$hours:${twoDigits(minutes)}:${twoDigits(seconds)}';
-    } else {
-      return '$minutes:${twoDigits(seconds)}';
+    // For immediate feedback during tap (not just drag)
+    if (!_isDragging) {
+      controller.seekTo(newPosition);
     }
   }
 }
