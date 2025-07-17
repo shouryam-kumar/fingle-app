@@ -89,9 +89,10 @@ class _CommentInputState extends State<CommentInput>
 
     final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
     final state = commentsProvider.getCommentsState(widget.video.id);
+    final wasReplying = state.replyingToId != null;
 
     try {
-      if (state.replyingToId != null) {
+      if (wasReplying) {
         // Replying to a comment
         await commentsProvider.replyToComment(
           widget.video.id,
@@ -99,15 +100,24 @@ class _CommentInputState extends State<CommentInput>
           content,
         );
         
-        // Clear replying state
-        commentsProvider.clearReplyingTo(widget.video.id);
+        debugPrint('✅ Reply sent successfully');
       } else {
         // Adding a new comment
         await commentsProvider.addComment(widget.video.id, content);
+        
+        debugPrint('✅ Comment sent successfully');
       }
 
-      // Clear input and hide keyboard
+      // Clear input after sending
       _textController.clear();
+      
+      // Automatically clear reply state after successful submission
+      if (wasReplying) {
+        commentsProvider.clearReplyingTo(widget.video.id);
+        debugPrint('🔄 Reply state cleared automatically after sending');
+      }
+      
+      // Unfocus input
       widget.focusNode.unfocus();
       
       // Haptic feedback
@@ -137,9 +147,38 @@ class _CommentInputState extends State<CommentInput>
   }
 
   void _cancelReply() {
+    // ✅ ENHANCED: Better cancel reply with explicit state management
     widget.onResetTimeout?.call();
+    
+    debugPrint('🔄 Cancel reply button clicked');
+    
     final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
-    commentsProvider.clearReplyingTo(widget.video.id);
+    
+    // ✅ FORCE STATE UPDATE: Clear reply state and trigger rebuild
+    try {
+      commentsProvider.clearReplyingTo(widget.video.id);
+      debugPrint('🔄 Reply state cleared in provider');
+      
+      // ✅ FORCE REBUILD: Ensure the UI updates immediately
+      if (mounted) {
+        setState(() {
+          // This forces a rebuild of this widget to reflect the change
+        });
+      }
+      
+      debugPrint('🔄 UI state updated - reply indicator should disappear');
+      
+    } catch (e) {
+      debugPrint('❌ Error clearing reply state: $e');
+    }
+    
+    // ✅ DO NOT clear text - keep user's typed content
+    // ✅ DO NOT unfocus - let user continue typing
+    
+    // Haptic feedback
+    HapticFeedback.lightImpact();
+    
+    debugPrint('🔄 Reply cancelled - text preserved, indicator should be gone');
   }
 
   @override
@@ -149,15 +188,18 @@ class _CommentInputState extends State<CommentInput>
         final state = commentsProvider.getCommentsState(widget.video.id);
         final isReplying = state.replyingToId != null;
         
+        // ✅ DEBUG: Log the current state
+        debugPrint('🔍 Build - isReplying: $isReplying, replyingToId: ${state.replyingToId}');
+        
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Reply indicator
+              // ✅ Reply indicator - conditionally shown
               if (isReplying) ...[
-                _buildReplyIndicator(state),
-                const SizedBox(height: 12),
+                _buildReplyIndicator(state, commentsProvider),
+                const SizedBox(height: 8),
               ],
               
               // Input row
@@ -165,22 +207,22 @@ class _CommentInputState extends State<CommentInput>
                 children: [
                   // User avatar
                   CircleAvatar(
-                    radius: 16,
+                    radius: 14,
                     backgroundImage: NetworkImage(commentsProvider.currentUser.profilePic),
                     backgroundColor: Colors.grey[800],
                   ),
                   
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   
                   // Input field
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[900],
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: widget.focusNode.hasFocus 
-                              ? AppColors.primary.withOpacity(0.5)
+                              ? AppColors.primary.withOpacity(0.4)
                               : Colors.transparent,
                           width: 1,
                         ),
@@ -202,11 +244,11 @@ class _CommentInputState extends State<CommentInput>
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+                            horizontal: 14,
+                            vertical: 10,
                           ),
                         ),
-                        maxLines: 4,
+                        maxLines: 3,
                         minLines: 1,
                         textCapitalization: TextCapitalization.sentences,
                         onTap: widget.onResetTimeout,
@@ -225,8 +267,8 @@ class _CommentInputState extends State<CommentInput>
                       return Transform.scale(
                         scale: _sendButtonAnimation.value,
                         child: Container(
-                          width: 40,
-                          height: 40,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: _hasText && !_isSubmitting
                                 ? AppColors.primary
@@ -236,9 +278,9 @@ class _CommentInputState extends State<CommentInput>
                           child: IconButton(
                             onPressed: _hasText && !_isSubmitting ? _submitComment : null,
                             icon: _isSubmitting
-                                ? SizedBox(
-                                    width: 16,
-                                    height: 16,
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
                                     child: CircularProgressIndicator(
                                       color: Colors.white,
                                       strokeWidth: 2,
@@ -247,7 +289,7 @@ class _CommentInputState extends State<CommentInput>
                                 : Icon(
                                     Icons.send,
                                     color: _hasText ? Colors.white : Colors.white.withOpacity(0.5),
-                                    size: 18,
+                                    size: 16,
                                   ),
                           ),
                         ),
@@ -256,24 +298,6 @@ class _CommentInputState extends State<CommentInput>
                   ),
                 ],
               ),
-              
-              // Character count (optional)
-              if (_textController.text.length > 50)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      '${_textController.text.length}/500',
-                      style: TextStyle(
-                        color: _textController.text.length > 450
-                            ? Colors.red[300]
-                            : Colors.white.withOpacity(0.5),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
         );
@@ -281,14 +305,14 @@ class _CommentInputState extends State<CommentInput>
     );
   }
 
-  Widget _buildReplyIndicator(CommentsState state) {
+  Widget _buildReplyIndicator(CommentsState state, CommentsProvider commentsProvider) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.3),
+          color: AppColors.primary.withOpacity(0.25),
           width: 1,
         ),
       ),
@@ -297,27 +321,35 @@ class _CommentInputState extends State<CommentInput>
           Icon(
             Icons.reply,
             color: AppColors.primary,
-            size: 16,
+            size: 14,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               'Replying to ${state.replyingToUser?.name}',
               style: TextStyle(
                 color: AppColors.primary,
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          GestureDetector(
-            onTap: _cancelReply,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              child: Icon(
-                Icons.close,
-                color: AppColors.primary,
-                size: 16,
+          // ✅ ENHANCED: More robust cancel button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                debugPrint('🔄 X button tapped');
+                _cancelReply();
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.close,
+                  color: AppColors.primary,
+                  size: 16,
+                ),
               ),
             ),
           ),

@@ -35,9 +35,7 @@ class _CommentItemState extends State<CommentItem>
   
   late AnimationController _likeAnimationController;
   late Animation<double> _likeScaleAnimation;
-  late Animation<double> _likeOpacityAnimation;
   
-  bool _isExpanded = false;
   bool _showFullContent = false;
 
   @override
@@ -45,28 +43,20 @@ class _CommentItemState extends State<CommentItem>
     super.initState();
     
     _likeAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 250),
       vsync: this,
     );
     
     _likeScaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 1.2,
+      end: 1.15,
     ).animate(CurvedAnimation(
       parent: _likeAnimationController,
       curve: Curves.elasticOut,
     ));
-    
-    _likeOpacityAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.8,
-    ).animate(CurvedAnimation(
-      parent: _likeAnimationController,
-      curve: Curves.easeOut,
-    ));
 
     // Check if content is long
-    _showFullContent = widget.comment.content.length <= 100;
+    _showFullContent = widget.comment.content.length <= 80;
   }
 
   @override
@@ -92,6 +82,9 @@ class _CommentItemState extends State<CommentItem>
   void _handleReply() {
     widget.onResetTimeout?.call();
     widget.onReply?.call();
+    
+    // Haptic feedback
+    HapticFeedback.lightImpact();
   }
 
   void _handleDelete() {
@@ -106,124 +99,106 @@ class _CommentItemState extends State<CommentItem>
   }
 
   @override
-  @override
-Widget build(BuildContext context) {
-  final commentsProvider = Provider.of<CommentsProvider>(context);
-  final currentUser = commentsProvider.currentUser;
-  final isOwnComment = widget.comment.author.id == currentUser.id;
-  final isVideoCreator = widget.comment.author.id == widget.video.creator.id;
+  Widget build(BuildContext context) {
+    final commentsProvider = Provider.of<CommentsProvider>(context);
+    final currentUser = commentsProvider.currentUser;
+    final isOwnComment = widget.comment.author.id == currentUser.id;
+    final isVideoCreator = widget.comment.author.id == widget.video.creator.id;
 
-  return Container(
-    margin: EdgeInsets.only(
-      bottom: widget.comment.isPinned ? 16 : 12, // More space for pinned
-      top: widget.comment.isPinned ? 8 : 0,
-    ),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      // ✅ ENHANCED: Better visual treatment for pinned comments
-      color: widget.comment.isPinned 
-          ? AppColors.primary.withOpacity(0.08)  // Slightly more prominent
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
-      border: widget.comment.isPinned
-          ? Border.all(
-              color: AppColors.primary.withOpacity(0.3), 
-              width: 1.5,  // Slightly thicker border
-            )
-          : null,
-      // ✅ NEW: Add subtle glow for pinned comments
-      boxShadow: widget.comment.isPinned ? [
-        BoxShadow(
-          color: AppColors.primary.withOpacity(0.1),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ] : null,
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ✅ ENHANCED: Better pinned indicator
-        if (widget.comment.isPinned && !widget.isReply)
-          Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.push_pin,
-                  size: 12,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 4),
-                const Text(
-                  'Pinned',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        
-        // Rest of your existing comment content...
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Avatar
-            _buildAvatar(),
-            
-            const SizedBox(width: 12),
-            
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: EdgeInsets.only(
+        bottom: widget.comment.isPinned ? 12 : 8,
+        top: widget.comment.isPinned ? 6 : 0,
+      ),
+      padding: const EdgeInsets.all(10), // More compact padding
+      decoration: BoxDecoration(
+        color: widget.comment.isPinned 
+            ? AppColors.primary.withOpacity(0.06)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        border: widget.comment.isPinned
+            ? Border.all(
+                color: AppColors.primary.withOpacity(0.25), 
+                width: 1,
+              )
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Pinned indicator
+          if (widget.comment.isPinned && !widget.isReply)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // User info and content
-                  _buildUserInfo(isVideoCreator),
-                  
-                  const SizedBox(height: 4),
-                  
-                  // Comment content
-                  _buildCommentContent(),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Actions
-                  _buildActions(isOwnComment),
+                  const Icon(
+                    Icons.push_pin,
+                    size: 10,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 3),
+                  const Text(
+                    'Pinned',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
             ),
-            
-            // Like button
-            _buildLikeButton(),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+          
+          // Main comment content
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Avatar
+              _buildAvatar(),
+              
+              const SizedBox(width: 10),
+              
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // User info
+                    _buildUserInfo(isVideoCreator),
+                    
+                    const SizedBox(height: 3),
+                    
+                    // Comment content
+                    _buildCommentContent(),
+                    
+                    const SizedBox(height: 6),
+                    
+                    // Actions
+                    _buildActions(isOwnComment),
+                  ],
+                ),
+              ),
+              
+              // Like button
+              _buildLikeButton(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildAvatar() {
     return GestureDetector(
       onTap: () {
         widget.onResetTimeout?.call();
-        // TODO: Navigate to user profile
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('View ${widget.comment.author.name}\'s profile'),
@@ -232,19 +207,19 @@ Widget build(BuildContext context) {
         );
       },
       child: Container(
-        width: widget.isReply ? 28 : 32,
-        height: widget.isReply ? 28 : 32,
+        width: widget.isReply ? 24 : 28,
+        height: widget.isReply ? 24 : 28,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
             color: widget.comment.author.isVerified 
                 ? AppColors.primary 
                 : Colors.transparent,
-            width: 2,
+            width: 1.5,
           ),
         ),
         child: CircleAvatar(
-          radius: widget.isReply ? 12 : 14,
+          radius: widget.isReply ? 10 : 12,
           backgroundImage: NetworkImage(widget.comment.author.profilePic),
           backgroundColor: Colors.grey[800],
         ),
@@ -260,35 +235,35 @@ Widget build(BuildContext context) {
           widget.comment.author.name,
           style: TextStyle(
             color: Colors.white,
-            fontSize: widget.isReply ? 13 : 14,
+            fontSize: widget.isReply ? 12 : 13,
             fontWeight: FontWeight.w600,
           ),
         ),
         
         // Verified badge
         if (widget.comment.author.isVerified) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: 3),
           Icon(
             Icons.verified,
             color: AppColors.primary,
-            size: widget.isReply ? 12 : 14,
+            size: widget.isReply ? 10 : 12,
           ),
         ],
         
         // Creator badge
         if (isVideoCreator) ...[
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
+              color: AppColors.primary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               'Creator',
               style: TextStyle(
                 color: AppColors.primary,
-                fontSize: 8,
+                fontSize: 7,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -296,23 +271,23 @@ Widget build(BuildContext context) {
         ],
         
         // Time ago
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Text(
           widget.comment.timeAgo,
           style: TextStyle(
             color: Colors.white.withOpacity(0.5),
-            fontSize: widget.isReply ? 11 : 12,
+            fontSize: widget.isReply ? 10 : 11,
           ),
         ),
         
         // Edited indicator
         if (widget.comment.isEdited) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: 3),
           Text(
             '(edited)',
             style: TextStyle(
               color: Colors.white.withOpacity(0.4),
-              fontSize: widget.isReply ? 10 : 11,
+              fontSize: widget.isReply ? 9 : 10,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -323,28 +298,28 @@ Widget build(BuildContext context) {
 
   Widget _buildCommentContent() {
     final content = widget.comment.content;
-    final shouldTruncate = content.length > 100 && !_showFullContent;
+    final shouldTruncate = content.length > 80 && !_showFullContent;
     final displayContent = shouldTruncate 
-        ? '${content.substring(0, 100)}...' 
+        ? '${content.substring(0, 80)}...' 
         : content;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Comment text with mention highlighting
+        // Comment text
         _buildFormattedText(displayContent),
         
         // Show more/less button
-        if (content.length > 100)
+        if (content.length > 80)
           GestureDetector(
             onTap: _toggleExpanded,
             child: Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 3),
               child: Text(
                 _showFullContent ? 'Show less' : 'Show more',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.6),
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -355,49 +330,13 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildFormattedText(String text) {
-    // Simple mention highlighting
-    final mentionRegex = RegExp(r'@(\w+)');
-    final spans = <TextSpan>[];
-    int lastIndex = 0;
-
-    for (final match in mentionRegex.allMatches(text)) {
-      // Add text before mention
-      if (match.start > lastIndex) {
-        spans.add(TextSpan(
-          text: text.substring(lastIndex, match.start),
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: widget.isReply ? 13 : 14,
-          ),
-        ));
-      }
-      
-      // Add mention
-      spans.add(TextSpan(
-        text: match.group(0),
-        style: TextStyle(
-          color: AppColors.primary,
-          fontSize: widget.isReply ? 13 : 14,
-          fontWeight: FontWeight.w600,
-        ),
-      ));
-      
-      lastIndex = match.end;
-    }
-    
-    // Add remaining text
-    if (lastIndex < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(lastIndex),
-        style: TextStyle(
-          color: Colors.white.withOpacity(0.9),
-          fontSize: widget.isReply ? 13 : 14,
-        ),
-      ));
-    }
-
-    return RichText(
-      text: TextSpan(children: spans),
+    return Text(
+      text,
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.9),
+        fontSize: widget.isReply ? 12 : 13,
+        height: 1.2,
+      ),
     );
   }
 
@@ -406,15 +345,16 @@ Widget build(BuildContext context) {
       children: [
         // Reply button
         if (!widget.isReply)
-          GestureDetector(
+          InkWell(
             onTap: _handleReply,
+            borderRadius: BorderRadius.circular(6),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               child: Text(
                 'Reply',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.6),
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -423,16 +363,17 @@ Widget build(BuildContext context) {
         
         // Delete button (only for own comments)
         if (isOwnComment) ...[
-          const SizedBox(width: 16),
-          GestureDetector(
+          const SizedBox(width: 12),
+          InkWell(
             onTap: _handleDelete,
+            borderRadius: BorderRadius.circular(6),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               child: Text(
                 'Delete',
                 style: TextStyle(
                   color: Colors.red.withOpacity(0.7),
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -449,38 +390,35 @@ Widget build(BuildContext context) {
       builder: (context, child) {
         return Transform.scale(
           scale: _likeScaleAnimation.value,
-          child: Opacity(
-            opacity: _likeOpacityAnimation.value,
-            child: GestureDetector(
-              onTap: _handleLike,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      widget.comment.isLiked 
-                          ? Icons.favorite 
-                          : Icons.favorite_border,
-                      color: widget.comment.isLiked 
-                          ? Colors.red 
-                          : Colors.white.withOpacity(0.6),
-                      size: widget.isReply ? 16 : 18,
-                    ),
-                    
-                    if (widget.comment.likes > 0) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        _formatLikeCount(widget.comment.likes),
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                        ),
+          child: GestureDetector(
+            onTap: _handleLike,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    widget.comment.isLiked 
+                        ? Icons.favorite 
+                        : Icons.favorite_border,
+                    color: widget.comment.isLiked 
+                        ? Colors.red 
+                        : Colors.white.withOpacity(0.6),
+                    size: widget.isReply ? 14 : 16,
+                  ),
+                  
+                  if (widget.comment.likes > 0) ...[
+                    const SizedBox(height: 1),
+                    Text(
+                      _formatLikeCount(widget.comment.likes),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
           ),

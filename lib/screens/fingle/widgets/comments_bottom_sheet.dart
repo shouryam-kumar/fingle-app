@@ -35,7 +35,6 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
   final FocusNode _inputFocusNode = FocusNode();
   
   bool _isKeyboardVisible = false;
-  double _keyboardHeight = 0;
 
   @override
   void initState() {
@@ -103,6 +102,10 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
     // Reset screen timeout on close
     ScreenTimeoutService.resetTimer();
     
+    // Clear reply state on close
+    final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
+    commentsProvider.clearReplyingTo(widget.video.id);
+    
     // Unfocus input to hide keyboard
     _inputFocusNode.unfocus();
     
@@ -143,13 +146,16 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
               },
             ),
             
-            // Comments sheet
+            // Comments sheet - POSITIONED AT BOTTOM
             AnimatedBuilder(
               animation: _slideAnimation,
               builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, MediaQuery.of(context).size.height * _slideAnimation.value),
-                  child: _buildCommentsSheet(),
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Transform.translate(
+                    offset: Offset(0, MediaQuery.of(context).size.height * _slideAnimation.value * 0.9),
+                    child: _buildCommentsSheet(),
+                  ),
                 );
               },
             ),
@@ -160,33 +166,41 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
   }
 
   Widget _buildCommentsSheet() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    
+    // ✅ MUCH BETTER POSITIONING - Starts closer to bottom
+    double sheetHeight;
+    if (_isKeyboardVisible) {
+      // When keyboard is visible, take most of the screen
+      sheetHeight = screenHeight - 100 - keyboardHeight;
+    } else {
+      // When keyboard is hidden, take about 65% of screen height
+      sheetHeight = screenHeight * 0.65; // Much more reasonable height
+    }
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
+      height: sheetHeight,
+      width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)), // Slightly smaller radius
       ),
       child: Column(
         children: [
-          // Handle bar and header
-          _buildHeader(),
+          // Minimal header
+          _buildMinimalHeader(),
           
           // Comments list
           Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: CommentList(
-                video: widget.video,
-                scrollController: _scrollController,
-                onResetTimeout: () => ScreenTimeoutService.resetTimer(),
-              ),
+            child: CommentList(
+              video: widget.video,
+              scrollController: _scrollController,
+              onResetTimeout: () => ScreenTimeoutService.resetTimer(),
             ),
           ),
           
-          // Comment input
+          // Comment input - ALWAYS AT BOTTOM
           Container(
             decoration: BoxDecoration(
               color: Colors.black,
@@ -221,72 +235,69 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildMinimalHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16), // More compact
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Handle bar
           Container(
-            width: 40,
-            height: 4,
+            width: 36,
+            height: 3,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           
           // Header with title and close button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Comments count
-                Consumer<CommentsProvider>(
-                  builder: (context, commentsProvider, child) {
-                    final totalComments = commentsProvider.getTotalComments(widget.video.id);
-                    return Text(
-                      totalComments == 0 
-                          ? 'No comments yet' 
-                          : '$totalComments comment${totalComments == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    );
-                  },
-                ),
-                
-                // Close button
-                GestureDetector(
-                  onTap: _closeSheet,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.close,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Comments count
+              Consumer<CommentsProvider>(
+                builder: (context, commentsProvider, child) {
+                  final totalComments = commentsProvider.getTotalComments(widget.video.id);
+                  return Text(
+                    totalComments == 0 
+                        ? 'Comments' 
+                        : '$totalComments comment${totalComments == 1 ? '' : 's'}',
+                    style: const TextStyle(
                       color: Colors.white,
-                      size: 20,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
+                  );
+                },
+              ),
+              
+              // Close button
+              GestureDetector(
+                onTap: _closeSheet,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 18,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           
-          // Divider
+          // Minimal divider
           Container(
-            height: 1,
+            height: 0.5,
             color: Colors.white.withOpacity(0.1),
           ),
         ],
