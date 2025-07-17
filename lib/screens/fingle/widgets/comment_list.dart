@@ -130,7 +130,7 @@ class _CommentListState extends State<CommentList> {
         Expanded(
           child: ListView.builder(
             controller: widget.scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Reduced padding
             itemCount: state.comments.length + (state.isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
               // Show loading indicator at the end
@@ -150,29 +150,29 @@ class _CommentListState extends State<CommentList> {
                       comment: comment,
                       video: widget.video,
                       onResetTimeout: widget.onResetTimeout,
-                      onReply: () => _handleReply(comment),
+                      onReply: () => _handleReply(comment, commentsProvider),
                       onLike: () => _handleLike(comment, commentsProvider),
                       onDelete: () => _handleDelete(comment, commentsProvider),
                     ),
                     
                     // Replies
                     if (comment.hasReplies) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       ...comment.replies.map((reply) => Padding(
-                        padding: const EdgeInsets.only(left: 48),
+                        padding: const EdgeInsets.only(left: 40), // Reduced indentation
                         child: CommentItem(
                           comment: reply,
                           video: widget.video,
                           isReply: true,
                           onResetTimeout: widget.onResetTimeout,
-                          onReply: () => _handleReply(comment, replyToReply: reply),
+                          onReply: () => _handleReply(comment, commentsProvider, replyToReply: reply),
                           onLike: () => _handleLike(reply, commentsProvider, isReply: true),
                           onDelete: () => _handleDelete(reply, commentsProvider, parentComment: comment),
                         ),
                       )),
                     ],
                     
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12), // Reduced spacing
                   ],
                 ),
               );
@@ -189,25 +189,25 @@ class _CommentListState extends State<CommentList> {
 
   Widget _buildLoadingMoreIndicator() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Center(
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(
-              width: 16,
-              height: 16,
+              width: 14,
+              height: 14,
               child: CircularProgressIndicator(
                 color: AppColors.primary,
                 strokeWidth: 2,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Text(
-              'Loading more comments...',
+              'Loading more...',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 11,
               ),
             ),
           ],
@@ -218,8 +218,8 @@ class _CommentListState extends State<CommentList> {
 
   Widget _buildErrorMessage(String error, CommentsProvider commentsProvider) {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.red.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
@@ -233,29 +233,28 @@ class _CommentListState extends State<CommentList> {
           Icon(
             Icons.error_outline,
             color: Colors.red[300],
-            size: 16,
+            size: 14,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               error,
               style: TextStyle(
                 color: Colors.red[300],
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
           ),
           TextButton(
             onPressed: () {
               commentsProvider.clearError(widget.video.id);
-              // Retry loading comments
               commentsProvider.loadComments(widget.video.id);
             },
             child: Text(
               'Retry',
               style: TextStyle(
                 color: Colors.red[300],
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -265,19 +264,25 @@ class _CommentListState extends State<CommentList> {
     );
   }
 
-  void _handleReply(Comment comment, {Comment? replyToReply}) {
+  void _handleReply(Comment comment, CommentsProvider commentsProvider, {Comment? replyToReply}) {
     widget.onResetTimeout?.call();
-    
-    final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
     
     // If replying to a reply, use the original comment as parent
     final targetUser = replyToReply?.author ?? comment.author;
     
-    commentsProvider.setReplyingTo(
-      widget.video.id,
-      comment.id,
-      targetUser,
-    );
+    // ✅ ENHANCED: Clear any existing reply state first, then set new one
+    commentsProvider.clearReplyingTo(widget.video.id);
+    
+    // Small delay to ensure clean state transition
+    Future.delayed(const Duration(milliseconds: 50), () {
+      commentsProvider.setReplyingTo(
+        widget.video.id,
+        comment.id,
+        targetUser,
+      );
+      
+      debugPrint('🔄 Reply state set for: ${targetUser.name}');
+    });
     
     // Show haptic feedback
     HapticFeedback.lightImpact();
@@ -306,11 +311,11 @@ class _CommentListState extends State<CommentList> {
         backgroundColor: Colors.grey[900],
         title: const Text(
           'Delete Comment',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontSize: 16),
         ),
         content: const Text(
           'Are you sure you want to delete this comment?',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: Colors.white70, fontSize: 14),
         ),
         actions: [
           TextButton(

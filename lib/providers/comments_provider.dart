@@ -1,4 +1,4 @@
- import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import '../models/comment_models.dart';
 import '../models/user_model.dart';
 
@@ -114,53 +114,52 @@ class CommentsProvider extends ChangeNotifier {
   return [...pinnedComments, ...regularComments];
     }
 
-
   // Add a new comment
   Future<void> addComment(String videoId, String content) async {
-  if (content.trim().isEmpty) return;
+    if (content.trim().isEmpty) return;
 
-  final state = getCommentsState(videoId);
-  _updateState(videoId, state.copyWith(isSubmitting: true));
+    final state = getCommentsState(videoId);
+    _updateState(videoId, state.copyWith(isSubmitting: true));
 
-  try {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+        // Simulate network delay
+        await Future.delayed(const Duration(milliseconds: 500));
 
-    final newComment = Comment(
-      id: 'comment_${DateTime.now().millisecondsSinceEpoch}',
-      videoId: videoId,
-      author: _currentUser,
-      content: content.trim(),
-      createdAt: DateTime.now(),
-      likes: 0,
-      isLiked: false,
-      mentions: _extractMentions(content),
-    );
+        final newComment = Comment(
+        id: 'comment_${DateTime.now().millisecondsSinceEpoch}',
+        videoId: videoId,
+        author: _currentUser,
+        content: content.trim(),
+        createdAt: DateTime.now(),
+        likes: 0,
+        isLiked: false,
+        mentions: _extractMentions(content),
+        );
 
-    // Add new comment to the list
-    var updatedComments = [newComment, ...state.comments];
-    
-    // ✅ FIXED: Re-sort to ensure pinned comments stay at top
-    updatedComments = _sortCommentsWithPinnedFirst(updatedComments);
-    
-    final totalComments = _calculateTotalComments(updatedComments);
+        // Add new comment to the list
+        var updatedComments = [newComment, ...state.comments];
+        
+        // ✅ FIXED: Re-sort to ensure pinned comments stay at top
+        updatedComments = _sortCommentsWithPinnedFirst(updatedComments);
+        
+        final totalComments = _calculateTotalComments(updatedComments);
 
-    _updateState(videoId, state.copyWith(
-      comments: updatedComments,
-      isSubmitting: false,
-      totalComments: totalComments,
-      error: null,
-    ));
+        _updateState(videoId, state.copyWith(
+        comments: updatedComments,
+        isSubmitting: false,
+        totalComments: totalComments,
+        error: null,
+        ));
 
-    debugPrint('✅ Comment added successfully');
+        debugPrint('✅ Comment added successfully');
 
-  } catch (e) {
-    _updateState(videoId, state.copyWith(
-      isSubmitting: false,
-      error: 'Failed to add comment',
-    ));
+    } catch (e) {
+        _updateState(videoId, state.copyWith(
+        isSubmitting: false,
+        error: 'Failed to add comment',
+        ));
+    }
   }
-}
 
   // Reply to a comment
   Future<void> replyToComment(String videoId, String commentId, String content) async {
@@ -195,16 +194,20 @@ class CommentsProvider extends ChangeNotifier {
 
       final totalComments = _calculateTotalComments(updatedComments);
 
-      _updateState(videoId, state.copyWith(
+      // ✅ ENHANCED: Use explicit null clearing for reply state
+      _updateState(videoId, CommentsState(
         comments: updatedComments,
+        isLoading: false,
+        isLoadingMore: false,
         isSubmitting: false,
-        replyingToId: null,
-        replyingToUser: null,
+        hasMoreComments: state.hasMoreComments,
         totalComments: totalComments,
         error: null,
+        replyingToId: null,      // ✅ Explicitly set to null
+        replyingToUser: null,    // ✅ Explicitly set to null
       ));
 
-      debugPrint('✅ Reply added successfully');
+      debugPrint('✅ Reply added successfully and reply state cleared');
 
     } catch (e) {
       _updateState(videoId, state.copyWith(
@@ -264,22 +267,56 @@ class CommentsProvider extends ChangeNotifier {
     }
   }
 
-  // Set replying state
+  // ✅ ENHANCED: Set replying state with better logging
   void setReplyingTo(String videoId, String commentId, User user) {
+    debugPrint('🔄 CommentsProvider: Setting reply state');
+    debugPrint('🔄 VideoId: $videoId, CommentId: $commentId, User: ${user.name}');
+    
     final state = getCommentsState(videoId);
-    _updateState(videoId, state.copyWith(
-      replyingToId: commentId,
-      replyingToUser: user,
-    ));
+    
+    // ✅ Use explicit new state instead of copyWith for critical state changes
+    final newState = CommentsState(
+      comments: state.comments,
+      isLoading: state.isLoading,
+      isLoadingMore: state.isLoadingMore,
+      isSubmitting: state.isSubmitting,
+      hasMoreComments: state.hasMoreComments,
+      totalComments: state.totalComments,
+      error: state.error,
+      replyingToId: commentId,        // ✅ Explicitly set
+      replyingToUser: user,           // ✅ Explicitly set
+    );
+    
+    _updateState(videoId, newState);
+    
+    debugPrint('🔄 Reply state set successfully');
+    debugPrint('🔄 Current replyingToId: ${getCommentsState(videoId).replyingToId}');
   }
 
-  // Clear replying state
+  // ✅ ENHANCED: Clear replying state with explicit null setting
   void clearReplyingTo(String videoId) {
+    debugPrint('🔄 CommentsProvider: Clearing reply state for video: $videoId');
+    
     final state = getCommentsState(videoId);
-    _updateState(videoId, state.copyWith(
-      replyingToId: null,
-      replyingToUser: null,
-    ));
+    
+    // ✅ Use explicit new state instead of copyWith for critical state changes
+    final newState = CommentsState(
+      comments: state.comments,
+      isLoading: state.isLoading,
+      isLoadingMore: state.isLoadingMore,
+      isSubmitting: state.isSubmitting,
+      hasMoreComments: state.hasMoreComments,
+      totalComments: state.totalComments,
+      error: state.error,
+      replyingToId: null,             // ✅ Explicitly set to null
+      replyingToUser: null,           // ✅ Explicitly set to null
+    );
+    
+    _updateState(videoId, newState);
+    
+    debugPrint('🔄 Reply state cleared successfully');
+    debugPrint('🔄 Current replyingToId: ${getCommentsState(videoId).replyingToId}');
+    debugPrint('🔄 Current replyingToUser: ${getCommentsState(videoId).replyingToUser}');
   }
 
   // Load more comments (pagination)
@@ -360,10 +397,13 @@ class CommentsProvider extends ChangeNotifier {
     _updateState(videoId, state.copyWith(error: null));
   }
 
-  // Helper methods
+  // ✅ ENHANCED: Helper method with better logging
   void _updateState(String videoId, CommentsState newState) {
     _videoComments[videoId] = newState;
+    debugPrint('🔄 State updated for video: $videoId');
+    debugPrint('🔄 New replyingToId: ${newState.replyingToId}');
     notifyListeners();
+    debugPrint('🔄 Listeners notified');
   }
 
   List<Comment> _getMockCommentsForVideo(String videoId, {int offset = 0}) {
@@ -390,6 +430,7 @@ class CommentsProvider extends ChangeNotifier {
   }
 
   // Cleanup
+  @override
   void dispose() {
     _videoComments.clear();
     super.dispose();
