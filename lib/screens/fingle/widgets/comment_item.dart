@@ -106,89 +106,118 @@ class _CommentItemState extends State<CommentItem>
   }
 
   @override
-  Widget build(BuildContext context) {
-    final commentsProvider = Provider.of<CommentsProvider>(context);
-    final currentUser = commentsProvider.currentUser;
-    final isOwnComment = widget.comment.author.id == currentUser.id;
-    final isVideoCreator = widget.comment.author.id == widget.video.creator.id;
+  @override
+Widget build(BuildContext context) {
+  final commentsProvider = Provider.of<CommentsProvider>(context);
+  final currentUser = commentsProvider.currentUser;
+  final isOwnComment = widget.comment.author.id == currentUser.id;
+  final isVideoCreator = widget.comment.author.id == widget.video.creator.id;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: widget.comment.isPinned 
-            ? AppColors.primary.withOpacity(0.05) 
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: widget.comment.isPinned
-            ? Border.all(color: AppColors.primary.withOpacity(0.2))
-            : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Pinned indicator
-          if (widget.comment.isPinned && !widget.isReply)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+  return Container(
+    margin: EdgeInsets.only(
+      bottom: widget.comment.isPinned ? 16 : 12, // More space for pinned
+      top: widget.comment.isPinned ? 8 : 0,
+    ),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      // ✅ ENHANCED: Better visual treatment for pinned comments
+      color: widget.comment.isPinned 
+          ? AppColors.primary.withOpacity(0.08)  // Slightly more prominent
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      border: widget.comment.isPinned
+          ? Border.all(
+              color: AppColors.primary.withOpacity(0.3), 
+              width: 1.5,  // Slightly thicker border
+            )
+          : null,
+      // ✅ NEW: Add subtle glow for pinned comments
+      boxShadow: widget.comment.isPinned ? [
+        BoxShadow(
+          color: AppColors.primary.withOpacity(0.1),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ] : null,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ✅ ENHANCED: Better pinned indicator
+        if (widget.comment.isPinned && !widget.isReply)
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.push_pin,
+                  size: 12,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 4),
+                const Text(
+                  'Pinned',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        
+        // Rest of your existing comment content...
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar
+            _buildAvatar(),
+            
+            const SizedBox(width: 12),
+            
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.push_pin,
-                    size: 12,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Pinned',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  // User info and content
+                  _buildUserInfo(isVideoCreator),
+                  
+                  const SizedBox(height: 4),
+                  
+                  // Comment content
+                  _buildCommentContent(),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Actions
+                  _buildActions(isOwnComment),
                 ],
               ),
             ),
-          
-          // Main comment content
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Avatar
-              _buildAvatar(),
-              
-              const SizedBox(width: 12),
-              
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // User info and content
-                    _buildUserInfo(isVideoCreator),
-                    
-                    const SizedBox(height: 4),
-                    
-                    // Comment content
-                    _buildCommentContent(),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Actions
-                    _buildActions(isOwnComment),
-                  ],
-                ),
-              ),
-              
-              // Like button
-              _buildLikeButton(),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            
+            // Like button
+            _buildLikeButton(),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildAvatar() {
     return GestureDetector(

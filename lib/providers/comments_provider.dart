@@ -73,70 +73,94 @@ class CommentsProvider extends ChangeNotifier {
     _updateState(videoId, getCommentsState(videoId).copyWith(isLoading: true));
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 800));
+        // Simulate network delay
+        await Future.delayed(const Duration(milliseconds: 800));
 
-      // In real app, this would be an API call
-      final comments = _getMockCommentsForVideo(videoId);
-      final totalComments = _calculateTotalComments(comments);
+        // In real app, this would be an API call
+        var comments = _getMockCommentsForVideo(videoId);
+        
+        //  Sort comments with pinned ones first
+        comments = _sortCommentsWithPinnedFirst(comments);
+        
+        final totalComments = _calculateTotalComments(comments);
 
-      _updateState(videoId, CommentsState(
+        _updateState(videoId, CommentsState(
         comments: comments,
         isLoading: false,
-        hasMoreComments: comments.length >= 10, // Simulate pagination
+        hasMoreComments: comments.length >= 10,
         totalComments: totalComments,
-      ));
+        ));
 
     } catch (e) {
-      _updateState(videoId, getCommentsState(videoId).copyWith(
+        _updateState(videoId, getCommentsState(videoId).copyWith(
         isLoading: false,
         error: 'Failed to load comments',
-      ));
+        ));
     }
   }
+
+  List<Comment> _sortCommentsWithPinnedFirst(List<Comment> comments) {
+  // Separate pinned and regular comments
+  final pinnedComments = comments.where((comment) => comment.isPinned).toList();
+  final regularComments = comments.where((comment) => !comment.isPinned).toList();
+  
+  // Sort pinned comments by creation time (newest first)
+  pinnedComments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  
+  // Sort regular comments by creation time (newest first)
+  regularComments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  
+  // Return pinned comments first, then regular comments
+  return [...pinnedComments, ...regularComments];
+    }
+
 
   // Add a new comment
   Future<void> addComment(String videoId, String content) async {
-    if (content.trim().isEmpty) return;
+  if (content.trim().isEmpty) return;
 
-    final state = getCommentsState(videoId);
-    _updateState(videoId, state.copyWith(isSubmitting: true));
+  final state = getCommentsState(videoId);
+  _updateState(videoId, state.copyWith(isSubmitting: true));
 
-    try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 500));
+  try {
+    // Simulate network delay
+    await Future.delayed(const Duration(milliseconds: 500));
 
-      final newComment = Comment(
-        id: 'comment_${DateTime.now().millisecondsSinceEpoch}',
-        videoId: videoId,
-        author: _currentUser,
-        content: content.trim(),
-        createdAt: DateTime.now(),
-        likes: 0,
-        isLiked: false,
-        mentions: _extractMentions(content),
-      );
+    final newComment = Comment(
+      id: 'comment_${DateTime.now().millisecondsSinceEpoch}',
+      videoId: videoId,
+      author: _currentUser,
+      content: content.trim(),
+      createdAt: DateTime.now(),
+      likes: 0,
+      isLiked: false,
+      mentions: _extractMentions(content),
+    );
 
-      // Add to the beginning of the list (newest first)
-      final updatedComments = [newComment, ...state.comments];
-      final totalComments = _calculateTotalComments(updatedComments);
+    // Add new comment to the list
+    var updatedComments = [newComment, ...state.comments];
+    
+    // ✅ FIXED: Re-sort to ensure pinned comments stay at top
+    updatedComments = _sortCommentsWithPinnedFirst(updatedComments);
+    
+    final totalComments = _calculateTotalComments(updatedComments);
 
-      _updateState(videoId, state.copyWith(
-        comments: updatedComments,
-        isSubmitting: false,
-        totalComments: totalComments,
-        error: null,
-      ));
+    _updateState(videoId, state.copyWith(
+      comments: updatedComments,
+      isSubmitting: false,
+      totalComments: totalComments,
+      error: null,
+    ));
 
-      debugPrint('✅ Comment added successfully');
+    debugPrint('✅ Comment added successfully');
 
-    } catch (e) {
-      _updateState(videoId, state.copyWith(
-        isSubmitting: false,
-        error: 'Failed to add comment',
-      ));
-    }
+  } catch (e) {
+    _updateState(videoId, state.copyWith(
+      isSubmitting: false,
+      error: 'Failed to add comment',
+    ));
   }
+}
 
   // Reply to a comment
   Future<void> replyToComment(String videoId, String commentId, String content) async {
