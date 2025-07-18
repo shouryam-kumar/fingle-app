@@ -7,10 +7,16 @@ import '../../providers/app_provider.dart';
 import '../../services/screen_timeout_service.dart';
 import 'widgets/video_player_widget.dart';
 import 'widgets/video_progress_indicator.dart';
+import 'widgets/reaction_button.dart';
+import 'widgets/recommend_button.dart';
+import 'widgets/comment_reaction_button.dart';
 import 'package:fingle_app/models/video_models.dart';
+import 'package:fingle_app/models/reaction_models.dart';
 import '../../providers/comments_provider.dart';
 import 'widgets/comments_bottom_sheet.dart';
-
+import 'widgets/reaction_details_sheet.dart';
+import 'widgets/recommendation_details_sheet.dart';
+import 'widgets/share_bottom_sheet.dart';
 
 class FingleScreen extends StatefulWidget {
   const FingleScreen({super.key});
@@ -49,7 +55,6 @@ class _FingleScreenState extends State<FingleScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
-    // Disable screen timeout when leaving the screen
     ScreenTimeoutService.disableExtendedTimeout();
     super.dispose();
   }
@@ -64,8 +69,6 @@ class _FingleScreenState extends State<FingleScreen>
       case AppLifecycleState.resumed:
         debugPrint('📱 App resumed - checking tab visibility');
         _checkAndUpdateTabVisibility();
-        
-        // ✅ NEW: Re-enable wakelock if needed
         ScreenTimeoutService.onAppResumed();
         break;
         
@@ -74,8 +77,6 @@ class _FingleScreenState extends State<FingleScreen>
       case AppLifecycleState.hidden:
         debugPrint('📱 App paused/inactive - pausing video');
         _videoProvider.pauseCurrentVideo();
-        
-        // ✅ NEW: Handle app going to background
         ScreenTimeoutService.onAppPaused();
         break;
         
@@ -86,9 +87,7 @@ class _FingleScreenState extends State<FingleScreen>
     }
   }
 
-
   Future<void> _showCommentsSheet(VideoPost video) async {
-    // Reset timeout when opening comments
     _onUserInteraction();
     
     await showModalBottomSheet(
@@ -99,7 +98,60 @@ class _FingleScreenState extends State<FingleScreen>
       builder: (context) => CommentsBottomSheet(
         video: video,
         onClose: () {
-          // Reset timeout when closing comments
+          _onUserInteraction();
+        },
+      ),
+    );
+  }
+
+  Future<void> _showReactionDetailsSheet(VideoPost video) async {
+    _onUserInteraction();
+    
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => ReactionDetailsSheet(
+        reactionSummary: video.reactionSummary,
+        onClose: () {
+          Navigator.of(context).pop();
+          _onUserInteraction();
+        },
+      ),
+    );
+  }
+
+  Future<void> _showRecommendationDetailsSheet(VideoPost video) async {
+    _onUserInteraction();
+    
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => RecommendationDetailsSheet(
+        recommendations: video.recommendations,
+        onClose: () {
+          Navigator.of(context).pop();
+          _onUserInteraction();
+        },
+      ),
+    );
+  }
+
+  Future<void> _showShareSheet(VideoPost video) async {
+    _onUserInteraction();
+    
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => ShareBottomSheet(
+        video: video,
+        onClose: () {
+          Navigator.of(context).pop();
           _onUserInteraction();
         },
       ),
@@ -125,7 +177,6 @@ class _FingleScreenState extends State<FingleScreen>
     debugPrint('🟢 Fingle tab became VISIBLE - enabling screen timeout');
     _videoProvider.setTabVisibility(true);
     
-    // ✅ IMPROVED: Enable extended screen timeout when tab becomes visible
     ScreenTimeoutService.enableExtendedTimeout();
     
     if (_isInitialized && _videoProvider.videos.isNotEmpty) {
@@ -146,7 +197,6 @@ class _FingleScreenState extends State<FingleScreen>
     debugPrint('🔴 Fingle tab became INVISIBLE - disabling screen timeout');
     _videoProvider.setTabVisibility(false);
     
-    // ✅ IMPROVED: Disable extended screen timeout when tab becomes invisible
     ScreenTimeoutService.disableExtendedTimeout();
   }
 
@@ -180,7 +230,6 @@ class _FingleScreenState extends State<FingleScreen>
     debugPrint('=== ✅ VIDEO FEED INITIALIZATION COMPLETE ===');
   }
 
-  // ✅ IMPROVED: Reset screen timeout on user interactions
   void _onUserInteraction() {
     ScreenTimeoutService.resetTimer();
     debugPrint('👆 User interaction detected - resetting 3min timer');
@@ -201,7 +250,6 @@ class _FingleScreenState extends State<FingleScreen>
         return Scaffold(
           backgroundColor: Colors.black,
           body: GestureDetector(
-            // Reset timeout on any tap
             onTap: _onUserInteraction,
             child: Consumer<VideoFeedProvider>(
               builder: (context, provider, child) {
@@ -226,59 +274,67 @@ class _FingleScreenState extends State<FingleScreen>
                       scrollDirection: Axis.vertical,
                       onPageChanged: _onPageChanged,
                       itemCount: provider.videos.length,
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
                       itemBuilder: (context, index) {
                         final video = provider.videos[index];
                         final controller = provider.getController(video.id);
                         final isActive = index == provider.currentIndex;
 
-                        return Container(
-                          width: double.infinity,
-                          height: double.infinity,
-                          color: Colors.black,
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Container(
-                                width: double.infinity,
-                                height: double.infinity,
-                                color: Colors.black,
-                              ),
-                              
-                              if (isActive) ...[
-                                VideoPlayerWidget(
-                                  video: video,
-                                  controller: controller,
-                                  isActive: isActive,
-                                  isTabVisible: provider.isTabVisible,
-                                  onTap: _onVideoTap,
-                                  onDoubleTap: _onVideoDoubleTap,
-                                ),
-                                
-                                _buildVideoOverlays(video, provider),
-                              ] else ...[
+                        return RepaintBoundary(
+                          key: ValueKey(video.id),
+                          child: Container(
+                            width: double.infinity,
+                            height: double.infinity,
+                            color: Colors.black,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
                                 Container(
                                   width: double.infinity,
                                   height: double.infinity,
                                   color: Colors.black,
-                                  child: Image.network(
-                                    video.thumbnailUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: Colors.black,
-                                        child: const Center(
-                                          child: Icon(
-                                            Icons.video_library,
-                                            color: Colors.white54,
-                                            size: 48,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
                                 ),
+                                
+                                if (isActive) ...[
+                                  VideoPlayerWidget(
+                                    video: video,
+                                    controller: controller,
+                                    isActive: isActive,
+                                    isTabVisible: provider.isTabVisible,
+                                    onTap: _onVideoTap,
+                                    onDoubleTap: () => _onVideoDoubleTap(video),
+                                  ),
+                                  
+                                  RepaintBoundary(
+                                    child: _buildVideoOverlays(video, provider),
+                                  ),
+                                ] else ...[
+                                  Container(
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    color: Colors.black,
+                                    child: Image.network(
+                                      video.thumbnailUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.black,
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.video_library,
+                                              color: Colors.white54,
+                                              size: 48,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         );
                       },
@@ -320,7 +376,6 @@ class _FingleScreenState extends State<FingleScreen>
   void _onPageChanged(int index) async {
     debugPrint('📄 Page changed to index: $index');
     
-    // Reset timeout on page change
     _onUserInteraction();
     
     await _videoProvider.setCurrentIndex(index);
@@ -333,31 +388,28 @@ class _FingleScreenState extends State<FingleScreen>
 
   void _onVideoTap() {
     debugPrint('👆 Video tapped - toggling play/pause');
-    // Reset timeout on video tap
     _onUserInteraction();
     _videoProvider.togglePlayPause();
   }
 
   void _onProgressBarTap() {
     debugPrint('👆 Progress bar tapped - seeking only');
-    // Reset timeout on progress bar tap
     _onUserInteraction();
   }
 
-  void _onVideoDoubleTap() {
-    debugPrint('👆👆 Video double-tapped - toggling like');
-    // Reset timeout on double tap
+  void _onVideoDoubleTap(VideoPost video) {
+    debugPrint('👆👆 Video double-tapped - adding fire reaction');
     _onUserInteraction();
     
-    final currentVideo = _videoProvider.currentVideo;
-    if (currentVideo != null) {
-      _videoProvider.toggleLike(currentVideo.id);
-      _showLikeAnimation();
-    }
+    // Double tap adds fire reaction
+    _videoProvider.toggleReaction(video.id, ReactionType.fire);
+    _showReactionAnimation(ReactionType.fire);
   }
 
-  void _showLikeAnimation() {
+  void _showReactionAnimation(ReactionType reactionType) {
     HapticFeedback.mediumImpact();
+    
+    final reactionData = ReactionData.getReactionData(reactionType);
     
     OverlayEntry? overlayEntry;
     overlayEntry = OverlayEntry(
@@ -372,10 +424,9 @@ class _FingleScreenState extends State<FingleScreen>
               scale: 1.0 + (value * 0.5),
               child: Opacity(
                 opacity: 1.0 - value,
-                child: const Icon(
-                  Icons.favorite,
-                  color: Colors.red,
-                  size: 60,
+                child: Text(
+                  reactionData.emoji,
+                  style: const TextStyle(fontSize: 60),
                 ),
               ),
             );
@@ -472,7 +523,7 @@ class _FingleScreenState extends State<FingleScreen>
                 ),
                 IconButton(
                   onPressed: () {
-                    _onUserInteraction(); // Reset timeout on button press
+                    _onUserInteraction();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Camera feature coming soon!'),
@@ -501,7 +552,7 @@ class _FingleScreenState extends State<FingleScreen>
         // Creator Avatar with Follow Button
         GestureDetector(
           onTap: () {
-            _onUserInteraction(); // Reset timeout on tap
+            _onUserInteraction();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('View ${video.creator.name}\'s profile'),
@@ -537,107 +588,76 @@ class _FingleScreenState extends State<FingleScreen>
         
         const SizedBox(height: 24),
         
-        // Like Button
-        GestureDetector(
-          onTap: () {
-            _onUserInteraction(); // Reset timeout on like
-            provider.toggleLike(video.id);
+        // NEW: Reaction Button (replaces like button)
+        ReactionButton(
+          reactionSummary: video.reactionSummary,
+          onReactionSelected: (reactionType) {
+            _onUserInteraction();
+            provider.toggleReaction(video.id, reactionType);
           },
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  video.isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: video.isLiked ? Colors.red : Colors.white,
-                  size: 32,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatCount(video.likes),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          onViewReactions: () {
+            _onUserInteraction();
+            _showReactionDetailsSheet(video);
+          },
+          onResetTimeout: _onUserInteraction,
         ),
         
         const SizedBox(height: 24),
         
-        // Comment Button - UPDATED WITH COMMENTS FUNCTIONALITY
-        GestureDetector(
+        // NEW: Recommend Button
+        RecommendButton(
+          recommendCount: video.recommendations.length,
+          isRecommended: video.isRecommended,
+          onRecommend: () {
+            _onUserInteraction();
+            provider.toggleRecommendation(video.id);
+          },
+          onViewRecommendations: () {
+            _onUserInteraction();
+            _showRecommendationDetailsSheet(video);
+          },
+          onResetTimeout: _onUserInteraction,
+        ),
+        
+        const SizedBox(height: 24),
+        
+        // Comment Button
+        _buildActionButton(
+          icon: Icons.chat_bubble_outline,
           onTap: () {
-            _onUserInteraction(); // Reset timeout on comment
+            _onUserInteraction();
             _showCommentsSheet(video);
           },
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.chat_bubble_outline,
+          child: Consumer<CommentsProvider>(
+            builder: (context, commentsProvider, child) {
+              final totalComments = commentsProvider.getTotalComments(video.id);
+              return Text(
+                _formatCount(totalComments > 0 ? totalComments : video.comments),
+                style: const TextStyle(
                   color: Colors.white,
-                  size: 32,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 4),
-                // Show actual comment count from provider
-                Consumer<CommentsProvider>(
-                  builder: (context, commentsProvider, child) {
-                    final totalComments = commentsProvider.getTotalComments(video.id);
-                    return Text(
-                      _formatCount(totalComments > 0 ? totalComments : video.comments),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ),
         
         const SizedBox(height: 24),
         
         // Share Button
-        GestureDetector(
+        _buildActionButton(
+          icon: Icons.share,
           onTap: () {
-            _onUserInteraction(); // Reset timeout on share
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Share feature coming soon!'),
-                duration: Duration(seconds: 1),
-              ),
-            );
+            _onUserInteraction();
+            _showShareSheet(video);
           },
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.share,
-                  color: Colors.white,
-                  size: 32,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatCount(video.shares),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          child: Text(
+            _formatCount(video.shares),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -689,7 +709,7 @@ class _FingleScreenState extends State<FingleScreen>
                 if (!video.isFollowing)
                   GestureDetector(
                     onTap: () {
-                      _onUserInteraction(); // Reset timeout on follow
+                      _onUserInteraction();
                       provider.toggleFollow(video.creator.id);
                     },
                     child: Container(
@@ -801,7 +821,7 @@ class _FingleScreenState extends State<FingleScreen>
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () {
-              _onUserInteraction(); // Reset timeout on refresh
+              _onUserInteraction();
               Provider.of<VideoFeedProvider>(context, listen: false).refreshFeed();
             },
             style: ElevatedButton.styleFrom(
@@ -822,5 +842,98 @@ class _FingleScreenState extends State<FingleScreen>
       return '${(count / 1000).toStringAsFixed(1)}K';
     }
     return count.toString();
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
+    return _AnimatedActionButton(
+      icon: icon,
+      onTap: onTap,
+      child: child,
+    );
+  }
+}
+
+class _AnimatedActionButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _AnimatedActionButton({
+    required this.icon,
+    required this.onTap,
+    required this.child,
+  });
+
+  @override
+  State<_AnimatedActionButton> createState() => _AnimatedActionButtonState();
+}
+
+class _AnimatedActionButtonState extends State<_AnimatedActionButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.9,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        _controller.forward();
+        HapticFeedback.lightImpact();
+      },
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    widget.icon,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 4),
+                  widget.child,
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

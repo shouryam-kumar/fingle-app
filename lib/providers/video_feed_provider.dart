@@ -1,356 +1,383 @@
-// lib/providers/video_feed_provider.dart
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../models/video_models.dart';
+import '../models/user_model.dart';
+import '../models/reaction_models.dart';
+import '../services/mock_video_data.dart';
 
-class VideoFeedProvider extends ChangeNotifier {
-  // Core state
+class VideoFeedProvider with ChangeNotifier {
   List<VideoPost> _videos = [];
   int _currentIndex = 0;
   bool _isLoading = false;
   bool _hasReachedEnd = false;
-  bool _isTabVisible = false; // Track tab visibility
+  bool _isTabVisible = true;
   
-  // Video controllers management
   final Map<String, VideoPlayerController> _controllers = {};
-  final Map<String, bool> _controllersInitialized = {};
   
   // Getters
   List<VideoPost> get videos => _videos;
   int get currentIndex => _currentIndex;
   bool get isLoading => _isLoading;
   bool get hasReachedEnd => _hasReachedEnd;
-  bool get isTabVisible => _isTabVisible; // Expose tab visibility
-  VideoPost? get currentVideo => _videos.isNotEmpty ? _videos[_currentIndex] : null;
+  bool get isTabVisible => _isTabVisible;
+  bool get shouldLoadMore => _currentIndex >= _videos.length - 3 && !_hasReachedEnd;
   
-  // Get video controller for specific video
+  VideoPost? get currentVideo => _videos.isNotEmpty && _currentIndex < _videos.length
+      ? _videos[_currentIndex]
+      : null;
+
   VideoPlayerController? getController(String videoId) {
     return _controllers[videoId];
   }
-  
-  bool isControllerInitialized(String videoId) {
-    return _controllersInitialized[videoId] ?? false;
-  }
 
-  // Set tab visibility from UI
-  void setTabVisibility(bool isVisible) {
-
-    debugPrint('📱 VideoFeedProvider.setTabVisibility($isVisible) called');
-    debugPrint('  📊 Current visibility: $_isTabVisible');
-    debugPrint('  📊 Videos count: ${_videos.length}');
-    debugPrint('  📊 Current index: $_currentIndex');
-
-    if (_isTabVisible != isVisible) {
-      debugPrint('📱 Provider: Tab visibility changed to $isVisible');
-      _isTabVisible = isVisible;
-      
-      if (isVisible && _videos.isNotEmpty) {
-        // Play current video when tab becomes visible
-        playCurrentVideo();
-      } else if (!isVisible) {
-        // Pause current video when tab becomes invisible
-        pauseCurrentVideo();
-      }
-      
-      notifyListeners();
-    }
-  }
-
-  // Initialize with mock data
   Future<void> initialize() async {
-    if (_videos.isNotEmpty) return;
+    debugPrint('🎬 VideoFeedProvider: Initializing...');
     
     _isLoading = true;
     notifyListeners();
     
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    _videos = List.from(mockLifestyleVideos);
-    _isLoading = false;
-    notifyListeners();
-    
-    // Preload first few videos
-    if (_videos.isNotEmpty) {
-      await _preloadVideos(0);
+    try {
+      await _loadInitialVideos();
+      debugPrint('✅ VideoFeedProvider: Initialization complete');
+    } catch (e) {
+      debugPrint('❌ VideoFeedProvider: Initialization failed: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  // Load more videos (for infinite scroll)
+  Future<void> _loadInitialVideos() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    final mockVideos = MockVideoData.getMockVideos();
+    _videos = mockVideos.take(10).toList();
+    
+    if (_videos.isNotEmpty) {
+      await _preloadVideos();
+    }
+  }
+
   Future<void> loadMoreVideos() async {
     if (_isLoading || _hasReachedEnd) return;
     
+    debugPrint('📥 Loading more videos...');
+    
     _isLoading = true;
     notifyListeners();
     
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 800));
-    
-    // For demo, we'll cycle through the same videos
-    final moreVideos = mockLifestyleVideos.map((video) {
-      return video.copyWith(
-        id: '${video.id}_${DateTime.now().millisecondsSinceEpoch}',
-        createdAt: DateTime.now().subtract(Duration(hours: _videos.length)),
-      );
-    }).toList();
-    
-    _videos.addAll(moreVideos);
-    _isLoading = false;
-    
-    // Mark as reached end after loading 30 videos (for demo)
-    if (_videos.length >= 30) {
-      _hasReachedEnd = true;
+    try {
+      await Future.delayed(const Duration(milliseconds: 800));
+      
+      final additionalVideos = MockVideoData.getMockVideos()
+          .skip(_videos.length)
+          .take(5)
+          .toList();
+      
+      if (additionalVideos.isEmpty) {
+        _hasReachedEnd = true;
+        debugPrint('🏁 Reached end of videos');
+      } else {
+        _videos.addAll(additionalVideos);
+        await _preloadVideos();
+        debugPrint('✅ Loaded ${additionalVideos.length} more videos');
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading more videos: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-    
-    notifyListeners();
   }
 
-  // Navigate to specific video index without auto-playing
+  Future<void> _preloadVideos() async {
+    final indicesToPreload = [
+      _currentIndex,
+      if (_currentIndex + 1 < _videos.length) _currentIndex + 1,
+      if (_currentIndex + 2 < _videos.length) _currentIndex + 2,
+    ];
+
+    for (final index in indicesToPreload) {
+      if (index >= 0 && index < _videos.length) {
+        final video = _videos[index];
+        if (!_controllers.containsKey(video.id)) {
+          await _createController(video);
+        }
+      }
+    }
+  }
+
+  Future<void> _createController(VideoPost video) async {
+    try {
+      final controller = VideoPlayerController.networkUrl(Uri.parse(video.videoUrl));
+      await controller.initialize();
+      
+      controller.setLooping(true);
+      controller.setVolume(1.0);
+      
+      _controllers[video.id] = controller;
+      
+      debugPrint('🎬 Controller created for video: ${video.id}');
+    } catch (e) {
+      debugPrint('❌ Failed to create controller for video ${video.id}: $e');
+    }
+  }
+
   Future<void> setCurrentIndex(int index) async {
-    if (index < 0 || index >= _videos.length) return;
+    if (index == _currentIndex || index < 0 || index >= _videos.length) return;
     
-    final oldIndex = _currentIndex;
+    debugPrint('📹 Setting current index to: $index');
+    
+    await pauseCurrentVideo();
+    
     _currentIndex = index;
     notifyListeners();
     
-    // Pause previous video
-    if (oldIndex != index && oldIndex < _videos.length) {
-      final oldVideo = _videos[oldIndex];
-      final oldController = _controllers[oldVideo.id];
-      if (oldController != null && oldController.value.isPlaying) {
-        await oldController.pause();
-        debugPrint('⏸️ Paused previous video: ${oldVideo.id}');
-      }
-    }
+    await _preloadVideos();
     
-    // Only play if tab is visible
     if (_isTabVisible) {
       await playCurrentVideo();
-    } else {
-      debugPrint('📱 Not playing video - tab not visible (index: $index)');
     }
-    
-    // Preload surrounding videos
-    await _preloadVideos(index);
-    
-    // Clean up distant controllers to save memory
-    _cleanupDistantControllers(index);
   }
 
-  // Play current video only if tab is visible
   Future<void> playCurrentVideo() async {
-    if (_videos.isEmpty) {
-      debugPrint('⚠️ playCurrentVideo: No videos available');
-      return;
-    }
+    if (!_isTabVisible || _currentIndex < 0 || _currentIndex >= _videos.length) return;
     
     final video = _videos[_currentIndex];
-    debugPrint('🎬 playCurrentVideo called:');
-    debugPrint('  📹 Video ID: ${video.id}');
-    debugPrint('  📊 Index: $_currentIndex');
-    debugPrint('  📱 Tab visible: $_isTabVisible');
-    debugPrint('  🎮 Controller exists: ${_controllers.containsKey(video.id)}');
+    final controller = _controllers[video.id];
     
-    // Check tab visibility before playing
-    if (!_isTabVisible) {
-      debugPrint('⏸️ Not playing - tab not visible');
-      return;
-    }
-    
-    VideoPlayerController? controller = _controllers[video.id];
-    
-    if (controller == null) {
-      debugPrint('🔄 Controller is null, creating new one for ${video.id}');
-      await _createController(video);
-      controller = _controllers[video.id];
-    }
-    
-    if (controller != null && _controllersInitialized[video.id] == true) {
+    if (controller != null && controller.value.isInitialized) {
+      await controller.play();
       debugPrint('▶️ Playing video: ${video.id}');
-      if (!controller.value.isPlaying) {
-        await controller.play();
-      }
-    } else {
-      debugPrint('⚠️ Controller not ready for video: ${video.id}');
     }
   }
 
-  // Pause current video
   Future<void> pauseCurrentVideo() async {
-    if (_videos.isEmpty) return;
+    if (_currentIndex < 0 || _currentIndex >= _videos.length) return;
     
     final video = _videos[_currentIndex];
     final controller = _controllers[video.id];
     
-    if (controller != null && controller.value.isPlaying) {
-      debugPrint('⏸️ Pausing video: ${video.id}');
+    if (controller != null && controller.value.isInitialized) {
       await controller.pause();
+      debugPrint('⏸️ Paused video: ${video.id}');
     }
   }
 
-  // Toggle play/pause respects tab visibility
-  Future<void> togglePlayPause() async {
-    if (_videos.isEmpty || !_isTabVisible) return;
+  void togglePlayPause() {
+    if (_currentIndex < 0 || _currentIndex >= _videos.length) return;
     
     final video = _videos[_currentIndex];
     final controller = _controllers[video.id];
     
-    if (controller != null && _controllersInitialized[video.id] == true) {
+    if (controller != null && controller.value.isInitialized) {
       if (controller.value.isPlaying) {
-        await controller.pause();
-        debugPrint('⏸️ Toggled to pause: ${video.id}');
+        controller.pause();
+        debugPrint('⏸️ Paused video: ${video.id}');
       } else {
-        await controller.play();
-        debugPrint('▶️ Toggled to play: ${video.id}');
-      }
-      notifyListeners();
-    }
-  }
-
-  // Create video controller
-  Future<void> _createController(VideoPost video) async {
-    if (_controllers.containsKey(video.id)) return;
-    
-    try {
-      debugPrint('🔄 Creating controller for ${video.id}');
-      final controller = VideoPlayerController.networkUrl(Uri.parse(video.videoUrl));
-      _controllers[video.id] = controller;
-      _controllersInitialized[video.id] = false;
-      
-      await controller.initialize();
-      
-      // Set to loop
-      await controller.setLooping(true);
-      
-      _controllersInitialized[video.id] = true;
-      debugPrint('✅ Controller ready for ${video.id}');
-      notifyListeners();
-      
-    } catch (e) {
-      debugPrint('❌ Error creating video controller for ${video.id}: $e');
-      _controllersInitialized[video.id] = false;
-    }
-  }
-
-  // Preload videos around current index
-  Future<void> _preloadVideos(int centerIndex) async {
-    final indicesToPreload = <int>[];
-    
-    // Preload current + next 2 + previous 1
-    for (int i = centerIndex - 1; i <= centerIndex + 2; i++) {
-      if (i >= 0 && i < _videos.length) {
-        indicesToPreload.add(i);
-      }
-    }
-    
-    for (final index in indicesToPreload) {
-      final video = _videos[index];
-      if (!_controllers.containsKey(video.id)) {
-        await _createController(video);
+        controller.play();
+        debugPrint('▶️ Playing video: ${video.id}');
       }
     }
   }
 
-  // Clean up controllers that are far from current index
-  void _cleanupDistantControllers(int currentIndex) {
-    final controllersToRemove = <String>[];
+  void setTabVisibility(bool isVisible) {
+    if (_isTabVisible == isVisible) return;
     
-    _controllers.forEach((videoId, controller) {
-      final videoIndex = _videos.indexWhere((v) => v.id == videoId);
-      if (videoIndex != -1) {
-        final distance = (videoIndex - currentIndex).abs();
-        if (distance > 3) { // Keep controllers within 3 positions
-          controllersToRemove.add(videoId);
-        }
-      }
-    });
+    _isTabVisible = isVisible;
+    debugPrint('👁️ Tab visibility changed: $isVisible');
     
-    for (final videoId in controllersToRemove) {
-      final controller = _controllers[videoId];
-      controller?.dispose();
-      _controllers.remove(videoId);
-      _controllersInitialized.remove(videoId);
-      debugPrint('🗑️ Cleaned up controller for $videoId');
+    if (isVisible) {
+      playCurrentVideo();
+    } else {
+      pauseCurrentVideo();
     }
   }
 
-  // Like/unlike video
-  Future<void> toggleLike(String videoId) async {
+  // NEW: Reaction handling methods
+  Future<void> toggleReaction(String videoId, ReactionType reactionType) async {
     final videoIndex = _videos.indexWhere((v) => v.id == videoId);
     if (videoIndex == -1) return;
-    
+
     final video = _videos[videoIndex];
-    final newLikeCount = video.isLiked ? video.likes - 1 : video.likes + 1;
+    final currentUserReaction = video.reactionSummary.userReaction;
     
+    if (currentUserReaction == reactionType) {
+      // Remove reaction
+      await _removeReaction(videoId, reactionType);
+    } else {
+      // Add/change reaction
+      await _addReaction(videoId, reactionType);
+    }
+  }
+
+  Future<void> _addReaction(String videoId, ReactionType reactionType) async {
+    final videoIndex = _videos.indexWhere((v) => v.id == videoId);
+    if (videoIndex == -1) return;
+
+    final video = _videos[videoIndex];
+    final currentUserId = 'current_user_id'; // Replace with actual user ID
+    
+    // Create new reaction
+    final newReaction = Reaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: currentUserId,
+      userName: 'You',
+      userAvatar: 'https://example.com/avatar.jpg',
+      type: reactionType,
+      createdAt: DateTime.now(),
+    );
+
+    // Update reaction summary
+    final existingReactions = video.reactionSummary.reactions.values
+        .expand((list) => list)
+        .where((r) => r.userId != currentUserId)
+        .toList();
+    
+    existingReactions.add(newReaction);
+    
+    final updatedSummary = ReactionSummary.fromReactions(existingReactions, currentUserId);
+    
+    _videos[videoIndex] = video.copyWith(reactionSummary: updatedSummary);
+    notifyListeners();
+    
+    debugPrint('✅ Added reaction: ${reactionType.name} to video: $videoId');
+  }
+
+  Future<void> _removeReaction(String videoId, ReactionType reactionType) async {
+    final videoIndex = _videos.indexWhere((v) => v.id == videoId);
+    if (videoIndex == -1) return;
+
+    final video = _videos[videoIndex];
+    final currentUserId = 'current_user_id'; // Replace with actual user ID
+    
+    // Remove user's reaction
+    final existingReactions = video.reactionSummary.reactions.values
+        .expand((list) => list)
+        .where((r) => r.userId != currentUserId)
+        .toList();
+    
+    final updatedSummary = ReactionSummary.fromReactions(existingReactions, currentUserId);
+    
+    _videos[videoIndex] = video.copyWith(reactionSummary: updatedSummary);
+    notifyListeners();
+    
+    debugPrint('❌ Removed reaction: ${reactionType.name} from video: $videoId');
+  }
+
+  // NEW: Recommendation handling methods
+  Future<void> toggleRecommendation(String videoId) async {
+    final videoIndex = _videos.indexWhere((v) => v.id == videoId);
+    if (videoIndex == -1) return;
+
+    final video = _videos[videoIndex];
+    
+    if (video.isRecommended) {
+      await _removeRecommendation(videoId);
+    } else {
+      await _addRecommendation(videoId);
+    }
+  }
+
+  Future<void> _addRecommendation(String videoId) async {
+    final videoIndex = _videos.indexWhere((v) => v.id == videoId);
+    if (videoIndex == -1) return;
+
+    final video = _videos[videoIndex];
+    
+    // Create new recommendation
+    final newRecommendation = Recommendation(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: 'current_user_id',
+      userName: 'You',
+      userAvatar: 'https://example.com/avatar.jpg',
+      createdAt: DateTime.now(),
+    );
+
+    final updatedRecommendations = List<Recommendation>.from(video.recommendations)
+      ..add(newRecommendation);
+
     _videos[videoIndex] = video.copyWith(
-      isLiked: !video.isLiked,
-      likes: newLikeCount,
+      recommendations: updatedRecommendations,
+      isRecommended: true,
     );
     
     notifyListeners();
+    
+    debugPrint('✅ Added recommendation to video: $videoId');
   }
 
-  // Follow/unfollow user
+  Future<void> _removeRecommendation(String videoId) async {
+    final videoIndex = _videos.indexWhere((v) => v.id == videoId);
+    if (videoIndex == -1) return;
+
+    final video = _videos[videoIndex];
+    
+    // Remove user's recommendation
+    final updatedRecommendations = video.recommendations
+        .where((r) => r.userId != 'current_user_id')
+        .toList();
+
+    _videos[videoIndex] = video.copyWith(
+      recommendations: updatedRecommendations,
+      isRecommended: false,
+    );
+    
+    notifyListeners();
+    
+    debugPrint('❌ Removed recommendation from video: $videoId');
+  }
+
+  // Legacy method for backward compatibility
+  Future<void> toggleLike(String videoId) async {
+    await toggleReaction(videoId, ReactionType.like);
+  }
+
   Future<void> toggleFollow(String userId) async {
-    for (int i = 0; i < _videos.length; i++) {
-      if (_videos[i].creator.id == userId) {
-        _videos[i] = _videos[i].copyWith(
-          isFollowing: !_videos[i].isFollowing,
-        );
-      }
-    }
-    
+    final videoIndex = _videos.indexWhere((v) => v.creator.id == userId);
+    if (videoIndex == -1) return;
+
+    final video = _videos[videoIndex];
+    final updatedCreator = video.creator.copyWith(
+      isFollowing: !video.creator.isFollowing,
+    );
+
+    _videos[videoIndex] = video.copyWith(
+      creator: updatedCreator,
+      isFollowing: !video.isFollowing,
+    );
+
     notifyListeners();
+    
+    debugPrint('✅ Toggled follow for user: $userId');
   }
 
-  // Refresh feed
   Future<void> refreshFeed() async {
-    _isLoading = true;
-    _hasReachedEnd = false;
-    notifyListeners();
+    debugPrint('🔄 Refreshing feed...');
     
-    // Clear existing data
-    await _disposeAllControllers();
     _videos.clear();
     _currentIndex = 0;
+    _hasReachedEnd = false;
     
-    // Reload
-    await initialize();
-  }
-
-  // Dispose all controllers
-  Future<void> _disposeAllControllers() async {
+    // Dispose all controllers
     for (final controller in _controllers.values) {
       await controller.dispose();
     }
     _controllers.clear();
-    _controllersInitialized.clear();
+    
+    await initialize();
   }
 
   @override
   void dispose() {
-    _disposeAllControllers();
+    debugPrint('🗑️ VideoFeedProvider: Disposing...');
+    
+    // Dispose all video controllers
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    _controllers.clear();
+    
     super.dispose();
-  }
-
-  // Get next video for swipe prediction
-  VideoPost? getNextVideo() {
-    if (_currentIndex + 1 < _videos.length) {
-      return _videos[_currentIndex + 1];
-    }
-    return null;
-  }
-
-  // Get previous video
-  VideoPost? getPreviousVideo() {
-    if (_currentIndex - 1 >= 0) {
-      return _videos[_currentIndex - 1];
-    }
-    return null;
-  }
-
-  // Check if we're near the end (for infinite scroll)
-  bool get shouldLoadMore {
-    return !_isLoading && !_hasReachedEnd && (_currentIndex >= _videos.length - 3);
   }
 }

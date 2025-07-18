@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/comment_models.dart';
 import '../models/user_model.dart';
+import '../models/reaction_models.dart';
 
 class CommentsProvider extends ChangeNotifier {
   // Map of video ID to comments state
@@ -18,16 +19,89 @@ class CommentsProvider extends ChangeNotifier {
     profilePic: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
     coverImage: '',
     isVerified: false,
+    isFollowing: false,
     joinedAt: DateTime.now().subtract(const Duration(days: 30)),
     interests: ['Fitness'],
+    followers: 0,
+    following: 0,
     posts: [],
     stats: UserStats(totalPosts: 0, followers: 0, following: 0, totalViews: 0),
     achievements: [],
   );
 
+  // Mock comments data
+  List<Comment> get mockComments => [
+    Comment(
+      id: '1',
+      videoId: 'video_1',
+      content: 'Great workout! This really motivated me to push harder 💪',
+      author: User(
+        id: 'user_1',
+        name: 'Sarah Johnson',
+        age: 26,
+        bio: 'Fitness lover',
+        profilePic: 'https://images.unsplash.com/photo-1494790108755-2616b612b02c?w=150&h=150&fit=crop&crop=face',
+        coverImage: '',
+        isVerified: true,
+        isFollowing: false,
+        joinedAt: DateTime.now().subtract(const Duration(days: 100)),
+        interests: ['Fitness'],
+        followers: 1200,
+        following: 800,
+        posts: [],
+        stats: UserStats(totalPosts: 0, followers: 0, following: 0, totalViews: 0),
+        achievements: [],
+      ),
+      createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
+      timeAgo: '30m ago',
+      isEdited: false,
+      isPinned: false,
+      replies: [],
+      reactionSummary: const ReactionSummary(
+        counts: {},
+        reactions: {},
+        userReaction: null,
+        totalCount: 0,
+      ),
+    ),
+    Comment(
+      id: '2',
+      videoId: 'video_1',
+      content: 'Amazing form! How long have you been training?',
+      author: User(
+        id: 'user_2',
+        name: 'Mike Chen',
+        age: 28,
+        bio: 'Personal trainer',
+        profilePic: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+        coverImage: '',
+        isVerified: false,
+        isFollowing: false,
+        joinedAt: DateTime.now().subtract(const Duration(days: 200)),
+        interests: ['Training'],
+        followers: 800,
+        following: 600,
+        posts: [],
+        stats: UserStats(totalPosts: 0, followers: 0, following: 0, totalViews: 0),
+        achievements: [],
+      ),
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      timeAgo: '1h ago',
+      isEdited: false,
+      isPinned: false,
+      replies: [],
+      reactionSummary: const ReactionSummary(
+        counts: {},
+        reactions: {},
+        userReaction: null,
+        totalCount: 0,
+      ),
+    ),
+  ];
+
   // Getters
   CommentsState getCommentsState(String videoId) {
-    return _videoComments[videoId] ?? CommentsState();
+    return _videoComments[videoId] ?? CommentsState.initial();
   }
 
   List<Comment> getComments(String videoId) {
@@ -87,6 +161,8 @@ class CommentsProvider extends ChangeNotifier {
         _updateState(videoId, CommentsState(
         comments: comments,
         isLoading: false,
+        isLoadingMore: false,
+        isSubmitting: false,
         hasMoreComments: comments.length >= 10,
         totalComments: totalComments,
         ));
@@ -131,9 +207,16 @@ class CommentsProvider extends ChangeNotifier {
         author: _currentUser,
         content: content.trim(),
         createdAt: DateTime.now(),
-        likes: 0,
-        isLiked: false,
-        mentions: _extractMentions(content),
+        timeAgo: 'now',
+        isEdited: false,
+        isPinned: false,
+        replies: [],
+        reactionSummary: const ReactionSummary(
+          counts: {},
+          reactions: {},
+          userReaction: null,
+          totalCount: 0,
+        ),
         );
 
         // Add new comment to the list
@@ -175,13 +258,19 @@ class CommentsProvider extends ChangeNotifier {
       final newReply = Comment(
         id: 'reply_${DateTime.now().millisecondsSinceEpoch}',
         videoId: videoId,
-        parentCommentId: commentId,
         author: _currentUser,
         content: content.trim(),
         createdAt: DateTime.now(),
-        likes: 0,
-        isLiked: false,
-        mentions: _extractMentions(content),
+        timeAgo: 'now',
+        isEdited: false,
+        isPinned: false,
+        replies: [],
+        reactionSummary: const ReactionSummary(
+          counts: {},
+          reactions: {},
+          userReaction: null,
+          totalCount: 0,
+        ),
       );
 
       // Find the parent comment and add reply
@@ -229,10 +318,8 @@ class CommentsProvider extends ChangeNotifier {
       updatedComments = state.comments.map((comment) {
         final updatedReplies = comment.replies.map((reply) {
           if (reply.id == commentId) {
-            return reply.copyWith(
-              isLiked: !reply.isLiked,
-              likes: reply.isLiked ? reply.likes - 1 : reply.likes + 1,
-            );
+            // TODO: Implement reaction system for comments
+            return reply;
           }
           return reply;
         }).toList();
@@ -242,10 +329,8 @@ class CommentsProvider extends ChangeNotifier {
       // Handle main comment like
       updatedComments = state.comments.map((comment) {
         if (comment.id == commentId) {
-          return comment.copyWith(
-            isLiked: !comment.isLiked,
-            likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
-          );
+          // TODO: Implement reaction system for comments
+          return comment;
         }
         return comment;
       }).toList();
