@@ -5,6 +5,9 @@ import '../../models/user_model.dart';
 import 'widgets/zoomable_image.dart';
 import 'widgets/post_interactions.dart';
 import 'widgets/post_details.dart';
+import '../fingle/widgets/share_bottom_sheet.dart';
+import '../../models/video_models.dart';
+import '../../models/reaction_models.dart';
 
 class PostViewerScreen extends StatefulWidget {
   final List<Post> posts;
@@ -28,6 +31,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
   late PageController _pageController;
   late int _currentIndex;
   bool _showDetails = true;
+  bool _isFollowing = false;
 
   @override
   void initState() {
@@ -81,11 +85,42 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
   }
 
   void _onShare() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Share functionality coming soon!'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
+    // Create a mock VideoPost for the share sheet
+    final currentPost = widget.posts[_currentIndex];
+    final mockVideo = VideoPost(
+      id: currentPost.id,
+      videoUrl: '', // Not needed for share sheet
+      thumbnailUrl: currentPost.imageUrl,
+      creator: widget.user,
+      title: currentPost.title,
+      description: currentPost.description,
+      tags: currentPost.tags,
+      workoutType: 'Fitness',
+      difficulty: 'Intermediate',
+      duration: 300,
+      views: currentPost.views,
+      shares: currentPost.shares,
+      comments: currentPost.comments,
+      createdAt: currentPost.createdAt,
+      isFollowing: false,
+      reactionSummary: const ReactionSummary(
+        counts: {},
+        reactions: {},
+        userReaction: null,
+        totalCount: 0,
+      ),
+      recommendations: const [],
+      isRecommended: false,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => ShareBottomSheet(
+        video: mockVideo,
+        onClose: () => Navigator.of(context).pop(),
       ),
     );
   }
@@ -229,7 +264,17 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Handle comment submission
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Comment posted! 💬'),
+                          duration: Duration(seconds: 1),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
                     icon: const Icon(
                       Icons.send,
                       color: AppColors.primary,
@@ -515,18 +560,30 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                                 ),
                               ),
                               ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  setState(() {
+                                    _isFollowing = !_isFollowing;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(_isFollowing ? 'Following ${widget.user.name}!' : 'Unfollowed ${widget.user.name}'),
+                                      duration: const Duration(seconds: 1),
+                                      backgroundColor: AppColors.primary,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
+                                  backgroundColor: _isFollowing ? Colors.grey[700] : AppColors.primary,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 ),
-                                child: const Text(
-                                  'Follow',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                child: Text(
+                                  _isFollowing ? 'Following' : 'Follow',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
