@@ -1,9 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import '../models/home_models.dart';
+import '../models/reaction_models.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
+import '../screens/fingle/widgets/reaction_button.dart';
+import '../screens/fingle/widgets/enhanced_reaction_picker.dart';
+import 'action_button.dart';
 import 'video_player_post.dart';
 
 class PostCard extends StatefulWidget {
@@ -14,6 +19,7 @@ class PostCard extends StatefulWidget {
   final VoidCallback? onBookmark;
   final VoidCallback? onRecommend;
   final VoidCallback? onUserTap;
+  final Function(ReactionType)? onReactionSelected;
 
   const PostCard({
     super.key,
@@ -24,6 +30,7 @@ class PostCard extends StatefulWidget {
     this.onBookmark,
     this.onRecommend,
     this.onUserTap,
+    this.onReactionSelected,
   });
 
   @override
@@ -33,7 +40,7 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _likeController;
-  late Animation<double> _likeAnimation;
+  Function(bool)? _videoVisibilityHandler;
 
   @override
   void initState() {
@@ -42,13 +49,6 @@ class _PostCardState extends State<PostCard>
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    _likeAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.2,
-    ).animate(CurvedAnimation(
-      parent: _likeController,
-      curve: Curves.elasticOut,
-    ));
   }
 
   @override
@@ -64,11 +64,12 @@ class _PostCardState extends State<PostCard>
     widget.onLike?.call();
   }
 
-  String _formatCount(int count) {
-    if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    }
-    return count.toString();
+  void _handleVideoVisibilityChanged(bool isVisible) {
+    // This will be called when video visibility changes
+    debugPrint('📹 PostCard: Video ${widget.post.id} visibility changed: $isVisible');
+    
+    // Call the VideoPlayerPost's visibility handler if available
+    _videoVisibilityHandler?.call(isVisible);
   }
 
   Widget _buildUserHeader() {
@@ -289,19 +290,31 @@ class _PostCardState extends State<PostCard>
     final media = widget.post.mediaItems!.first;
     final isReel = widget.post.postType == PostType.videoReel;
 
-    return VideoPlayerPost(
-      mediaItem: media,
-      isReel: isReel,
-      autoPlay: false, // Start paused for better UX
-      isMuted: true, // Start muted for better UX
-      onTap: () {
-        // Video play/pause is handled by VideoPlayerPost
+    return VisibilityDetector(
+      key: Key('video_post_${widget.post.id}'),
+      onVisibilityChanged: (visibilityInfo) {
+        final visiblePercentage = visibilityInfo.visibleFraction * 100;
+        final isVisible = visiblePercentage > 50.0; // 50% threshold
+        _handleVideoVisibilityChanged(isVisible);
       },
-      onDoubleTap: () {
-        // Double-tap to like
-        widget.onLike?.call();
-        _onLike();
-      },
+      child: VideoPlayerPost(
+        mediaItem: media,
+        isReel: isReel,
+        autoPlay: false, // Start paused for better UX
+        isMuted: true, // Start muted for better UX
+        onTap: () {
+          // Video play/pause is handled by VideoPlayerPost
+        },
+        onDoubleTap: () {
+          // Double-tap to like
+          widget.onLike?.call();
+          _onLike();
+        },
+        onViewportVisibilityChanged: (handler) {
+          // Store the handler so we can call it when visibility changes
+          _videoVisibilityHandler = handler;
+        },
+      ),
     );
   }
 
@@ -396,120 +409,63 @@ class _PostCardState extends State<PostCard>
   Widget _buildActionButtons() {
     return Row(
       children: [
-        // Like button
-        GestureDetector(
-          onTap: _onLike,
-          child: AnimatedBuilder(
-            animation: _likeAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _likeAnimation.value,
-                child: Row(
-                  children: [
-                    Icon(
-                      widget.post.isLiked
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      color: widget.post.isLiked
-                          ? AppColors.accent
-                          : AppColors.textSecondary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatCount(widget.post.likes),
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              );
+        // Reaction button (like with emoji picker)
+        SizedBox(
+          width: 60,
+          height: 60,
+          child: ReactionButton(
+            reactionSummary: widget.post.reactionSummary,
+            onReactionSelected: (ReactionType type) {
+              widget.onReactionSelected?.call(type);
+              // Remove animation for reactions - looks bad
             },
+            onViewReactions: () {
+              // TODO: Show reaction details
+            },
+            pickerLayout: ReactionPickerLayout.horizontal,
+            useHomeSize: true,
           ),
         ),
-        const SizedBox(width: 20),
-
-        // Comment button
-        GestureDetector(
-          onTap: widget.onComment,
-          child: Row(
-            children: [
-              Icon(
-                Icons.comment_outlined,
-                color: AppColors.textSecondary,
-                size: 20,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                _formatCount(widget.post.comments),
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 20),
-
-        // Share button
-        GestureDetector(
-          onTap: widget.onShare,
-          child: Row(
-            children: [
-              Icon(
-                Icons.share_outlined,
-                color: AppColors.textSecondary,
-                size: 20,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                _formatCount(widget.post.shares),
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 8),
 
         // Recommend button
-        GestureDetector(
-          onTap: widget.onRecommend,
-          child: Row(
-            children: [
-              Icon(
-                widget.post.isRecommended
-                    ? Icons.thumb_up
-                    : Icons.thumb_up_outlined,
-                color: widget.post.isRecommended
-                    ? AppColors.success
-                    : AppColors.textSecondary,
-                size: 20,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                _formatCount(widget.post.recommendations),
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
+        ActionButton(
+          icon: Icons.keyboard_arrow_up_outlined,
+          activeIcon: Icons.keyboard_arrow_up,
+          count: widget.post.recommendations,
+          isActive: widget.post.isRecommended,
+          activeColor: AppColors.success,
+          showAnimation: true,
+          onTap: () {
+            widget.onRecommend?.call();
+            _onLike(); // Use the same animation for recommend
+          },
+        ),
+        const SizedBox(width: 8),
+
+        // Comment button
+        ActionButton(
+          icon: Icons.comment_outlined,
+          count: widget.post.comments,
+          onTap: widget.onComment,
+        ),
+        const SizedBox(width: 8),
+
+        // Share button
+        ActionButton(
+          icon: Icons.share_outlined,
+          count: widget.post.shares,
+          onTap: widget.onShare,
         ),
         const Spacer(),
 
         // Bookmark button
-        GestureDetector(
+        ActionButton(
+          icon: Icons.bookmark_border,
+          activeIcon: Icons.bookmark,
+          isActive: widget.post.isBookmarked,
+          activeColor: AppColors.warning,
           onTap: widget.onBookmark,
-          child: Icon(
-            widget.post.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-            color: widget.post.isBookmarked
-                ? AppColors.warning
-                : AppColors.textSecondary,
-            size: 20,
-          ),
         ),
       ],
     );
@@ -521,7 +477,7 @@ class _PostCardState extends State<PostCard>
       margin: const EdgeInsets.only(bottom: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.glassMorphism,
+          color: AppColors.postCardBackground,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.glassBorder),
           boxShadow: [

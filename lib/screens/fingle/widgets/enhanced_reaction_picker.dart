@@ -242,14 +242,14 @@ class _EnhancedReactionPickerState extends State<EnhancedReactionPicker>
             padding: EdgeInsets.symmetric(
               horizontal: isVertical
                   ? (isSmallScreen ? 6 : 8)
-                  : (isSmallScreen ? 8 : 12),
+                  : (isSmallScreen ? 6 : 8), // Reduced horizontal padding for horizontal layout
               vertical: isVertical
                   ? (isSmallScreen ? 8 : 12)
-                  : (isSmallScreen ? 6 : 8),
+                  : (isSmallScreen ? 4 : 6), // Reduced vertical padding for horizontal layout
             ),
             decoration: BoxDecoration(
               color: Colors.grey[900]?.withOpacity(0.95),
-              borderRadius: BorderRadius.circular(isVertical ? 20 : 25),
+              borderRadius: BorderRadius.circular(isVertical ? 20 : 15), // Smaller radius for horizontal
               border: Border.all(
                 color: Colors.white.withOpacity(0.2),
                 width: 1,
@@ -322,7 +322,11 @@ class _EnhancedReactionPickerState extends State<EnhancedReactionPicker>
     final isVertical = widget.layout == ReactionPickerLayout.vertical;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    final emojiSize = isSmallScreen ? 24.0 : 28.0;
+    
+    // Smaller emoji sizes for horizontal layout (home feed)
+    final emojiSize = isVertical 
+        ? (isSmallScreen ? 24.0 : 28.0)
+        : (isSmallScreen ? 18.0 : 20.0);
 
     return AnimatedBuilder(
       animation: _reactionAnimations[index],
@@ -339,9 +343,9 @@ class _EnhancedReactionPickerState extends State<EnhancedReactionPicker>
                 duration: const Duration(milliseconds: 150),
                 margin: EdgeInsets.symmetric(
                   vertical: isVertical ? (isSmallScreen ? 3 : 4) : 0,
-                  horizontal: isVertical ? 0 : (isSmallScreen ? 3 : 4),
+                  horizontal: isVertical ? 0 : (isSmallScreen ? 2 : 3), // Tighter spacing for horizontal
                 ),
-                padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
+                padding: EdgeInsets.all(isVertical ? (isSmallScreen ? 6 : 8) : (isSmallScreen ? 4 : 6)), // Smaller padding for horizontal
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
@@ -390,7 +394,7 @@ class _EnhancedReactionPickerState extends State<EnhancedReactionPicker>
                 child: _ReactionEmoji(
                   emoji: reactionData.emoji,
                   color: reactionData.color,
-                  size: 28, // Increased from variable size
+                  size: emojiSize, // Use calculated size based on layout
                   isSelected: isSelected,
                   isHovered: isHovered,
                 ),

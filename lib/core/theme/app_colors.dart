@@ -37,6 +37,9 @@ class AppColors {
   static final glassBorder = Colors.white.withOpacity(0.12);
   static final glassShadow = Colors.black.withOpacity(0.05);
 
+  // Post Card Background - Very subtle
+  static final postCardBackground = Colors.white.withOpacity(0.15);
+
   // Gradients - Subtle versions
   static const oceanGradient = LinearGradient(
     colors: [Color(0xFF8B7AB8), Color(0xFF87B79F)],

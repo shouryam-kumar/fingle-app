@@ -72,6 +72,8 @@ class _CommentReactionButtonState extends State<CommentReactionButton>
   void dispose() {
     _buttonController.dispose();
     _pulseController.dispose();
+    _hoverTimer?.cancel();
+    _hideTimer?.cancel();
     _hideReactionPicker();
     super.dispose();
   }

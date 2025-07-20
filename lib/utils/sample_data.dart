@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/home_models.dart';
+import '../models/reaction_models.dart';
 import '../core/theme/app_colors.dart';
 
 // Sample Trending Topics
@@ -135,6 +136,16 @@ final List<FeedPost> sampleFeedPosts = [
       fontFamily: 'Poppins',
     ),
     tags: ['motivation', 'mindset', 'fitness'],
+    reactionSummary: ReactionSummary(
+      counts: {
+        ReactionType.fire: 42,
+        ReactionType.strong: 31,
+        ReactionType.like: 16,
+      },
+      reactions: {},
+      userReaction: ReactionType.fire,
+      totalCount: 89,
+    ),
   ),
 
   // Video Post 1 - Regular size
@@ -168,6 +179,16 @@ final List<FeedPost> sampleFeedPosts = [
       ),
     ],
     tags: ['yoga', 'morning', 'mindfulness', 'flow'],
+    reactionSummary: ReactionSummary(
+      counts: {
+        ReactionType.love: 156,
+        ReactionType.like: 62,
+        ReactionType.wow: 16,
+      },
+      reactions: {},
+      userReaction: ReactionType.love,
+      totalCount: 234,
+    ),
   ),
 
   // Photo Carousel Post
@@ -206,6 +227,16 @@ final List<FeedPost> sampleFeedPosts = [
           aspectRatio: '1:1'),
     ],
     tags: ['transformation', 'chest', 'strength', 'progress'],
+    reactionSummary: ReactionSummary(
+      counts: {
+        ReactionType.strong: 245,
+        ReactionType.fire: 134,
+        ReactionType.like: 77,
+      },
+      reactions: {},
+      userReaction: null, // User hasn't reacted yet
+      totalCount: 456,
+    ),
   ),
 
   // Canvas Post 2 - Recipe Card
@@ -232,6 +263,16 @@ final List<FeedPost> sampleFeedPosts = [
       textColor: Colors.white,
     ),
     tags: ['nutrition', 'smoothie', 'recipe', 'protein'],
+    reactionSummary: ReactionSummary(
+      counts: {
+        ReactionType.like: 89,
+        ReactionType.love: 54,
+        ReactionType.laugh: 24,
+      },
+      reactions: {},
+      userReaction: ReactionType.like,
+      totalCount: 167,
+    ),
   ),
 
   // Video Reel - Vertical format
@@ -264,6 +305,17 @@ final List<FeedPost> sampleFeedPosts = [
       ),
     ],
     tags: ['hiit', 'workout', 'cardio', 'noequipment'],
+    reactionSummary: ReactionSummary(
+      counts: {
+        ReactionType.fire: 312,
+        ReactionType.strong: 198,
+        ReactionType.wow: 98,
+        ReactionType.like: 70,
+      },
+      reactions: {},
+      userReaction: ReactionType.fire,
+      totalCount: 678,
+    ),
   ),
 
   // Single Photo Post

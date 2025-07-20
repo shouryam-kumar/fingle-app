@@ -13,6 +13,8 @@ class ReactionButton extends StatefulWidget {
   final VoidCallback? onViewReactions;
   final VoidCallback? onResetTimeout;
   final Function(bool)? onPickerVisibilityChanged;
+  final ReactionPickerLayout pickerLayout;
+  final bool useHomeSize;
 
   const ReactionButton({
     super.key,
@@ -21,6 +23,8 @@ class ReactionButton extends StatefulWidget {
     this.onViewReactions,
     this.onResetTimeout,
     this.onPickerVisibilityChanged,
+    this.pickerLayout = ReactionPickerLayout.vertical,
+    this.useHomeSize = false,
   });
 
   @override
@@ -144,7 +148,7 @@ class _ReactionButtonState extends State<ReactionButton>
             currentReaction: widget.reactionSummary.userReaction,
             onReactionSelected: _handleReactionSelection,
             onDismiss: _hideReactionPicker,
-            layout: ReactionPickerLayout.vertical,
+            layout: widget.pickerLayout,
             onPickerHover: _onPickerHover,
           ),
         ),
@@ -159,6 +163,7 @@ class _ReactionButtonState extends State<ReactionButton>
           currentReaction: widget.reactionSummary.userReaction,
           onReactionSelected: _handleReactionSelection,
           onDismiss: _hideReactionPicker,
+          pickerLayout: widget.pickerLayout,
         ),
       );
     }
@@ -259,38 +264,65 @@ class _ReactionButtonState extends State<ReactionButton>
   }
 
   double _calculateOptimalX(Offset position, Size size, Size screenSize) {
-    const pickerWidth = 60.0; // Approximate picker width
-    const buttonToPickerGap = 4.0; // Reduced from 10px to 4px
-    double left = position.dx -
-        pickerWidth -
-        buttonToPickerGap; // Position to the left of button
-
-    // Ensure picker stays on screen
-    if (left < 10) {
-      left = position.dx +
-          size.width +
-          buttonToPickerGap; // Position to the right instead
+    final isHorizontal = widget.pickerLayout == ReactionPickerLayout.horizontal;
+    
+    if (isHorizontal) {
+      // For horizontal layout, center the picker over the button
+      // Horizontal picker width = 8 reactions * ~28px each + padding (~16px)
+      const pickerWidth = 240.0; // More accurate width for 8 compact reactions
+      double left = position.dx + (size.width / 2) - (pickerWidth / 2);
+      
+      // Ensure picker stays on screen
+      if (left < 10) {
+        left = 10;
+      }
+      if (left + pickerWidth > screenSize.width - 10) {
+        left = screenSize.width - pickerWidth - 10;
+      }
+      
+      return left;
+    } else {
+      // For vertical layout, keep original positioning logic
+      const pickerWidth = 60.0;
+      const buttonToPickerGap = 4.0;
+      double left = position.dx - pickerWidth - buttonToPickerGap;
+      
+      // Ensure picker stays on screen
+      if (left < 10) {
+        left = position.dx + size.width + buttonToPickerGap;
+      }
+      if (left + pickerWidth > screenSize.width - 10) {
+        left = screenSize.width - pickerWidth - 10;
+      }
+      
+      return left;
     }
-    if (left + pickerWidth > screenSize.width - 10) {
-      left = screenSize.width - pickerWidth - 10;
-    }
-
-    return left;
   }
 
   double _calculateOptimalY(Offset position, Size size, Size screenSize) {
-    const pickerHeight = 280.0; // Approximate picker height
-    double top = position.dy -
-        (pickerHeight / 2) +
-        (size.height / 2); // Center vertically
+    final isHorizontal = widget.pickerLayout == ReactionPickerLayout.horizontal;
+    final pickerHeight = isHorizontal ? 48.0 : 280.0; // More accurate height for horizontal picker
+    
+    double top;
+    if (isHorizontal) {
+      // Position above the button for horizontal layout
+      top = position.dy - pickerHeight - 4.0; // 4px gap above button for tighter connection
+      
+      // If too close to top, position below instead
+      if (top < 50) {
+        top = position.dy + size.height + 4.0; // Position below button with same gap
+      }
+    } else {
+      // Center vertically for vertical layout
+      top = position.dy - (pickerHeight / 2) + (size.height / 2);
+    }
 
     // Ensure picker stays on screen
     if (top < 50) {
       top = 50; // Leave space for status bar
     }
     if (top + pickerHeight > screenSize.height - 100) {
-      top =
-          screenSize.height - pickerHeight - 100; // Leave space for navigation
+      top = screenSize.height - pickerHeight - 100; // Leave space for navigation
     }
 
     return top;
@@ -298,14 +330,18 @@ class _ReactionButtonState extends State<ReactionButton>
 
   @override
   Widget build(BuildContext context) {
+    final buttonWidth = widget.useHomeSize ? kHomeTotalButtonWidth : kTotalButtonWidth;
+    final buttonHeight = widget.useHomeSize ? kHomeTotalButtonHeight : kTotalButtonHeight;
+    final textIconGap = widget.useHomeSize ? kHomeTextIconGap : kTextIconGap;
+    
     debugPrint(
         '🎯 ReactionButton build - hasReactions: ${widget.reactionSummary.hasReactions}');
-    debugPrint('🎯 Container height: $kTotalButtonHeight');
+    debugPrint('🎯 Container height: $buttonHeight');
 
     Widget child = Container(
       key: _buttonKey,
-      width: kTotalButtonWidth,
-      height: kTotalButtonHeight,
+      width: buttonWidth,
+      height: buttonHeight,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -318,7 +354,7 @@ class _ReactionButtonState extends State<ReactionButton>
               );
             },
           ),
-          SizedBox(height: kTextIconGap),
+          SizedBox(height: textIconGap),
           _buildReactionCount(),
         ],
       ),
@@ -395,18 +431,23 @@ class _ReactionButtonState extends State<ReactionButton>
   }
 
   Widget _buildReactionIcon() {
+    final containerSize = widget.useHomeSize ? kHomeButtonContainerSize : kButtonContainerSize;
+    final iconSize = widget.useHomeSize ? kHomeButtonIconSize : kButtonIconSize;
+    final borderWidth = widget.useHomeSize ? kHomeButtonBorderWidth : kButtonBorderWidth;
+    final emojiSize = widget.useHomeSize ? 16.0 : 22.0;
+    
     if (widget.reactionSummary.userReaction != null) {
       final reactionData =
           ReactionData.getReactionData(widget.reactionSummary.userReaction!);
       return Container(
-        width: kButtonContainerSize,
-        height: kButtonContainerSize,
+        width: containerSize,
+        height: containerSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: reactionData.color.withOpacity(0.15),
           border: Border.all(
             color: reactionData.color.withOpacity(0.4),
-            width: kButtonBorderWidth,
+            width: borderWidth,
           ),
           boxShadow: [
             BoxShadow(
@@ -424,20 +465,20 @@ class _ReactionButtonState extends State<ReactionButton>
         child: Center(
           child: Text(
             reactionData.emoji,
-            style: const TextStyle(fontSize: 22),
+            style: TextStyle(fontSize: emojiSize),
           ),
         ),
       );
     } else {
       return Container(
-        width: kButtonContainerSize,
-        height: kButtonContainerSize,
+        width: containerSize,
+        height: containerSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withOpacity(0.1),
           border: Border.all(
             color: Colors.white.withOpacity(0.25),
-            width: kButtonBorderWidth,
+            width: borderWidth,
           ),
           boxShadow: [
             BoxShadow(
@@ -450,7 +491,7 @@ class _ReactionButtonState extends State<ReactionButton>
         child: Icon(
           Icons.favorite_border,
           color: Colors.white,
-          size: kButtonIconSize,
+          size: iconSize,
         ),
       );
     }
@@ -462,6 +503,11 @@ class _ReactionButtonState extends State<ReactionButton>
     final textColor = userReaction != null
         ? ReactionData.getReactionData(userReaction).color
         : Colors.white;
+    
+    final containerSize = widget.useHomeSize ? kHomeButtonContainerSize : kButtonContainerSize;
+    final textHeight = widget.useHomeSize ? kHomeTextHeight : kTextHeight;
+    final buttonTextSize = widget.useHomeSize ? kHomeButtonTextSize : kButtonTextSize;
+    final smallEmojiSize = widget.useHomeSize ? 5.0 : 6.0;
 
     return GestureDetector(
       behavior:
@@ -471,10 +517,10 @@ class _ReactionButtonState extends State<ReactionButton>
       },
       onTap: widget.onViewReactions,
       child: Container(
-        width: kButtonContainerSize,
+        width: containerSize,
         constraints: BoxConstraints(
-          minHeight: kTextHeight,
-          maxHeight: kTextHeight + 4.0, // Allow for overflow
+          minHeight: textHeight,
+          maxHeight: textHeight + 4.0, // Allow for overflow
         ),
         alignment: Alignment.center,
         child: hasReactions
@@ -485,7 +531,7 @@ class _ReactionButtonState extends State<ReactionButton>
                     _formatCount(widget.reactionSummary.totalCount),
                     style: TextStyle(
                       color: textColor,
-                      fontSize: kButtonTextSize,
+                      fontSize: buttonTextSize,
                       fontWeight: FontWeight.w600,
                       height: 1.0,
                     ),
@@ -495,7 +541,7 @@ class _ReactionButtonState extends State<ReactionButton>
                   if (widget.reactionSummary.topReactionTypes.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(top: 1),
-                      height: 8.0, // Fixed height for emoji row
+                      height: widget.useHomeSize ? 6.0 : 8.0, // Fixed height for emoji row
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: widget.reactionSummary.topReactionTypes
@@ -507,7 +553,7 @@ class _ReactionButtonState extends State<ReactionButton>
                             margin: const EdgeInsets.only(right: 1),
                             child: Text(
                               reactionData.emoji,
-                              style: const TextStyle(fontSize: 6),
+                              style: TextStyle(fontSize: smallEmojiSize),
                             ),
                           );
                         }).toList(),
@@ -519,7 +565,7 @@ class _ReactionButtonState extends State<ReactionButton>
                 '0',
                 style: TextStyle(
                   color: textColor,
-                  fontSize: kButtonTextSize,
+                  fontSize: buttonTextSize,
                   fontWeight: FontWeight.w600,
                   height: 1.0,
                 ),
@@ -547,6 +593,7 @@ class _MobileReactionPickerOverlay extends StatelessWidget {
   final ReactionType? currentReaction;
   final Function(ReactionType) onReactionSelected;
   final VoidCallback onDismiss;
+  final ReactionPickerLayout pickerLayout;
 
   const _MobileReactionPickerOverlay({
     required this.buttonPosition,
@@ -555,6 +602,7 @@ class _MobileReactionPickerOverlay extends StatelessWidget {
     this.currentReaction,
     required this.onReactionSelected,
     required this.onDismiss,
+    required this.pickerLayout,
   });
 
   @override
@@ -584,7 +632,7 @@ class _MobileReactionPickerOverlay extends StatelessWidget {
               currentReaction: currentReaction,
               onReactionSelected: onReactionSelected,
               onDismiss: onDismiss,
-              layout: ReactionPickerLayout.vertical,
+              layout: pickerLayout,
             ),
           ),
         ),
@@ -593,25 +641,57 @@ class _MobileReactionPickerOverlay extends StatelessWidget {
   }
 
   double _calculateOptimalX() {
-    const pickerWidth = 60.0;
-    const buttonToPickerGap = 4.0;
-    double left = buttonPosition.dx - pickerWidth - buttonToPickerGap;
-
-    // Ensure picker stays on screen
-    if (left < 10) {
-      left = buttonPosition.dx + buttonSize.width + buttonToPickerGap;
+    final isHorizontal = pickerLayout == ReactionPickerLayout.horizontal;
+    
+    if (isHorizontal) {
+      // For horizontal layout, center the picker over the button
+      const pickerWidth = 240.0; // More accurate width for 8 compact reactions
+      double left = buttonPosition.dx + (buttonSize.width / 2) - (pickerWidth / 2);
+      
+      // Ensure picker stays on screen
+      if (left < 10) {
+        left = 10;
+      }
+      if (left + pickerWidth > screenSize.width - 10) {
+        left = screenSize.width - pickerWidth - 10;
+      }
+      
+      return left;
+    } else {
+      // For vertical layout, keep original positioning logic
+      const pickerWidth = 60.0;
+      const buttonToPickerGap = 4.0;
+      double left = buttonPosition.dx - pickerWidth - buttonToPickerGap;
+      
+      // Ensure picker stays on screen
+      if (left < 10) {
+        left = buttonPosition.dx + buttonSize.width + buttonToPickerGap;
+      }
+      if (left + pickerWidth > screenSize.width - 10) {
+        left = screenSize.width - pickerWidth - 10;
+      }
+      
+      return left;
     }
-    if (left + pickerWidth > screenSize.width - 10) {
-      left = screenSize.width - pickerWidth - 10;
-    }
-
-    return left;
   }
 
   double _calculateOptimalY() {
-    const pickerHeight = 280.0;
-    double top =
-        buttonPosition.dy - (pickerHeight / 2) + (buttonSize.height / 2);
+    final isHorizontal = pickerLayout == ReactionPickerLayout.horizontal;
+    final pickerHeight = isHorizontal ? 48.0 : 280.0;
+    
+    double top;
+    if (isHorizontal) {
+      // Position above the button for horizontal layout
+      top = buttonPosition.dy - pickerHeight - 4.0;
+      
+      // If too close to top, position below instead
+      if (top < 50) {
+        top = buttonPosition.dy + buttonSize.height + 4.0;
+      }
+    } else {
+      // Center vertically for vertical layout
+      top = buttonPosition.dy - (pickerHeight / 2) + (buttonSize.height / 2);
+    }
 
     // Ensure picker stays on screen
     if (top < 50) {

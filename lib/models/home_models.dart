@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'reaction_models.dart';
 
 enum PostType { photo, video, canvas, carousel, videoReel }
 
@@ -112,6 +113,7 @@ class FeedPost {
   final CanvasPost? canvasData; // For canvas posts
   final int recommendations; // New interaction type
   final bool isRecommended;
+  final ReactionSummary reactionSummary; // Reaction system like video feed
 
   FeedPost({
     required this.id,
@@ -135,7 +137,8 @@ class FeedPost {
     this.canvasData,
     this.recommendations = 0,
     this.isRecommended = false,
-  });
+    ReactionSummary? reactionSummary,
+  }) : reactionSummary = reactionSummary ?? ReactionSummary.empty();
 
   FeedPost copyWith({
     int? id,
@@ -159,6 +162,7 @@ class FeedPost {
     CanvasPost? canvasData,
     int? recommendations,
     bool? isRecommended,
+    ReactionSummary? reactionSummary,
   }) {
     return FeedPost(
       id: id ?? this.id,
@@ -182,6 +186,7 @@ class FeedPost {
       canvasData: canvasData ?? this.canvasData,
       recommendations: recommendations ?? this.recommendations,
       isRecommended: isRecommended ?? this.isRecommended,
+      reactionSummary: reactionSummary ?? this.reactionSummary,
     );
   }
 }

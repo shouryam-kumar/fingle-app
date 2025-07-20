@@ -21,6 +21,7 @@ dependencies:
   google_fonts: ^6.1.0
   flutter_staggered_animations: ^1.1.1
   flutter_svg: ^2.0.9
+  visibility_detector: ^0.4.0+2
   
   # Storage & Network
   shared_preferences: ^2.2.2
