@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../models/video_models.dart';
-import '../models/user_model.dart';
 import '../models/reaction_models.dart';
 import '../services/mock_video_data.dart';
 
@@ -11,20 +10,22 @@ class VideoFeedProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _hasReachedEnd = false;
   bool _isTabVisible = true;
-  
+
   final Map<String, VideoPlayerController> _controllers = {};
-  
+
   // Getters
   List<VideoPost> get videos => _videos;
   int get currentIndex => _currentIndex;
   bool get isLoading => _isLoading;
   bool get hasReachedEnd => _hasReachedEnd;
   bool get isTabVisible => _isTabVisible;
-  bool get shouldLoadMore => _currentIndex >= _videos.length - 3 && !_hasReachedEnd;
-  
-  VideoPost? get currentVideo => _videos.isNotEmpty && _currentIndex < _videos.length
-      ? _videos[_currentIndex]
-      : null;
+  bool get shouldLoadMore =>
+      _currentIndex >= _videos.length - 3 && !_hasReachedEnd;
+
+  VideoPost? get currentVideo =>
+      _videos.isNotEmpty && _currentIndex < _videos.length
+          ? _videos[_currentIndex]
+          : null;
 
   VideoPlayerController? getController(String videoId) {
     return _controllers[videoId];
@@ -32,10 +33,10 @@ class VideoFeedProvider with ChangeNotifier {
 
   Future<void> initialize() async {
     debugPrint('🎬 VideoFeedProvider: Initializing...');
-    
+
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await _loadInitialVideos();
       debugPrint('✅ VideoFeedProvider: Initialization complete');
@@ -49,10 +50,10 @@ class VideoFeedProvider with ChangeNotifier {
 
   Future<void> _loadInitialVideos() async {
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     final mockVideos = MockVideoData.getMockVideos();
     _videos = mockVideos.take(10).toList();
-    
+
     if (_videos.isNotEmpty) {
       await _preloadVideos();
     }
@@ -60,20 +61,18 @@ class VideoFeedProvider with ChangeNotifier {
 
   Future<void> loadMoreVideos() async {
     if (_isLoading || _hasReachedEnd) return;
-    
+
     debugPrint('📥 Loading more videos...');
-    
+
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       await Future.delayed(const Duration(milliseconds: 800));
-      
-      final additionalVideos = MockVideoData.getMockVideos()
-          .skip(_videos.length)
-          .take(5)
-          .toList();
-      
+
+      final additionalVideos =
+          MockVideoData.getMockVideos().skip(_videos.length).take(5).toList();
+
       if (additionalVideos.isEmpty) {
         _hasReachedEnd = true;
         debugPrint('🏁 Reached end of videos');
@@ -109,14 +108,15 @@ class VideoFeedProvider with ChangeNotifier {
 
   Future<void> _createController(VideoPost video) async {
     try {
-      final controller = VideoPlayerController.networkUrl(Uri.parse(video.videoUrl));
+      final controller =
+          VideoPlayerController.networkUrl(Uri.parse(video.videoUrl));
       await controller.initialize();
-      
+
       controller.setLooping(true);
       controller.setVolume(1.0);
-      
+
       _controllers[video.id] = controller;
-      
+
       debugPrint('🎬 Controller created for video: ${video.id}');
     } catch (e) {
       debugPrint('❌ Failed to create controller for video ${video.id}: $e');
@@ -125,27 +125,31 @@ class VideoFeedProvider with ChangeNotifier {
 
   Future<void> setCurrentIndex(int index) async {
     if (index == _currentIndex || index < 0 || index >= _videos.length) return;
-    
+
     debugPrint('📹 Setting current index to: $index');
-    
+
     await pauseCurrentVideo();
-    
+
     _currentIndex = index;
     notifyListeners();
-    
+
     await _preloadVideos();
-    
+
     if (_isTabVisible) {
       await playCurrentVideo();
     }
   }
 
   Future<void> playCurrentVideo() async {
-    if (!_isTabVisible || _currentIndex < 0 || _currentIndex >= _videos.length) return;
-    
+    if (!_isTabVisible ||
+        _currentIndex < 0 ||
+        _currentIndex >= _videos.length) {
+      return;
+    }
+
     final video = _videos[_currentIndex];
     final controller = _controllers[video.id];
-    
+
     if (controller != null && controller.value.isInitialized) {
       await controller.play();
       debugPrint('▶️ Playing video: ${video.id}');
@@ -154,10 +158,10 @@ class VideoFeedProvider with ChangeNotifier {
 
   Future<void> pauseCurrentVideo() async {
     if (_currentIndex < 0 || _currentIndex >= _videos.length) return;
-    
+
     final video = _videos[_currentIndex];
     final controller = _controllers[video.id];
-    
+
     if (controller != null && controller.value.isInitialized) {
       await controller.pause();
       debugPrint('⏸️ Paused video: ${video.id}');
@@ -166,10 +170,10 @@ class VideoFeedProvider with ChangeNotifier {
 
   void togglePlayPause() {
     if (_currentIndex < 0 || _currentIndex >= _videos.length) return;
-    
+
     final video = _videos[_currentIndex];
     final controller = _controllers[video.id];
-    
+
     if (controller != null && controller.value.isInitialized) {
       if (controller.value.isPlaying) {
         controller.pause();
@@ -183,10 +187,10 @@ class VideoFeedProvider with ChangeNotifier {
 
   void setTabVisibility(bool isVisible) {
     if (_isTabVisible == isVisible) return;
-    
+
     _isTabVisible = isVisible;
     debugPrint('👁️ Tab visibility changed: $isVisible');
-    
+
     if (isVisible) {
       playCurrentVideo();
     } else {
@@ -201,7 +205,7 @@ class VideoFeedProvider with ChangeNotifier {
 
     final video = _videos[videoIndex];
     final currentUserReaction = video.reactionSummary.userReaction;
-    
+
     if (currentUserReaction == reactionType) {
       // Remove reaction
       await _removeReaction(videoId, reactionType);
@@ -217,7 +221,7 @@ class VideoFeedProvider with ChangeNotifier {
 
     final video = _videos[videoIndex];
     final currentUserId = 'current_user_id'; // Replace with actual user ID
-    
+
     // Create new reaction
     final newReaction = Reaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -233,35 +237,38 @@ class VideoFeedProvider with ChangeNotifier {
         .expand((list) => list)
         .where((r) => r.userId != currentUserId)
         .toList();
-    
+
     existingReactions.add(newReaction);
-    
-    final updatedSummary = ReactionSummary.fromReactions(existingReactions, currentUserId);
-    
+
+    final updatedSummary =
+        ReactionSummary.fromReactions(existingReactions, currentUserId);
+
     _videos[videoIndex] = video.copyWith(reactionSummary: updatedSummary);
     notifyListeners();
-    
+
     debugPrint('✅ Added reaction: ${reactionType.name} to video: $videoId');
   }
 
-  Future<void> _removeReaction(String videoId, ReactionType reactionType) async {
+  Future<void> _removeReaction(
+      String videoId, ReactionType reactionType) async {
     final videoIndex = _videos.indexWhere((v) => v.id == videoId);
     if (videoIndex == -1) return;
 
     final video = _videos[videoIndex];
     final currentUserId = 'current_user_id'; // Replace with actual user ID
-    
+
     // Remove user's reaction
     final existingReactions = video.reactionSummary.reactions.values
         .expand((list) => list)
         .where((r) => r.userId != currentUserId)
         .toList();
-    
-    final updatedSummary = ReactionSummary.fromReactions(existingReactions, currentUserId);
-    
+
+    final updatedSummary =
+        ReactionSummary.fromReactions(existingReactions, currentUserId);
+
     _videos[videoIndex] = video.copyWith(reactionSummary: updatedSummary);
     notifyListeners();
-    
+
     debugPrint('❌ Removed reaction: ${reactionType.name} from video: $videoId');
   }
 
@@ -271,7 +278,7 @@ class VideoFeedProvider with ChangeNotifier {
     if (videoIndex == -1) return;
 
     final video = _videos[videoIndex];
-    
+
     if (video.isRecommended) {
       await _removeRecommendation(videoId);
     } else {
@@ -284,7 +291,7 @@ class VideoFeedProvider with ChangeNotifier {
     if (videoIndex == -1) return;
 
     final video = _videos[videoIndex];
-    
+
     // Create new recommendation
     final newRecommendation = Recommendation(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -294,16 +301,17 @@ class VideoFeedProvider with ChangeNotifier {
       createdAt: DateTime.now(),
     );
 
-    final updatedRecommendations = List<Recommendation>.from(video.recommendations)
-      ..add(newRecommendation);
+    final updatedRecommendations =
+        List<Recommendation>.from(video.recommendations)
+          ..add(newRecommendation);
 
     _videos[videoIndex] = video.copyWith(
       recommendations: updatedRecommendations,
       isRecommended: true,
     );
-    
+
     notifyListeners();
-    
+
     debugPrint('✅ Added recommendation to video: $videoId');
   }
 
@@ -312,7 +320,7 @@ class VideoFeedProvider with ChangeNotifier {
     if (videoIndex == -1) return;
 
     final video = _videos[videoIndex];
-    
+
     // Remove user's recommendation
     final updatedRecommendations = video.recommendations
         .where((r) => r.userId != 'current_user_id')
@@ -322,9 +330,9 @@ class VideoFeedProvider with ChangeNotifier {
       recommendations: updatedRecommendations,
       isRecommended: false,
     );
-    
+
     notifyListeners();
-    
+
     debugPrint('❌ Removed recommendation from video: $videoId');
   }
 
@@ -348,36 +356,36 @@ class VideoFeedProvider with ChangeNotifier {
     );
 
     notifyListeners();
-    
+
     debugPrint('✅ Toggled follow for user: $userId');
   }
 
   Future<void> refreshFeed() async {
     debugPrint('🔄 Refreshing feed...');
-    
+
     _videos.clear();
     _currentIndex = 0;
     _hasReachedEnd = false;
-    
+
     // Dispose all controllers
     for (final controller in _controllers.values) {
       await controller.dispose();
     }
     _controllers.clear();
-    
+
     await initialize();
   }
 
   @override
   void dispose() {
     debugPrint('🗑️ VideoFeedProvider: Disposing...');
-    
+
     // Dispose all video controllers
     for (final controller in _controllers.values) {
       controller.dispose();
     }
     _controllers.clear();
-    
+
     super.dispose();
   }
 }

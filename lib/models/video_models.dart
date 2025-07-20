@@ -17,7 +17,7 @@ class VideoPost {
   final int comments;
   final DateTime createdAt;
   final bool isFollowing;
-  
+
   // Updated reaction fields
   final ReactionSummary reactionSummary;
   final List<Recommendation> recommendations;

@@ -17,28 +17,29 @@ class _ProfileScreenState extends State<ProfileScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late ScrollController _scrollController;
-  
+
   // State to track expanded categories
   final Map<String, bool> expandedStates = {};
-  
+
   // Current user data
   final User currentUser = sampleUser;
-  
+
   bool _isHeaderCollapsed = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this); // Changed from 4 to 3
+    _tabController =
+        TabController(length: 3, vsync: this); // Changed from 4 to 3
     _scrollController = ScrollController();
-    
+
     _scrollController.addListener(_onScroll);
   }
 
   void _onScroll() {
     const double threshold = 200.0;
     final bool isCollapsed = _scrollController.offset > threshold;
-    
+
     if (isCollapsed != _isHeaderCollapsed) {
       setState(() {
         _isHeaderCollapsed = isCollapsed;
@@ -74,8 +75,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppColors.gradientStart,
-                        AppColors.gradientEnd,
+                        AppColors.primary,
+                        AppColors.secondary,
                       ],
                     ),
                   ),
@@ -117,20 +118,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                 user: currentUser,
                 isCollapsed: _isHeaderCollapsed,
               ).animate().fadeIn(duration: 600.ms).slideY(
-                begin: 0.3,
-                end: 0,
-                duration: 600.ms,
-              ),
-              
+                    begin: 0.3,
+                    end: 0,
+                    duration: 600.ms,
+                  ),
+
               const SizedBox(height: 20),
-              
+
               // Profile Stats
               ProfileStats(
                 stats: currentUser.stats,
               ).animate().fadeIn(delay: 200.ms, duration: 600.ms),
-              
+
               const SizedBox(height: 20),
-              
+
               // Content Tabs
               ProfileContentTabs(
                 user: currentUser,

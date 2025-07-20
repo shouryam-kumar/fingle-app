@@ -7,7 +7,8 @@ class MockVideoData {
     return [
       VideoPost(
         id: '1',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         thumbnailUrl: 'https://picsum.photos/400/600?random=1',
         creator: User(
           id: '1',
@@ -79,10 +80,10 @@ class MockVideoData {
         ],
         isRecommended: false,
       ),
-      
       VideoPost(
         id: '2',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         thumbnailUrl: 'https://picsum.photos/400/600?random=2',
         creator: User(
           id: '2',
@@ -138,10 +139,10 @@ class MockVideoData {
         recommendations: [],
         isRecommended: false,
       ),
-      
       VideoPost(
         id: '3',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        videoUrl:
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         thumbnailUrl: 'https://picsum.photos/400/600?random=3',
         creator: User(
           id: '3',

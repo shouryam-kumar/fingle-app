@@ -38,7 +38,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
-    
+
     // Hide system UI for immersive experience
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
   }
@@ -68,7 +68,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
       // Toggle like (in real app, this would update backend)
       // For demo, we'll just show a snackbar
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Post liked! ❤️'),
@@ -148,7 +148,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            
+
             // Comments header
             Padding(
               padding: const EdgeInsets.all(16),
@@ -157,11 +157,12 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: widget.useAppTheme ? AppColors.textPrimary : Colors.white,
+                  color:
+                      widget.useAppTheme ? AppColors.textPrimary : Colors.white,
                 ),
               ),
             ),
-            
+
             // Comments list (placeholder)
             Expanded(
               child: ListView.builder(
@@ -196,7 +197,9 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: widget.useAppTheme ? AppColors.textPrimary : Colors.white,
+                                      color: widget.useAppTheme
+                                          ? AppColors.textPrimary
+                                          : Colors.white,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -213,7 +216,9 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                               Text(
                                 'Great workout! This really motivates me to push harder 💪',
                                 style: TextStyle(
-                                  color: widget.useAppTheme ? AppColors.textSecondary : Colors.grey[300],
+                                  color: widget.useAppTheme
+                                      ? AppColors.textSecondary
+                                      : Colors.grey[300],
                                   fontSize: 14,
                                 ),
                               ),
@@ -226,7 +231,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                 },
               ),
             ),
-            
+
             // Comment input (placeholder)
             Container(
               padding: const EdgeInsets.all(16),
@@ -251,14 +256,18 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor: widget.useAppTheme ? Colors.grey[100] : Colors.grey[800],
+                        fillColor: widget.useAppTheme
+                            ? Colors.grey[100]
+                            : Colors.grey[800],
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
                         ),
                       ),
                       style: TextStyle(
-                        color: widget.useAppTheme ? AppColors.textPrimary : Colors.white,
+                        color: widget.useAppTheme
+                            ? AppColors.textPrimary
+                            : Colors.white,
                       ),
                     ),
                   ),
@@ -292,9 +301,10 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
   @override
   Widget build(BuildContext context) {
     // Determine colors based on theme preference
-    final backgroundColor = widget.useAppTheme ? AppColors.background : Colors.black;
+    final backgroundColor =
+        widget.useAppTheme ? AppColors.background : Colors.black;
     final textColor = widget.useAppTheme ? AppColors.textPrimary : Colors.white;
-    
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body: Stack(
@@ -317,7 +327,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                       imageUrl: post.imageUrl,
                       heroTag: 'post_${post.id}',
                     ),
-                    
+
                     // Gradient overlays only for black theme
                     if (!widget.useAppTheme) ...[
                       // Top gradient
@@ -339,7 +349,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                           ),
                         ),
                       ),
-                      
+
                       // Bottom gradient
                       Positioned(
                         bottom: 0,
@@ -365,7 +375,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
               );
             },
           ),
-          
+
           // UI Overlays
           AnimatedOpacity(
             opacity: _showDetails ? 1.0 : 0.0,
@@ -379,7 +389,8 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                   right: 0,
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -394,9 +405,10 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: widget.useAppTheme 
+                                  color: widget.useAppTheme
                                       ? Colors.white.withOpacity(0.9)
                                       : Colors.black.withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(15),
@@ -426,7 +438,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Right side actions
                 Positioned(
                   right: 16,
@@ -458,9 +470,9 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Comment button
                       GestureDetector(
                         onTap: _onComment,
@@ -486,9 +498,9 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Share button
                       GestureDetector(
                         onTap: _onShare,
@@ -504,7 +516,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                     ],
                   ),
                 ),
-                
+
                 // Bottom content
                 Positioned(
                   bottom: 0,
@@ -522,7 +534,8 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 20,
-                                backgroundImage: NetworkImage(widget.user.profilePic),
+                                backgroundImage:
+                                    NetworkImage(widget.user.profilePic),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -550,9 +563,12 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                                       ],
                                     ),
                                     Text(
-                                      _getTimeAgo(widget.posts[_currentIndex].createdAt),
+                                      _getTimeAgo(widget
+                                          .posts[_currentIndex].createdAt),
                                       style: TextStyle(
-                                        color: widget.useAppTheme ? AppColors.textLight : Colors.grey[300],
+                                        color: widget.useAppTheme
+                                            ? AppColors.textLight
+                                            : Colors.grey[300],
                                         fontSize: 12,
                                       ),
                                     ),
@@ -566,7 +582,9 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                                   });
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(_isFollowing ? 'Following ${widget.user.name}!' : 'Unfollowed ${widget.user.name}'),
+                                      content: Text(_isFollowing
+                                          ? 'Following ${widget.user.name}!'
+                                          : 'Unfollowed ${widget.user.name}'),
                                       duration: const Duration(seconds: 1),
                                       backgroundColor: AppColors.primary,
                                       behavior: SnackBarBehavior.floating,
@@ -574,23 +592,28 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _isFollowing ? Colors.grey[700] : AppColors.primary,
+                                  backgroundColor: _isFollowing
+                                      ? Colors.grey[700]
+                                      : AppColors.primary,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
                                 ),
                                 child: Text(
                                   _isFollowing ? 'Following' : 'Follow',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 12),
-                          
+
                           // Post content
                           Text(
                             widget.posts[_currentIndex].title,
@@ -600,15 +623,17 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          
+
                           const SizedBox(height: 8),
-                          
+
                           // Tags
                           if (widget.posts[_currentIndex].tags.isNotEmpty)
                             Wrap(
                               spacing: 8,
                               runSpacing: 4,
-                              children: widget.posts[_currentIndex].tags.take(3).map((tag) {
+                              children: widget.posts[_currentIndex].tags
+                                  .take(3)
+                                  .map((tag) {
                                 return Text(
                                   '#$tag',
                                   style: TextStyle(
@@ -627,12 +652,13 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
               ],
             ),
           ),
-          
+
           // Page indicators (dots)
           if (widget.posts.length > 1)
             Positioned(
               left: 16,
-              top: MediaQuery.of(context).size.height / 2 - (widget.posts.length * 6),
+              top: MediaQuery.of(context).size.height / 2 -
+                  (widget.posts.length * 6),
               child: AnimatedOpacity(
                 opacity: _showDetails ? 1.0 : 0.3,
                 duration: const Duration(milliseconds: 300),
@@ -647,7 +673,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
                         borderRadius: BorderRadius.circular(2),
                         color: index == _currentIndex
                             ? AppColors.primary
-                            : (widget.useAppTheme 
+                            : (widget.useAppTheme
                                 ? AppColors.textLight.withOpacity(0.5)
                                 : Colors.white.withOpacity(0.5)),
                       ),
@@ -664,7 +690,7 @@ class _PostViewerScreenState extends State<PostViewerScreen> {
   String _getTimeAgo(DateTime createdAt) {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays}d ago';
     } else if (difference.inHours > 0) {

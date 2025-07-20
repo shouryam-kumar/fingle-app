@@ -25,27 +25,26 @@ class CommentsBottomSheet extends StatefulWidget {
 
 class _CommentsBottomSheetState extends State<CommentsBottomSheet>
     with TickerProviderStateMixin {
-  
   late AnimationController _slideController;
   late AnimationController _backgroundController;
   late Animation<double> _slideAnimation;
   late Animation<double> _backgroundAnimation;
-  
+
   late ScrollController _scrollController;
   final FocusNode _inputFocusNode = FocusNode();
-  
+
   bool _isKeyboardVisible = false;
 
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animations
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _backgroundController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -76,9 +75,10 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _slideController.forward();
       _backgroundController.forward();
-      
+
       // Load comments
-      final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
+      final commentsProvider =
+          Provider.of<CommentsProvider>(context, listen: false);
       commentsProvider.setCurrentVideoId(widget.video.id);
     });
   }
@@ -101,20 +101,21 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
   Future<void> _closeSheet() async {
     // Reset screen timeout on close
     ScreenTimeoutService.resetTimer();
-    
+
     // Clear reply state on close
-    final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
+    final commentsProvider =
+        Provider.of<CommentsProvider>(context, listen: false);
     commentsProvider.clearReplyingTo(widget.video.id);
-    
+
     // Unfocus input to hide keyboard
     _inputFocusNode.unfocus();
-    
+
     // Animate out
     await Future.wait([
       _slideController.reverse(),
       _backgroundController.reverse(),
     ]);
-    
+
     if (mounted) {
       widget.onClose?.call();
       Navigator.of(context).pop();
@@ -145,7 +146,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
                 );
               },
             ),
-            
+
             // Comments sheet - POSITIONED AT BOTTOM
             AnimatedBuilder(
               animation: _slideAnimation,
@@ -153,7 +154,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
                 return Align(
                   alignment: Alignment.bottomCenter,
                   child: Transform.translate(
-                    offset: Offset(0, MediaQuery.of(context).size.height * _slideAnimation.value * 0.9),
+                    offset: Offset(
+                        0,
+                        MediaQuery.of(context).size.height *
+                            _slideAnimation.value *
+                            0.9),
                     child: _buildCommentsSheet(),
                   ),
                 );
@@ -168,7 +173,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
   Widget _buildCommentsSheet() {
     final screenHeight = MediaQuery.of(context).size.height;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    
+
     // ✅ MUCH BETTER POSITIONING - Starts closer to bottom
     double sheetHeight;
     if (_isKeyboardVisible) {
@@ -184,22 +189,24 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
       width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)), // Slightly smaller radius
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16)), // Slightly smaller radius
       ),
       child: Column(
         children: [
           // Minimal header
           _buildMinimalHeader(),
-          
+
           // Comments list
           Expanded(
             child: CommentList(
               video: widget.video,
               scrollController: _scrollController,
               onResetTimeout: () => ScreenTimeoutService.resetTimer(),
+              focusNode: _inputFocusNode,
             ),
           ),
-          
+
           // Comment input - ALWAYS AT BOTTOM
           Container(
             decoration: BoxDecoration(
@@ -237,7 +244,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
 
   Widget _buildMinimalHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16), // More compact
+      padding: const EdgeInsets.symmetric(
+          vertical: 6, horizontal: 16), // More compact
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -250,9 +258,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          
+
           const SizedBox(height: 10),
-          
+
           // Header with title and close button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -260,10 +268,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
               // Comments count
               Consumer<CommentsProvider>(
                 builder: (context, commentsProvider, child) {
-                  final totalComments = commentsProvider.getTotalComments(widget.video.id);
+                  final totalComments =
+                      commentsProvider.getTotalComments(widget.video.id);
                   return Text(
-                    totalComments == 0 
-                        ? 'Comments' 
+                    totalComments == 0
+                        ? 'Comments'
                         : '$totalComments comment${totalComments == 1 ? '' : 's'}',
                     style: const TextStyle(
                       color: Colors.white,
@@ -273,7 +282,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
                   );
                 },
               ),
-              
+
               // Close button
               GestureDetector(
                 onTap: _closeSheet,
@@ -292,9 +301,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Minimal divider
           Container(
             height: 0.5,
@@ -311,7 +320,7 @@ extension CommentsSheetExtension on BuildContext {
   Future<void> showCommentsSheet(VideoPost video) async {
     // Reset screen timeout when opening comments
     ScreenTimeoutService.resetTimer();
-    
+
     await showModalBottomSheet(
       context: this,
       isScrollControlled: true,

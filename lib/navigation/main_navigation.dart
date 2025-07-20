@@ -1,4 +1,4 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../screens/home/home_screen.dart';
@@ -21,8 +21,8 @@ class MainNavigation extends StatelessWidget {
             children: const [
               HomeScreen(),
               SearchScreen(),
-              FingleScreen(),
-              ActivityScreen(),
+              FingleScreen(), // This is now "Bites" (TikTok-style videos)
+              ActivityScreen(), // This is now "Mingle" (dating/matchmaking)
               ProfileScreen(),
             ],
           ),
@@ -60,12 +60,12 @@ class MainNavigation extends StatelessWidget {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.play_circle_outline),
                   activeIcon: Icon(Icons.play_circle),
-                  label: 'Fingle',
+                  label: 'Bites',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.fitness_center_outlined),
-                  activeIcon: Icon(Icons.fitness_center),
-                  label: 'Activity',
+                  icon: Icon(Icons.favorite_outline),
+                  activeIcon: Icon(Icons.favorite),
+                  label: 'Mingle',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.person_outline),

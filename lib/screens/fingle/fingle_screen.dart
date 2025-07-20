@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../../core/theme/app_colors.dart';
 import '../../providers/video_feed_provider.dart';
 import '../../providers/app_provider.dart';
@@ -9,7 +10,6 @@ import 'widgets/video_player_widget.dart';
 import 'widgets/video_progress_indicator.dart';
 import 'widgets/reaction_button.dart';
 import 'widgets/recommend_button.dart';
-import 'widgets/comment_reaction_button.dart';
 import 'package:fingle_app/models/video_models.dart';
 import 'package:fingle_app/models/reaction_models.dart';
 import '../../providers/comments_provider.dart';
@@ -17,6 +17,7 @@ import 'widgets/comments_bottom_sheet.dart';
 import 'widgets/reaction_details_sheet.dart';
 import 'widgets/recommendation_details_sheet.dart';
 import 'widgets/share_bottom_sheet.dart';
+import 'constants/button_constants.dart';
 
 class FingleScreen extends StatefulWidget {
   const FingleScreen({super.key});
@@ -25,12 +26,24 @@ class FingleScreen extends StatefulWidget {
   State<FingleScreen> createState() => _FingleScreenState();
 }
 
-class _FingleScreenState extends State<FingleScreen> 
+class _FingleScreenState extends State<FingleScreen>
     with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   late PageController _pageController;
   late VideoFeedProvider _videoProvider;
   bool _isInitialized = false;
   bool _wasTabVisible = false;
+
+  // Separate state management for different UI categories
+  bool _isInteractiveUIVisible =
+      true; // User-controlled elements (settings, etc.)
+  Timer? _uiHideTimer;
+  bool _isReactionPickerVisible = false;
+  bool _isCommentsVisible = false;
+
+  // Overlay tracking to prevent duplicates
+  OverlayEntry? _playPauseOverlayEntry;
+  OverlayEntry? _reactionAnimationOverlayEntry;
+  Timer? _playPauseTimer;
 
   @override
   bool get wantKeepAlive => true;
@@ -38,14 +51,14 @@ class _FingleScreenState extends State<FingleScreen>
   @override
   void initState() {
     super.initState();
-    
+
     WidgetsBinding.instance.addObserver(this);
-    
+
     _pageController = PageController(
       viewportFraction: 1.0,
       keepPage: false,
     );
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeVideoFeed();
     });
@@ -55,23 +68,49 @@ class _FingleScreenState extends State<FingleScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
+    _uiHideTimer?.cancel();
+    _clearAllOverlays();
     ScreenTimeoutService.disableExtendedTimeout();
     super.dispose();
+  }
+
+  void _clearAllOverlays() {
+    _cleanupPlayPauseOverlay();
+    _reactionAnimationOverlayEntry?.remove();
+    _reactionAnimationOverlayEntry = null;
+  }
+
+  void _cleanupPlayPauseOverlay() {
+    // Cancel any pending cleanup timer first
+    _playPauseTimer?.cancel();
+    _playPauseTimer = null;
+
+    // Remove overlay if it exists and is still mounted
+    if (_playPauseOverlayEntry != null) {
+      try {
+        _playPauseOverlayEntry!.remove();
+        debugPrint('🎯 Play/pause overlay cleaned up');
+      } catch (e) {
+        debugPrint('🎯 Error removing play/pause overlay: $e');
+      } finally {
+        _playPauseOverlayEntry = null;
+      }
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     if (!_isInitialized) return;
-    
+
     switch (state) {
       case AppLifecycleState.resumed:
         debugPrint('📱 App resumed - checking tab visibility');
         _checkAndUpdateTabVisibility();
         ScreenTimeoutService.onAppResumed();
         break;
-        
+
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
@@ -79,7 +118,7 @@ class _FingleScreenState extends State<FingleScreen>
         _videoProvider.pauseCurrentVideo();
         ScreenTimeoutService.onAppPaused();
         break;
-        
+
       case AppLifecycleState.detached:
         debugPrint('📱 App detached - cleaning up');
         ScreenTimeoutService.dispose();
@@ -89,7 +128,11 @@ class _FingleScreenState extends State<FingleScreen>
 
   Future<void> _showCommentsSheet(VideoPost video) async {
     _onUserInteraction();
-    
+
+    setState(() {
+      _isCommentsVisible = true;
+    });
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -102,11 +145,15 @@ class _FingleScreenState extends State<FingleScreen>
         },
       ),
     );
+
+    setState(() {
+      _isCommentsVisible = false;
+    });
   }
 
   Future<void> _showReactionDetailsSheet(VideoPost video) async {
     _onUserInteraction();
-    
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -124,7 +171,7 @@ class _FingleScreenState extends State<FingleScreen>
 
   Future<void> _showRecommendationDetailsSheet(VideoPost video) async {
     _onUserInteraction();
-    
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -142,7 +189,7 @@ class _FingleScreenState extends State<FingleScreen>
 
   Future<void> _showShareSheet(VideoPost video) async {
     _onUserInteraction();
-    
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -161,24 +208,25 @@ class _FingleScreenState extends State<FingleScreen>
   void _checkAndUpdateTabVisibility() {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     final isFingleTabActive = appProvider.currentIndex == 2;
-    
-    debugPrint('🔍 Tab visibility check: isFingleTabActive=$isFingleTabActive, wasVisible=$_wasTabVisible');
-    
+
+    debugPrint(
+        '🔍 Tab visibility check: isFingleTabActive=$isFingleTabActive, wasVisible=$_wasTabVisible');
+
     if (isFingleTabActive && !_wasTabVisible) {
       _onTabVisible();
     } else if (!isFingleTabActive && _wasTabVisible) {
       _onTabInvisible();
     }
-    
+
     _wasTabVisible = isFingleTabActive;
   }
 
   void _onTabVisible() {
     debugPrint('🟢 Fingle tab became VISIBLE - enabling screen timeout');
     _videoProvider.setTabVisibility(true);
-    
+
     ScreenTimeoutService.enableExtendedTimeout();
-    
+
     if (_isInitialized && _videoProvider.videos.isNotEmpty) {
       if (_videoProvider.currentIndex == 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -196,26 +244,27 @@ class _FingleScreenState extends State<FingleScreen>
   void _onTabInvisible() {
     debugPrint('🔴 Fingle tab became INVISIBLE - disabling screen timeout');
     _videoProvider.setTabVisibility(false);
-    
+
     ScreenTimeoutService.disableExtendedTimeout();
   }
 
   Future<void> _initializeVideoFeed() async {
     debugPrint('=== 🚀 INITIALIZING VIDEO FEED ===');
-    
+
     _videoProvider = Provider.of<VideoFeedProvider>(context, listen: false);
     await _videoProvider.initialize();
-    
+
     setState(() {
       _isInitialized = true;
     });
-    
-    debugPrint('✅ Initialized: $_isInitialized, Videos: ${_videoProvider.videos.length}');
-    
+
+    debugPrint(
+        '✅ Initialized: $_isInitialized, Videos: ${_videoProvider.videos.length}');
+
     if (_videoProvider.videos.isNotEmpty) {
       await _videoProvider.setCurrentIndex(0);
       debugPrint('📹 Set current index to 0');
-      
+
       if (_pageController.hasClients) {
         _pageController.animateToPage(
           0,
@@ -224,9 +273,9 @@ class _FingleScreenState extends State<FingleScreen>
         );
       }
     }
-    
+
     _checkAndUpdateTabVisibility();
-    
+
     debugPrint('=== ✅ VIDEO FEED INITIALIZATION COMPLETE ===');
   }
 
@@ -238,7 +287,7 @@ class _FingleScreenState extends State<FingleScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    
+
     return Consumer<AppProvider>(
       builder: (context, appProvider, child) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -246,14 +295,15 @@ class _FingleScreenState extends State<FingleScreen>
             _checkAndUpdateTabVisibility();
           }
         });
-        
+
         return Scaffold(
           backgroundColor: Colors.black,
           body: GestureDetector(
             onTap: _onUserInteraction,
             child: Consumer<VideoFeedProvider>(
               builder: (context, provider, child) {
-                if (!_isInitialized || provider.isLoading && provider.videos.isEmpty) {
+                if (!_isInitialized ||
+                    provider.isLoading && provider.videos.isEmpty) {
                   return _buildLoadingScreen();
                 }
 
@@ -268,7 +318,6 @@ class _FingleScreenState extends State<FingleScreen>
                       height: double.infinity,
                       color: Colors.black,
                     ),
-                    
                     PageView.builder(
                       controller: _pageController,
                       scrollDirection: Axis.vertical,
@@ -296,7 +345,6 @@ class _FingleScreenState extends State<FingleScreen>
                                   height: double.infinity,
                                   color: Colors.black,
                                 ),
-                                
                                 if (isActive) ...[
                                   VideoPlayerWidget(
                                     video: video,
@@ -306,10 +354,48 @@ class _FingleScreenState extends State<FingleScreen>
                                     onTap: _onVideoTap,
                                     onDoubleTap: () => _onVideoDoubleTap(video),
                                   ),
-                                  
+
+                                  // Combined overlays with separate visibility logic
                                   RepaintBoundary(
-                                    child: _buildVideoOverlays(video, provider),
+                                    child: _buildAllOverlays(video, provider),
                                   ),
+
+                                  // Center play/pause button (visible when UI is hidden)
+                                  if (!_isInteractiveUIVisible)
+                                    Center(
+                                      child: GestureDetector(
+                                        onTap: _onVideoPlayPauseTap,
+                                        child: AnimatedOpacity(
+                                          opacity: !_isInteractiveUIVisible
+                                              ? 0.8
+                                              : 0.0,
+                                          duration:
+                                              const Duration(milliseconds: 300),
+                                          child: Container(
+                                            width: 80,
+                                            height: 80,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Colors.black.withOpacity(0.3),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Colors.white
+                                                    .withOpacity(0.2),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Icon(
+                                              controller != null &&
+                                                      controller.value.isPlaying
+                                                  ? Icons.pause
+                                                  : Icons.play_arrow,
+                                              color: Colors.white,
+                                              size: 40,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                 ] else ...[
                                   Container(
                                     width: double.infinity,
@@ -318,7 +404,8 @@ class _FingleScreenState extends State<FingleScreen>
                                     child: Image.network(
                                       video.thumbnailUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
                                         return Container(
                                           color: Colors.black,
                                           child: const Center(
@@ -339,7 +426,6 @@ class _FingleScreenState extends State<FingleScreen>
                         );
                       },
                     ),
-                    
                     if (provider.isLoading && provider.videos.isNotEmpty)
                       Positioned(
                         bottom: 50,
@@ -375,11 +461,11 @@ class _FingleScreenState extends State<FingleScreen>
 
   void _onPageChanged(int index) async {
     debugPrint('📄 Page changed to index: $index');
-    
+
     _onUserInteraction();
-    
+
     await _videoProvider.setCurrentIndex(index);
-    
+
     if (_videoProvider.shouldLoadMore) {
       debugPrint('📥 Loading more videos...');
       _videoProvider.loadMoreVideos();
@@ -387,9 +473,130 @@ class _FingleScreenState extends State<FingleScreen>
   }
 
   void _onVideoTap() {
-    debugPrint('👆 Video tapped - toggling play/pause');
+    debugPrint(
+        '👆 Video tapped - reactionPickerVisible: $_isReactionPickerVisible, commentsVisible: $_isCommentsVisible');
+    _onUserInteraction();
+
+    // Only toggle play/pause if no UI overlays are active
+    if (!_isReactionPickerVisible && !_isCommentsVisible) {
+      debugPrint('👆 Video tapped - toggling play/pause');
+      _videoProvider.togglePlayPause();
+      _showPlayPauseIcon();
+
+      // Don't toggle UI visibility when showing play/pause feedback
+      // The animated overlay will handle the feedback
+      return;
+    } else {
+      debugPrint(
+          '🚫 Video tap ignored - UI overlay active (reactionPicker: $_isReactionPickerVisible, comments: $_isCommentsVisible)');
+    }
+
+    // Only toggle interactive UI visibility when NOT showing play/pause feedback
+    _toggleInteractiveUIVisibility();
+  }
+
+  void _toggleInteractiveUIVisibility() {
+    setState(() {
+      _isInteractiveUIVisible = !_isInteractiveUIVisible;
+    });
+
+    if (_isInteractiveUIVisible) {
+      _startInteractiveUIHideTimer();
+    } else {
+      _uiHideTimer?.cancel();
+    }
+  }
+
+  void _startInteractiveUIHideTimer() {
+    _uiHideTimer?.cancel();
+    _uiHideTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _isInteractiveUIVisible = false;
+        });
+      }
+    });
+  }
+
+  void _onVideoPlayPauseTap() {
+    debugPrint('👆 Video play/pause tapped');
     _onUserInteraction();
     _videoProvider.togglePlayPause();
+    _showPlayPauseIcon();
+  }
+
+  void _showPlayPauseIcon() {
+    debugPrint('🎯 _showPlayPauseIcon called - mounted: $mounted');
+    if (!mounted) return;
+
+    final currentVideo = _videoProvider.currentVideo;
+    if (currentVideo == null) return;
+
+    final controller = _videoProvider.getController(currentVideo.id);
+    if (controller == null) return;
+
+    // Clean up existing overlay
+    _cleanupPlayPauseOverlay();
+
+    // Show temporary feedback immediately (handled by overlay)
+
+    final isPlaying = controller.value.isPlaying;
+    debugPrint(
+        '🎯 Showing play/pause overlay - isPlaying: $isPlaying, will show: ${isPlaying ? 'pause' : 'play'} icon');
+
+    // Create new overlay with error handling
+    try {
+      _playPauseOverlayEntry = _createPlayPauseOverlay(isPlaying);
+      Overlay.of(context).insert(_playPauseOverlayEntry!);
+
+      // Backup cleanup timer (animation completes at 600ms)
+      _playPauseTimer = Timer(const Duration(milliseconds: 650), () {
+        _cleanupPlayPauseOverlay();
+      });
+    } catch (e) {
+      debugPrint('🎯 Error creating play/pause overlay: $e');
+      _cleanupPlayPauseOverlay();
+    }
+  }
+
+  OverlayEntry _createPlayPauseOverlay(bool isPlaying) {
+    return OverlayEntry(
+      builder: (context) => Material(
+        color: Colors.transparent,
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 600),
+            tween: Tween(begin: 0.0, end: 1.0),
+            onEnd: () {
+              // Remove overlay immediately when animation completes
+              _cleanupPlayPauseOverlay();
+            },
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value < 0.5 ? value * 2 : (1 - value) * 2,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    isPlaying ? Icons.pause : Icons.play_arrow,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   void _onProgressBarTap() {
@@ -400,7 +607,7 @@ class _FingleScreenState extends State<FingleScreen>
   void _onVideoDoubleTap(VideoPost video) {
     debugPrint('👆👆 Video double-tapped - adding fire reaction');
     _onUserInteraction();
-    
+
     // Double tap adds fire reaction
     _videoProvider.toggleReaction(video.id, ReactionType.fire);
     _showReactionAnimation(ReactionType.fire);
@@ -408,11 +615,16 @@ class _FingleScreenState extends State<FingleScreen>
 
   void _showReactionAnimation(ReactionType reactionType) {
     HapticFeedback.mediumImpact();
-    
+
     final reactionData = ReactionData.getReactionData(reactionType);
-    
-    OverlayEntry? overlayEntry;
-    overlayEntry = OverlayEntry(
+
+    // Remove existing reaction animation if present
+    if (_reactionAnimationOverlayEntry != null) {
+      _reactionAnimationOverlayEntry!.remove();
+      _reactionAnimationOverlayEntry = null;
+    }
+
+    _reactionAnimationOverlayEntry = OverlayEntry(
       builder: (context) => Positioned(
         left: MediaQuery.of(context).size.width / 2 - 30,
         top: MediaQuery.of(context).size.height / 2 - 30,
@@ -431,56 +643,77 @@ class _FingleScreenState extends State<FingleScreen>
               ),
             );
           },
-          onEnd: () => overlayEntry?.remove(),
+          onEnd: () {
+            if (_reactionAnimationOverlayEntry != null) {
+              _reactionAnimationOverlayEntry!.remove();
+              _reactionAnimationOverlayEntry = null;
+            }
+          },
         ),
       ),
     );
-    
-    Overlay.of(context).insert(overlayEntry);
+
+    Overlay.of(context).insert(_reactionAnimationOverlayEntry!);
   }
 
-  Widget _buildVideoOverlays(VideoPost video, VideoFeedProvider provider) {
+  Widget _buildAllOverlays(VideoPost video, VideoFeedProvider provider) {
     return Stack(
       children: [
-        _buildTopOverlay(),
-        
-        Positioned(
-          right: 12,
-          bottom: 100,
-          child: _buildRightActions(video, provider),
-        ),
-        
-        Positioned(
-          bottom: 30,
-          left: 0,
-          right: 100,
-          child: _buildBottomInfo(video, provider),
-        ),
-        
+        // Always visible UI elements (permanent)
+        _buildAlwaysVisibleElements(video, provider),
+
+        // Interactive UI elements (user-controlled)
+        if (_isInteractiveUIVisible) ...[
+          _buildTopOverlay(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildAlwaysVisibleElements(
+      VideoPost video, VideoFeedProvider provider) {
+    return Stack(
+      children: [
+        // Progress bar at bottom edge (always visible)
         Positioned(
           bottom: 0,
           left: 0,
           right: 0,
-          child: Container(
-            height: 10,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.1),
-                ],
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 4,
+              child: FingleVideoProgressIndicator(
+                controller: provider.getController(video.id),
+                onTap: _onProgressBarTap,
               ),
             ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: FingleVideoProgressIndicator(
-                  controller: provider.getController(video.id),
-                  onTap: _onProgressBarTap,
-                ),
+          ),
+        ),
+
+        // Left content: Profile + Account info (always visible)
+        Positioned(
+          bottom: 30,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Left side: Profile + Account info
+                  Expanded(
+                    child: _buildLeftContent(video, provider),
+                  ),
+
+                  // Right side: Action buttons
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: _buildRightActions(video, provider),
+                  ),
+                ],
               ),
             ),
           ),
@@ -549,45 +782,6 @@ class _FingleScreenState extends State<FingleScreen>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Creator Avatar with Follow Button
-        GestureDetector(
-          onTap: () {
-            _onUserInteraction();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('View ${video.creator.name}\'s profile'),
-                duration: const Duration(seconds: 1),
-              ),
-            );
-          },
-          child: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: ClipOval(
-              child: Image.network(
-                video.creator.profilePic,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: AppColors.primary,
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-        
-        const SizedBox(height: 24),
-        
         // NEW: Reaction Button (replaces like button)
         ReactionButton(
           reactionSummary: video.reactionSummary,
@@ -600,10 +794,17 @@ class _FingleScreenState extends State<FingleScreen>
             _showReactionDetailsSheet(video);
           },
           onResetTimeout: _onUserInteraction,
+          onPickerVisibilityChanged: (isVisible) {
+            debugPrint(
+                '🎯 FingleScreen: Reaction picker visibility changed to: $isVisible');
+            setState(() {
+              _isReactionPickerVisible = isVisible;
+            });
+          },
         ),
-        
-        const SizedBox(height: 24),
-        
+
+        SizedBox(height: kButtonSpacing),
+
         // NEW: Recommend Button
         RecommendButton(
           recommendCount: video.recommendations.length,
@@ -618,9 +819,9 @@ class _FingleScreenState extends State<FingleScreen>
           },
           onResetTimeout: _onUserInteraction,
         ),
-        
-        const SizedBox(height: 24),
-        
+
+        SizedBox(height: kButtonSpacing),
+
         // Comment Button
         _buildActionButton(
           icon: Icons.chat_bubble_outline,
@@ -632,19 +833,31 @@ class _FingleScreenState extends State<FingleScreen>
             builder: (context, commentsProvider, child) {
               final totalComments = commentsProvider.getTotalComments(video.id);
               return Text(
-                _formatCount(totalComments > 0 ? totalComments : video.comments),
-                style: const TextStyle(
+                _formatCount(
+                    totalComments > 0 ? totalComments : video.comments),
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
+                  fontSize: kButtonTextSize,
                   fontWeight: FontWeight.w600,
+                  height: 1.0,
+                  shadows: [
+                    Shadow(
+                      offset: const Offset(0, 1),
+                      blurRadius: 3.0,
+                      color: Colors.black.withOpacity(0.8),
+                    ),
+                  ],
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               );
             },
           ),
         ),
-        
-        const SizedBox(height: 24),
-        
+
+        SizedBox(height: kButtonSpacing),
+
         // Share Button
         _buildActionButton(
           icon: Icons.share,
@@ -654,118 +867,182 @@ class _FingleScreenState extends State<FingleScreen>
           },
           child: Text(
             _formatCount(video.shares),
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 12,
+              fontSize: kButtonTextSize,
               fontWeight: FontWeight.w600,
+              height: 1.0,
+              shadows: [
+                Shadow(
+                  offset: const Offset(0, 1),
+                  blurRadius: 3.0,
+                  color: Colors.black.withOpacity(0.8),
+                ),
+              ],
             ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildBottomInfo(VideoPost video, VideoFeedProvider provider) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            Colors.black.withOpacity(0.2),
-            Colors.black.withOpacity(0.6),
-          ],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '@${video.creator.name.toLowerCase().replaceAll(' ', '')}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (video.creator.isVerified) ...[
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.verified,
-                    color: Colors.blue,
-                    size: 16,
-                  ),
-                ],
-                const SizedBox(width: 12),
-                if (!video.isFollowing)
-                  GestureDetector(
-                    onTap: () {
-                      _onUserInteraction();
-                      provider.toggleFollow(video.creator.id);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'Follow',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            
-            const SizedBox(height: 8),
-            
-            Text(
-              video.title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            
-            const SizedBox(height: 8),
-            
-            if (video.tags.isNotEmpty)
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: video.tags.take(3).map((tag) {
-                  return Text(
-                    '#$tag',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+  Widget _buildLeftContent(VideoPost video, VideoFeedProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Profile + Username row
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  _onUserInteraction();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('View ${video.creator.name}\'s profile'),
+                      duration: const Duration(seconds: 1),
                     ),
                   );
-                }).toList(),
+                },
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: ClipOval(
+                    child: Image.network(
+                      video.creator.profilePic,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppColors.primary,
+                          child: const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
-          ],
-        ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '@${video.creator.name.toLowerCase().replaceAll(' ', '')}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(0, 1),
+                                  blurRadius: 3.0,
+                                  color: Colors.black,
+                                ),
+                              ],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (video.creator.isVerified) ...[
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.verified,
+                            color: Colors.blue,
+                            size: 16,
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (!video.isFollowing)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: GestureDetector(
+                          onTap: () {
+                            _onUserInteraction();
+                            provider.toggleFollow(video.creator.id);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: const Text(
+                              'Follow',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Video caption
+          Text(
+            video.title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              shadows: [
+                Shadow(
+                  offset: Offset(0, 1),
+                  blurRadius: 3.0,
+                  color: Colors.black,
+                ),
+              ],
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          const SizedBox(height: 8),
+
+          // Tags
+          if (video.tags.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: video.tags.take(3).map((tag) {
+                return Text(
+                  '#$tag',
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
       ),
     );
   }
@@ -822,7 +1099,8 @@ class _FingleScreenState extends State<FingleScreen>
           ElevatedButton(
             onPressed: () {
               _onUserInteraction();
-              Provider.of<VideoFeedProvider>(context, listen: false).refreshFeed();
+              Provider.of<VideoFeedProvider>(context, listen: false)
+                  .refreshFeed();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
@@ -901,38 +1179,76 @@ class _AnimatedActionButtonState extends State<_AnimatedActionButton>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) {
-        _controller.forward();
-        HapticFeedback.lightImpact();
-      },
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    widget.icon,
-                    color: Colors.white,
-                    size: 32,
+    return Container(
+      width: kTotalButtonWidth,
+      height: kTotalButtonHeight,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon area with primary action
+          GestureDetector(
+            onTapDown: (_) {
+              _controller.forward();
+              HapticFeedback.lightImpact();
+            },
+            onTapUp: (_) {
+              _controller.reverse();
+              widget.onTap();
+            },
+            onTapCancel: () => _controller.reverse(),
+            child: AnimatedBuilder(
+              animation: _scaleAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Container(
+                    width: kButtonContainerSize,
+                    height: kButtonContainerSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.1),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.25),
+                        width: kButtonBorderWidth,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      widget.icon,
+                      color: Colors.white,
+                      size: kButtonIconSize,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  widget.child,
+                );
+              },
+            ),
+          ),
+          SizedBox(height: kTextIconGap),
+          // Number area - no action, just display
+          Container(
+            width: kButtonContainerSize,
+            height: kTextHeight,
+            alignment: Alignment.center,
+            child: DefaultTextStyle(
+              style: TextStyle(
+                shadows: [
+                  Shadow(
+                    offset: Offset(0, 1),
+                    blurRadius: 3.0,
+                    color: Colors.black.withOpacity(0.8),
+                  ),
                 ],
               ),
+              child: widget.child,
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

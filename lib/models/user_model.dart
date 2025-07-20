@@ -70,6 +70,7 @@ class User {
   final List<Achievement> achievements;
   final bool isVerified;
   final bool isFollowing;
+  final bool openToMingle;
   final DateTime joinedAt;
   final List<String> interests;
   final int followers;
@@ -87,6 +88,7 @@ class User {
     required this.achievements,
     this.isVerified = false,
     this.isFollowing = false,
+    this.openToMingle = false,
     required this.joinedAt,
     required this.interests,
     required this.followers,
@@ -105,6 +107,7 @@ class User {
     List<Achievement>? achievements,
     bool? isVerified,
     bool? isFollowing,
+    bool? openToMingle,
     DateTime? joinedAt,
     List<String>? interests,
     int? followers,
@@ -122,6 +125,7 @@ class User {
       achievements: achievements ?? this.achievements,
       isVerified: isVerified ?? this.isVerified,
       isFollowing: isFollowing ?? this.isFollowing,
+      openToMingle: openToMingle ?? this.openToMingle,
       joinedAt: joinedAt ?? this.joinedAt,
       interests: interests ?? this.interests,
       followers: followers ?? this.followers,
@@ -135,11 +139,15 @@ final User sampleUser = User(
   id: '1',
   name: 'Alex Johnson',
   age: 28,
-  bio: 'Fitness junkie | Love hiking | Looking for someone to spot me 💪🏽\nTransforming lives through fitness 🔥',
-  profilePic: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=300&h=300&fit=crop&crop=face',
-  coverImage: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=400&fit=crop',
+  bio:
+      'Fitness junkie | Love hiking | Looking for someone to spot me 💪🏽\nTransforming lives through fitness 🔥',
+  profilePic:
+      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=300&h=300&fit=crop&crop=face',
+  coverImage:
+      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=400&fit=crop',
   isVerified: true,
   isFollowing: false,
+  openToMingle: true,
   joinedAt: DateTime(2023, 6, 15),
   interests: ['Strength Training', 'Cardio', 'Yoga', 'Nutrition', 'HIIT'],
   followers: 12500,
@@ -179,7 +187,8 @@ final User sampleUser = User(
   posts: [
     Post(
       id: '1',
-      imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&h=300&fit=crop',
       category: 'Gym',
       title: 'Chest day here it is',
       description: 'Intense chest workout with heavy weights. Feeling pumped!',
@@ -192,7 +201,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '2',
-      imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=300&fit=crop',
       category: 'Gym',
       title: 'Deadlift PR',
       description: 'Hit a new personal record on deadlifts today! 💪',
@@ -205,7 +215,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '3',
-      imageUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=300&h=300&fit=crop',
       category: 'Gym',
       title: 'Leg Day Beast Mode',
       description: 'Squats and lunges had me feeling like a beast! 🦵',
@@ -214,11 +225,12 @@ final User sampleUser = User(
       comments: 19,
       shares: 3,
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
-       tags: ['legs', 'squats', 'beast', 'pump'],
+      tags: ['legs', 'squats', 'beast', 'pump'],
     ),
     Post(
       id: '4',
-      imageUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=300&h=300&fit=crop',
       category: 'Gym',
       title: 'Back and Biceps',
       description: 'Pull day complete! Back and biceps are on fire 🔥',
@@ -231,7 +243,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '5',
-      imageUrl: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=300&h=300&fit=crop',
       category: 'Gym',
       title: 'Shoulder Shred',
       description: 'Shoulder definition is getting better every day! 💪',
@@ -244,7 +257,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '6',
-      imageUrl: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=300&h=300&fit=crop',
       category: 'Sports',
       title: 'Soccer Training',
       description: 'Working on my footwork and ball control ⚽',
@@ -257,7 +271,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '7',
-      imageUrl: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=300&h=300&fit=crop',
       category: 'Sports',
       title: 'Tennis Practice',
       description: 'Perfecting my serve and backhand 🎾',
@@ -270,7 +285,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '8',
-      imageUrl: 'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=300&h=300&fit=crop',
       category: 'Sports',
       title: 'Football Skills',
       description: 'Touchdown practice and route running drills 🏈',
@@ -283,7 +299,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '9',
-      imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=300&h=300&fit=crop',
       category: 'Sports',
       title: 'Basketball Drills',
       description: 'Shooting hoops and working on my crossover 🏀',
@@ -296,7 +313,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '10',
-      imageUrl: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1551632811-561732d1e306?w=300&h=300&fit=crop',
       category: 'Adventure',
       title: 'Mountain Hiking',
       description: 'Reached the summit after 3 hours of hiking! 🏔️',
@@ -309,7 +327,8 @@ final User sampleUser = User(
     ),
     Post(
       id: '11',
-      imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop',
       category: 'Adventure',
       title: 'Peak Adventure',
       description: 'Another mountain conquered! The view was breathtaking 🌅',
@@ -322,10 +341,12 @@ final User sampleUser = User(
     ),
     Post(
       id: '12',
-      imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&h=300&fit=crop',
       category: 'Adventure',
       title: 'Kayaking Fun',
-      description: 'Peaceful morning on the water. Nature therapy at its best! 🚣',
+      description:
+          'Peaceful morning on the water. Nature therapy at its best! 🚣',
       likes: 178,
       views: 734,
       comments: 14,

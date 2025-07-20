@@ -50,7 +50,8 @@ class _ZoomableImageState extends State<ZoomableImage>
     _animation = Matrix4Tween(
       begin: _transformationController.value,
       end: endMatrix,
-    ).animate(CurveTween(curve: Curves.easeInOut).animate(_animationController));
+    ).animate(
+        CurveTween(curve: Curves.easeInOut).animate(_animationController));
 
     _animation!.addListener(() {
       _transformationController.value = _animation!.value;

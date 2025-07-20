@@ -26,26 +26,25 @@ class CommentInput extends StatefulWidget {
 
 class _CommentInputState extends State<CommentInput>
     with SingleTickerProviderStateMixin {
-  
   late TextEditingController _textController;
   late AnimationController _sendButtonController;
   late Animation<double> _sendButtonAnimation;
-  
+
   bool _hasText = false;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    
+
     _textController = TextEditingController();
     _textController.addListener(_onTextChanged);
-    
+
     _sendButtonController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _sendButtonAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
@@ -68,7 +67,7 @@ class _CommentInputState extends State<CommentInput>
       setState(() {
         _hasText = hasText;
       });
-      
+
       if (hasText) {
         _sendButtonController.forward();
       } else {
@@ -82,12 +81,13 @@ class _CommentInputState extends State<CommentInput>
     if (content.isEmpty || _isSubmitting) return;
 
     widget.onResetTimeout?.call();
-    
+
     setState(() {
       _isSubmitting = true;
     });
 
-    final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
+    final commentsProvider =
+        Provider.of<CommentsProvider>(context, listen: false);
     final state = commentsProvider.getCommentsState(widget.video.id);
     final wasReplying = state.replyingToId != null;
 
@@ -99,33 +99,32 @@ class _CommentInputState extends State<CommentInput>
           state.replyingToId!,
           content,
         );
-        
+
         debugPrint('✅ Reply sent successfully');
       } else {
         // Adding a new comment
         await commentsProvider.addComment(widget.video.id, content);
-        
+
         debugPrint('✅ Comment sent successfully');
       }
 
       // Clear input after sending
       _textController.clear();
-      
+
       // Automatically clear reply state after successful submission
       if (wasReplying) {
         commentsProvider.clearReplyingTo(widget.video.id);
         debugPrint('🔄 Reply state cleared automatically after sending');
       }
-      
+
       // Unfocus input
       widget.focusNode.unfocus();
-      
+
       // Haptic feedback
       HapticFeedback.lightImpact();
-      
+
       // Notify parent
       widget.onSubmitted?.call();
-
     } catch (e) {
       // Show error
       if (mounted) {
@@ -149,35 +148,35 @@ class _CommentInputState extends State<CommentInput>
   void _cancelReply() {
     // ✅ ENHANCED: Better cancel reply with explicit state management
     widget.onResetTimeout?.call();
-    
+
     debugPrint('🔄 Cancel reply button clicked');
-    
-    final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
-    
+
+    final commentsProvider =
+        Provider.of<CommentsProvider>(context, listen: false);
+
     // ✅ FORCE STATE UPDATE: Clear reply state and trigger rebuild
     try {
       commentsProvider.clearReplyingTo(widget.video.id);
       debugPrint('🔄 Reply state cleared in provider');
-      
+
       // ✅ FORCE REBUILD: Ensure the UI updates immediately
       if (mounted) {
         setState(() {
           // This forces a rebuild of this widget to reflect the change
         });
       }
-      
+
       debugPrint('🔄 UI state updated - reply indicator should disappear');
-      
     } catch (e) {
       debugPrint('❌ Error clearing reply state: $e');
     }
-    
+
     // ✅ DO NOT clear text - keep user's typed content
     // ✅ DO NOT unfocus - let user continue typing
-    
+
     // Haptic feedback
     HapticFeedback.lightImpact();
-    
+
     debugPrint('🔄 Reply cancelled - text preserved, indicator should be gone');
   }
 
@@ -187,10 +186,11 @@ class _CommentInputState extends State<CommentInput>
       builder: (context, commentsProvider, child) {
         final state = commentsProvider.getCommentsState(widget.video.id);
         final isReplying = state.replyingToId != null;
-        
+
         // ✅ DEBUG: Log the current state
-        debugPrint('🔍 Build - isReplying: $isReplying, replyingToId: ${state.replyingToId}');
-        
+        debugPrint(
+            '🔍 Build - isReplying: $isReplying, replyingToId: ${state.replyingToId}');
+
         return Container(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
           child: Column(
@@ -201,19 +201,20 @@ class _CommentInputState extends State<CommentInput>
                 _buildReplyIndicator(state, commentsProvider),
                 const SizedBox(height: 8),
               ],
-              
+
               // Input row
               Row(
                 children: [
                   // User avatar
                   CircleAvatar(
                     radius: 14,
-                    backgroundImage: NetworkImage(commentsProvider.currentUser.profilePic),
+                    backgroundImage:
+                        NetworkImage(commentsProvider.currentUser.profilePic),
                     backgroundColor: Colors.grey[800],
                   ),
-                  
+
                   const SizedBox(width: 10),
-                  
+
                   // Input field
                   Expanded(
                     child: Container(
@@ -221,7 +222,7 @@ class _CommentInputState extends State<CommentInput>
                         color: Colors.grey[900],
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: widget.focusNode.hasFocus 
+                          color: widget.focusNode.hasFocus
                               ? AppColors.primary.withOpacity(0.4)
                               : Colors.transparent,
                           width: 1,
@@ -235,7 +236,7 @@ class _CommentInputState extends State<CommentInput>
                           fontSize: 14,
                         ),
                         decoration: InputDecoration(
-                          hintText: isReplying 
+                          hintText: isReplying
                               ? 'Reply to ${state.replyingToUser?.name}...'
                               : 'Add a comment...',
                           hintStyle: TextStyle(
@@ -257,9 +258,9 @@ class _CommentInputState extends State<CommentInput>
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   // Send button
                   AnimatedBuilder(
                     animation: _sendButtonAnimation,
@@ -276,7 +277,9 @@ class _CommentInputState extends State<CommentInput>
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
-                            onPressed: _hasText && !_isSubmitting ? _submitComment : null,
+                            onPressed: _hasText && !_isSubmitting
+                                ? _submitComment
+                                : null,
                             icon: _isSubmitting
                                 ? const SizedBox(
                                     width: 14,
@@ -288,7 +291,9 @@ class _CommentInputState extends State<CommentInput>
                                   )
                                 : Icon(
                                     Icons.send,
-                                    color: _hasText ? Colors.white : Colors.white.withOpacity(0.5),
+                                    color: _hasText
+                                        ? Colors.white
+                                        : Colors.white.withOpacity(0.5),
                                     size: 16,
                                   ),
                           ),
@@ -305,7 +310,8 @@ class _CommentInputState extends State<CommentInput>
     );
   }
 
-  Widget _buildReplyIndicator(CommentsState state, CommentsProvider commentsProvider) {
+  Widget _buildReplyIndicator(
+      CommentsState state, CommentsProvider commentsProvider) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(

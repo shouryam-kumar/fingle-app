@@ -13,10 +13,12 @@ class FingleVideoProgressIndicator extends StatefulWidget {
   });
 
   @override
-  State<FingleVideoProgressIndicator> createState() => _FingleVideoProgressIndicatorState();
+  State<FingleVideoProgressIndicator> createState() =>
+      _FingleVideoProgressIndicatorState();
 }
 
-class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndicator> {
+class _FingleVideoProgressIndicatorState
+    extends State<FingleVideoProgressIndicator> {
   bool _isDragging = false;
   Duration _dragPosition = Duration.zero;
   VideoPlayerController? _currentController;
@@ -76,7 +78,7 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
     final controller = widget.controller!;
     final duration = controller.value.duration;
     final position = _isDragging ? _dragPosition : controller.value.position;
-    
+
     return Container(
       height: 4, // Slightly thicker for better visibility
       margin: const EdgeInsets.symmetric(horizontal: 0),
@@ -88,7 +90,8 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
         child: Container(
           height: 4,
           decoration: BoxDecoration(
-            color: Colors.transparent, // Transparent background for better touch
+            color:
+                Colors.transparent, // Transparent background for better touch
             borderRadius: BorderRadius.circular(2),
           ),
           child: LayoutBuilder(
@@ -96,9 +99,9 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
               final progress = duration.inMilliseconds > 0
                   ? position.inMilliseconds / duration.inMilliseconds
                   : 0.0;
-              
+
               final bufferedProgress = _getBufferedProgress(duration);
-              
+
               return Stack(
                 children: [
                   // Background track
@@ -110,7 +113,7 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
                       color: Colors.white.withOpacity(0.3),
                     ),
                   ),
-                  
+
                   // Buffered progress (shows what's loaded)
                   if (bufferedProgress > 0)
                     Container(
@@ -121,7 +124,7 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
                         color: Colors.white.withOpacity(0.5),
                       ),
                     ),
-                  
+
                   // Progress track (shows current position)
                   Container(
                     width: constraints.maxWidth * progress.clamp(0.0, 1.0),
@@ -144,28 +147,29 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
     if (widget.controller == null || !widget.controller!.value.isInitialized) {
       return 0.0;
     }
-    
+
     final buffered = widget.controller!.value.buffered;
     if (buffered.isEmpty || duration.inMilliseconds == 0) {
       return 0.0;
     }
-    
+
     // Find the buffered range that contains the current position
     final currentPosition = widget.controller!.value.position;
     DurationRange? relevantRange;
-    
+
     for (final range in buffered) {
       if (range.start <= currentPosition && currentPosition <= range.end) {
         relevantRange = range;
         break;
       }
     }
-    
+
     // If no relevant range found, use the last buffered range
     relevantRange ??= buffered.last;
-    
+
     final bufferedEnd = relevantRange.end;
-    return (bufferedEnd.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0);
+    return (bufferedEnd.inMilliseconds / duration.inMilliseconds)
+        .clamp(0.0, 1.0);
   }
 
   void _onTapDown(TapDownDetails details) {
@@ -190,7 +194,7 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
     if (_isDragging) {
       // Actually seek the video to the final position
       widget.controller?.seekTo(_dragPosition);
-      
+
       setState(() {
         _isDragging = false;
       });
@@ -205,15 +209,16 @@ class _FingleVideoProgressIndicatorState extends State<FingleVideoProgressIndica
     final double seekWidth = box.size.width;
     final double seekPosition = localPosition.dx.clamp(0.0, seekWidth);
     final double seekPercent = seekPosition / seekWidth;
-    
+
     final Duration newPosition = Duration(
-      milliseconds: (controller.value.duration.inMilliseconds * seekPercent).round(),
+      milliseconds:
+          (controller.value.duration.inMilliseconds * seekPercent).round(),
     );
 
     setState(() {
       _dragPosition = newPosition;
     });
-    
+
     // For immediate feedback during tap (not just drag)
     if (!_isDragging) {
       controller.seekTo(newPosition);

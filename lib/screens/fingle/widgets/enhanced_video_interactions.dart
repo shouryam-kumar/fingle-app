@@ -21,7 +21,8 @@ class EnhancedVideoInteractions extends StatefulWidget {
   });
 
   @override
-  State<EnhancedVideoInteractions> createState() => _EnhancedVideoInteractionsState();
+  State<EnhancedVideoInteractions> createState() =>
+      _EnhancedVideoInteractionsState();
 }
 
 class _EnhancedVideoInteractionsState extends State<EnhancedVideoInteractions>
@@ -34,17 +35,17 @@ class _EnhancedVideoInteractionsState extends State<EnhancedVideoInteractions>
   @override
   void initState() {
     super.initState();
-    
+
     _likeAnimationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _followAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _likeScaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.2,
@@ -52,7 +53,7 @@ class _EnhancedVideoInteractionsState extends State<EnhancedVideoInteractions>
       parent: _likeAnimationController,
       curve: Curves.elasticOut,
     ));
-    
+
     _followBounceAnimation = Tween<double>(
       begin: 1.0,
       end: 0.95,
@@ -92,24 +93,24 @@ class _EnhancedVideoInteractionsState extends State<EnhancedVideoInteractions>
       children: [
         // Creator Avatar with Follow Button
         _buildCreatorAvatar(),
-        
+
         const SizedBox(height: 24),
-        
+
         // Like Button
         _buildLikeButton(),
-        
+
         const SizedBox(height: 24),
-        
+
         // Comment Button
         _buildCommentButton(),
-        
+
         const SizedBox(height: 24),
-        
+
         // Share Button
         _buildShareButton(),
-        
+
         const SizedBox(height: 24),
-        
+
         // More Options Button
         _buildMoreOptionsButton(),
       ],
@@ -155,7 +156,7 @@ class _EnhancedVideoInteractionsState extends State<EnhancedVideoInteractions>
             ),
           ),
         ),
-        
+
         // Follow Button (if not following)
         if (!widget.video.isFollowing)
           Positioned(
@@ -211,7 +212,9 @@ class _EnhancedVideoInteractionsState extends State<EnhancedVideoInteractions>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    widget.video.isLiked ? Icons.favorite : Icons.favorite_border,
+                    widget.video.isLiked
+                        ? Icons.favorite
+                        : Icons.favorite_border,
                     color: widget.video.isLiked ? Colors.red : Colors.white,
                     size: 32,
                   ),

@@ -36,12 +36,12 @@ class _ReactionPickerState extends State<ReactionPicker>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _backgroundController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -77,7 +77,7 @@ class _ReactionPickerState extends State<ReactionPicker>
         duration: Duration(milliseconds: 150 + (i * 50)),
         vsync: this,
       );
-      
+
       final animation = Tween<double>(
         begin: 0.0,
         end: 1.0,
@@ -111,7 +111,7 @@ class _ReactionPickerState extends State<ReactionPicker>
   @override
   void didUpdateWidget(ReactionPicker oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.isVisible && !oldWidget.isVisible) {
       _showPicker();
     } else if (!widget.isVisible && oldWidget.isVisible) {
@@ -122,7 +122,7 @@ class _ReactionPickerState extends State<ReactionPicker>
   void _showPicker() {
     _backgroundController.forward();
     _controller.forward();
-    
+
     // Staggered animation for reactions
     for (int i = 0; i < _reactionControllers.length; i++) {
       Future.delayed(Duration(milliseconds: i * 50), () {
@@ -136,7 +136,7 @@ class _ReactionPickerState extends State<ReactionPicker>
   void _hidePicker() {
     _backgroundController.reverse();
     _controller.reverse();
-    
+
     for (final controller in _reactionControllers) {
       controller.reverse();
     }
@@ -165,7 +165,9 @@ class _ReactionPickerState extends State<ReactionPicker>
               scale: _scaleAnimation.value,
               child: Opacity(
                 opacity: _opacityAnimation.value,
-                child: widget.isVisible ? _buildReactionContainer() : const SizedBox.shrink(),
+                child: widget.isVisible
+                    ? _buildReactionContainer()
+                    : const SizedBox.shrink(),
               ),
             );
           },
@@ -208,7 +210,7 @@ class _ReactionPickerState extends State<ReactionPicker>
 
   Widget _buildReactionButton(ReactionData reactionData, int index) {
     final isSelected = widget.currentReaction == reactionData.type;
-    
+
     return AnimatedBuilder(
       animation: _reactionAnimations[index],
       builder: (context, child) {
@@ -220,7 +222,7 @@ class _ReactionPickerState extends State<ReactionPicker>
               margin: const EdgeInsets.symmetric(vertical: 4),
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isSelected 
+                color: isSelected
                     ? reactionData.color.withOpacity(0.2)
                     : Colors.transparent,
                 shape: BoxShape.circle,
@@ -270,7 +272,7 @@ class _ReactionEmojiState extends State<_ReactionEmoji>
   @override
   void initState() {
     super.initState();
-    
+
     _bounceController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -294,7 +296,7 @@ class _ReactionEmojiState extends State<_ReactionEmoji>
   @override
   void didUpdateWidget(_ReactionEmoji oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.isSelected && !oldWidget.isSelected) {
       _bounceController.forward().then((_) {
         _bounceController.reverse();

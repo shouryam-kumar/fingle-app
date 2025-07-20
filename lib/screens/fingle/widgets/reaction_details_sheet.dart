@@ -21,17 +21,17 @@ class _ReactionDetailsSheetState extends State<ReactionDetailsSheet>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   ReactionType? _selectedReactionType;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     final reactionTypes = widget.reactionSummary.counts.keys.toList();
     _tabController = TabController(
       length: reactionTypes.length + 1,
       vsync: this,
     );
-    
+
     if (reactionTypes.isNotEmpty) {
       _selectedReactionType = widget.reactionSummary.topReactionTypes.first;
     }
@@ -46,7 +46,8 @@ class _ReactionDetailsSheetState extends State<ReactionDetailsSheet>
   @override
   Widget build(BuildContext context) {
     final reactionTypes = widget.reactionSummary.counts.keys.toList()
-      ..sort((a, b) => widget.reactionSummary.getCount(b)
+      ..sort((a, b) => widget.reactionSummary
+          .getCount(b)
           .compareTo(widget.reactionSummary.getCount(a)));
 
     return Container(
@@ -141,9 +142,9 @@ class _ReactionDetailsSheetState extends State<ReactionDetailsSheet>
         tabs: [
           _buildTab(null, widget.reactionSummary.totalCount),
           ...reactionTypes.map((type) => _buildTab(
-            type,
-            widget.reactionSummary.getCount(type),
-          )),
+                type,
+                widget.reactionSummary.getCount(type),
+              )),
         ],
       ),
     );
@@ -229,7 +230,7 @@ class _ReactionDetailsSheetState extends State<ReactionDetailsSheet>
 
   Widget _buildReactionItem(Reaction reaction) {
     final reactionData = ReactionData.getReactionData(reaction.type);
-    
+
     return ListTile(
       leading: Stack(
         children: [
@@ -277,26 +278,6 @@ class _ReactionDetailsSheetState extends State<ReactionDetailsSheet>
         style: TextStyle(
           color: Colors.white.withOpacity(0.5),
           fontSize: 12,
-        ),
-      ),
-      trailing: OutlinedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Follow feature coming soon!'),
-              duration: Duration(seconds: 1),
-            ),
-          );
-        },
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: BorderSide(color: AppColors.primary),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          minimumSize: const Size(0, 32),
-        ),
-        child: const Text(
-          'Follow',
-          style: TextStyle(fontSize: 12),
         ),
       ),
       onTap: () {

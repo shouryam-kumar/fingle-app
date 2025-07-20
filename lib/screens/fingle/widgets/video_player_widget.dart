@@ -27,58 +27,9 @@ class VideoPlayerWidget extends StatefulWidget {
   State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
 }
 
-class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
-    with TickerProviderStateMixin {
-  late AnimationController _playPauseAnimationController;
-  late Animation<double> _playPauseAnimation;
-  
-  bool _showPlayPauseIcon = false;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    _playPauseAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    
-    _playPauseAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _playPauseAnimationController,
-      curve: Curves.easeInOut,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _playPauseAnimationController.dispose();
-    super.dispose();
-  }
-
+class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   void _onTap() {
     widget.onTap?.call();
-    _showPlayPauseIndicator();
-  }
-
-  void _showPlayPauseIndicator() {
-    if (widget.controller == null) return;
-    
-    setState(() {
-      _showPlayPauseIcon = true;
-    });
-    
-    _playPauseAnimationController.forward().then((_) {
-      _playPauseAnimationController.reverse().then((_) {
-        if (mounted) {
-          setState(() {
-            _showPlayPauseIcon = false;
-          });
-        }
-      });
-    });
   }
 
   @override
@@ -92,9 +43,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
         children: [
           // Video or thumbnail
           _buildVideoContent(),
-          
-          // Gesture detector
+
+          // Gesture detector - with behavior to not interfere with child gestures
           GestureDetector(
+            behavior: HitTestBehavior.translucent,
             onTap: _onTap,
             onDoubleTap: widget.onDoubleTap,
             child: Container(
@@ -103,38 +55,10 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
               color: Colors.transparent,
             ),
           ),
-          
-          // Play/pause indicator
-          if (_showPlayPauseIcon)
-            Center(
-              child: AnimatedBuilder(
-                animation: _playPauseAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: 0.5 + (_playPauseAnimation.value * 0.5),
-                    child: Opacity(
-                      opacity: 1.0 - _playPauseAnimation.value,
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _getPlayPauseIcon(),
-                          color: Colors.white,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          
+
           // Loading indicator overlay
-          if (widget.controller != null && 
-              widget.controller!.value.isInitialized && 
+          if (widget.controller != null &&
+              widget.controller!.value.isInitialized &&
               widget.controller!.value.isBuffering)
             Center(
               child: Container(
@@ -173,13 +97,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
 
   Widget _buildVideoContent() {
     // Improved logic for when to show video vs thumbnail
-    final bool isControllerReady = widget.controller != null && 
-                                  widget.controller!.value.isInitialized;
-    
+    final bool isControllerReady =
+        widget.controller != null && widget.controller!.value.isInitialized;
+
     // Show video if controller is ready AND video is active AND tab is visible
-    final bool shouldShowVideo = isControllerReady && 
-                                widget.isActive && 
-                                widget.isTabVisible;
+    final bool shouldShowVideo =
+        isControllerReady && widget.isActive && widget.isTabVisible;
 
     if (shouldShowVideo) {
       // Show video player
@@ -234,12 +157,5 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget>
         ),
       ),
     );
-  }
-
-  IconData _getPlayPauseIcon() {
-    if (widget.controller == null || !widget.controller!.value.isInitialized) {
-      return Icons.play_arrow;
-    }
-    return widget.controller!.value.isPlaying ? Icons.pause : Icons.play_arrow;
   }
 }

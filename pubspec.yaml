@@ -18,6 +18,9 @@ dependencies:
   cached_network_image: ^3.3.0
   video_player: ^2.7.0
   screen_brightness: ^2.1.5
+  google_fonts: ^6.1.0
+  flutter_staggered_animations: ^1.1.1
+  flutter_svg: ^2.0.9
   
   # Storage & Network
   shared_preferences: ^2.2.2
