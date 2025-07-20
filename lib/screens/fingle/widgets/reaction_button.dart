@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import '../../../models/reaction_models.dart';
-import '../../../core/theme/app_colors.dart';
 import 'enhanced_reaction_picker.dart';
 import '../constants/button_constants.dart';
+import '../constants/reaction_picker_positioning.dart';
 import 'dart:async';
 
 class ReactionButton extends StatefulWidget {
@@ -141,8 +141,18 @@ class _ReactionButtonState extends State<ReactionButton>
       // Web version: Use existing hover-based implementation
       _overlayEntry = OverlayEntry(
         builder: (context) => Positioned(
-          left: _calculateOptimalX(position, size, screenSize),
-          top: _calculateOptimalY(position, size, screenSize),
+          left: ReactionPickerPositioning.calculateOptimalX(
+            buttonPosition: position,
+            buttonSize: size,
+            screenSize: screenSize,
+            layout: widget.pickerLayout,
+          ),
+          top: ReactionPickerPositioning.calculateOptimalY(
+            buttonPosition: position,
+            buttonSize: size,
+            screenSize: screenSize,
+            layout: widget.pickerLayout,
+          ),
           child: EnhancedReactionPicker(
             isVisible: _isReactionPickerVisible,
             currentReaction: widget.reactionSummary.userReaction,
@@ -263,70 +273,6 @@ class _ReactionButtonState extends State<ReactionButton>
     }
   }
 
-  double _calculateOptimalX(Offset position, Size size, Size screenSize) {
-    final isHorizontal = widget.pickerLayout == ReactionPickerLayout.horizontal;
-    
-    if (isHorizontal) {
-      // For horizontal layout, center the picker over the button
-      // Horizontal picker width = 8 reactions * ~28px each + padding (~16px)
-      const pickerWidth = 240.0; // More accurate width for 8 compact reactions
-      double left = position.dx + (size.width / 2) - (pickerWidth / 2);
-      
-      // Ensure picker stays on screen
-      if (left < 10) {
-        left = 10;
-      }
-      if (left + pickerWidth > screenSize.width - 10) {
-        left = screenSize.width - pickerWidth - 10;
-      }
-      
-      return left;
-    } else {
-      // For vertical layout, keep original positioning logic
-      const pickerWidth = 60.0;
-      const buttonToPickerGap = 4.0;
-      double left = position.dx - pickerWidth - buttonToPickerGap;
-      
-      // Ensure picker stays on screen
-      if (left < 10) {
-        left = position.dx + size.width + buttonToPickerGap;
-      }
-      if (left + pickerWidth > screenSize.width - 10) {
-        left = screenSize.width - pickerWidth - 10;
-      }
-      
-      return left;
-    }
-  }
-
-  double _calculateOptimalY(Offset position, Size size, Size screenSize) {
-    final isHorizontal = widget.pickerLayout == ReactionPickerLayout.horizontal;
-    final pickerHeight = isHorizontal ? 48.0 : 280.0; // More accurate height for horizontal picker
-    
-    double top;
-    if (isHorizontal) {
-      // Position above the button for horizontal layout
-      top = position.dy - pickerHeight - 4.0; // 4px gap above button for tighter connection
-      
-      // If too close to top, position below instead
-      if (top < 50) {
-        top = position.dy + size.height + 4.0; // Position below button with same gap
-      }
-    } else {
-      // Center vertically for vertical layout
-      top = position.dy - (pickerHeight / 2) + (size.height / 2);
-    }
-
-    // Ensure picker stays on screen
-    if (top < 50) {
-      top = 50; // Leave space for status bar
-    }
-    if (top + pickerHeight > screenSize.height - 100) {
-      top = screenSize.height - pickerHeight - 100; // Leave space for navigation
-    }
-
-    return top;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -622,8 +568,18 @@ class _MobileReactionPickerOverlay extends StatelessWidget {
 
         // Reaction picker positioned near button
         Positioned(
-          left: _calculateOptimalX(),
-          top: _calculateOptimalY(),
+          left: ReactionPickerPositioning.calculateOptimalX(
+            buttonPosition: buttonPosition,
+            buttonSize: buttonSize,
+            screenSize: screenSize,
+            layout: pickerLayout,
+          ),
+          top: ReactionPickerPositioning.calculateOptimalY(
+            buttonPosition: buttonPosition,
+            buttonSize: buttonSize,
+            screenSize: screenSize,
+            layout: pickerLayout,
+          ),
           child: GestureDetector(
             onTap: () {}, // Prevent dismissal when tapping picker
             behavior: HitTestBehavior.opaque,
@@ -640,67 +596,4 @@ class _MobileReactionPickerOverlay extends StatelessWidget {
     );
   }
 
-  double _calculateOptimalX() {
-    final isHorizontal = pickerLayout == ReactionPickerLayout.horizontal;
-    
-    if (isHorizontal) {
-      // For horizontal layout, center the picker over the button
-      const pickerWidth = 240.0; // More accurate width for 8 compact reactions
-      double left = buttonPosition.dx + (buttonSize.width / 2) - (pickerWidth / 2);
-      
-      // Ensure picker stays on screen
-      if (left < 10) {
-        left = 10;
-      }
-      if (left + pickerWidth > screenSize.width - 10) {
-        left = screenSize.width - pickerWidth - 10;
-      }
-      
-      return left;
-    } else {
-      // For vertical layout, keep original positioning logic
-      const pickerWidth = 60.0;
-      const buttonToPickerGap = 4.0;
-      double left = buttonPosition.dx - pickerWidth - buttonToPickerGap;
-      
-      // Ensure picker stays on screen
-      if (left < 10) {
-        left = buttonPosition.dx + buttonSize.width + buttonToPickerGap;
-      }
-      if (left + pickerWidth > screenSize.width - 10) {
-        left = screenSize.width - pickerWidth - 10;
-      }
-      
-      return left;
-    }
-  }
-
-  double _calculateOptimalY() {
-    final isHorizontal = pickerLayout == ReactionPickerLayout.horizontal;
-    final pickerHeight = isHorizontal ? 48.0 : 280.0;
-    
-    double top;
-    if (isHorizontal) {
-      // Position above the button for horizontal layout
-      top = buttonPosition.dy - pickerHeight - 4.0;
-      
-      // If too close to top, position below instead
-      if (top < 50) {
-        top = buttonPosition.dy + buttonSize.height + 4.0;
-      }
-    } else {
-      // Center vertically for vertical layout
-      top = buttonPosition.dy - (pickerHeight / 2) + (buttonSize.height / 2);
-    }
-
-    // Ensure picker stays on screen
-    if (top < 50) {
-      top = 50;
-    }
-    if (top + pickerHeight > screenSize.height - 100) {
-      top = screenSize.height - pickerHeight - 100;
-    }
-
-    return top;
-  }
 }
