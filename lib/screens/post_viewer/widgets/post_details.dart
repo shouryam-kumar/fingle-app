@@ -29,9 +29,9 @@ class PostDetails extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Post title and user
           RichText(
             text: TextSpan(
@@ -58,9 +58,9 @@ class PostDetails extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Tags
           if (post.tags.isNotEmpty) ...[
             Wrap(
@@ -79,7 +79,7 @@ class PostDetails extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
-          
+
           // View all comments
           GestureDetector(
             onTap: () {
@@ -93,9 +93,9 @@ class PostDetails extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 4),
-          
+
           // Time ago
           Text(
             _getTimeAgo(post.createdAt),
@@ -112,7 +112,7 @@ class PostDetails extends StatelessWidget {
   String _getTimeAgo(DateTime createdAt) {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
     } else if (difference.inHours > 0) {

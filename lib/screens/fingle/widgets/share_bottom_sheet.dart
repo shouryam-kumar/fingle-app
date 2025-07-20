@@ -106,9 +106,9 @@ class ShareBottomSheet extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Link copy section
           Container(
             padding: const EdgeInsets.all(16),
@@ -162,9 +162,9 @@ class ShareBottomSheet extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Additional options
           _buildListOption(
             context,
@@ -258,7 +258,7 @@ class ShareBottomSheet extends StatelessWidget {
           ? Text(
               subtitle,
               style: TextStyle(
-                color: isDestructive 
+                color: isDestructive
                     ? Colors.red.withOpacity(0.7)
                     : Colors.white.withOpacity(0.5),
                 fontSize: 12,
@@ -267,7 +267,7 @@ class ShareBottomSheet extends StatelessWidget {
           : null,
       trailing: Icon(
         Icons.chevron_right,
-        color: isDestructive 
+        color: isDestructive
             ? Colors.red.withOpacity(0.5)
             : Colors.white.withOpacity(0.3),
       ),
@@ -288,7 +288,8 @@ class ShareBottomSheet extends StatelessWidget {
   }
 
   void _copyLink(BuildContext context) {
-    Clipboard.setData(ClipboardData(text: 'https://fingle.app/video/${video.id}'));
+    Clipboard.setData(
+        ClipboardData(text: 'https://fingle.app/video/${video.id}'));
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -337,7 +338,8 @@ class ShareBottomSheet extends StatelessWidget {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Content reported. Thank you for keeping our community safe.'),
+                  content: Text(
+                      'Content reported. Thank you for keeping our community safe.'),
                   duration: Duration(seconds: 2),
                   backgroundColor: Colors.red,
                   behavior: SnackBarBehavior.floating,

@@ -102,7 +102,8 @@ class RecommendationDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildRecommendationItem(BuildContext context, Recommendation recommendation) {
+  Widget _buildRecommendationItem(
+      BuildContext context, Recommendation recommendation) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
@@ -192,7 +193,8 @@ class RecommendationDetailsSheet extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (recommendation.message != null && recommendation.message!.isNotEmpty) ...[
+                    if (recommendation.message != null &&
+                        recommendation.message!.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -230,7 +232,8 @@ class RecommendationDetailsSheet extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: BorderSide(color: AppColors.primary),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   minimumSize: const Size(0, 32),
                 ),
                 child: const Text(

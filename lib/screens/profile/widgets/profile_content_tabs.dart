@@ -128,7 +128,7 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
               ],
             ),
           ),
-          
+
           // Tab Content (removed Likes tab content)
           SizedBox(
             height: 600, // Fixed height for the tab content
@@ -137,10 +137,10 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
               children: [
                 // Posts Tab
                 _buildPostsTab(groupedPosts),
-                
+
                 // Videos Tab
                 _buildVideosTab(),
-                
+
                 // Tagged Tab (moved to position 2)
                 _buildTaggedTab(),
               ],
@@ -159,14 +159,15 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
           final category = entry.key;
           final posts = entry.value;
           final isExpanded = widget.expandedStates[category] ?? false;
-          
+
           return _buildCategorySection(category, posts, isExpanded);
         }).toList(),
       ),
     );
   }
 
-  Widget _buildCategorySection(String category, List<Post> posts, bool isExpanded) {
+  Widget _buildCategorySection(
+      String category, List<Post> posts, bool isExpanded) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -203,9 +204,9 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Content based on expand state
           if (!isExpanded) ...[
             // Horizontal thumbnail list (first 4 items)
@@ -233,9 +234,9 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
               itemBuilder: (_, i) => _buildGridItem(posts[i]),
             ).animate().fadeIn(duration: 500.ms),
           ],
-          
+
           const SizedBox(height: 12),
-          
+
           // Show More / Less Button
           Center(
             child: ElevatedButton(
@@ -246,7 +247,8 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               ),
               child: Text(
                 isExpanded ? 'Show Less' : 'Show More',
@@ -264,208 +266,212 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
 
   Widget _buildThumbnailItem(Post post) {
     return GestureDetector(
-        onTap: () => _viewPost(post),
-        child: Hero(
+      onTap: () => _viewPost(post),
+      child: Hero(
         tag: 'post_${post.id}', // Added hero tag
         child: Container(
-            width: 100,
-            decoration: BoxDecoration(
+          width: 100,
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
-                BoxShadow(
+              BoxShadow(
                 color: Colors.black.withOpacity(0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
-                ),
+              ),
             ],
-            ),
-            child: Stack(
+          ),
+          child: Stack(
             children: [
-                ClipRRect(
+              ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                    post.imageUrl,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
+                  post.imageUrl,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
                 ),
-                ),
-                
-                // Tags overlay (top)
-                if (post.tags.isNotEmpty)
+              ),
+
+              // Tags overlay (top)
+              if (post.tags.isNotEmpty)
                 Positioned(
-                    top: 4,
-                    left: 4,
-                    right: 4,
-                    child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  top: 4,
+                  left: 4,
+                  right: 4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(4),
+                      color: Colors.black.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                        '#${post.tags.first}',
-                        style: const TextStyle(
+                      '#${post.tags.first}',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    ),
+                  ),
                 ),
-                
-                // Stats overlay (bottom)
-                Positioned(
+
+              // Stats overlay (bottom)
+              Positioned(
                 bottom: 4,
                 left: 4,
                 right: 4,
                 child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                        const Icon(
-                        Icons.favorite,
-                        color: Colors.white,
-                        size: 10,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                        '${post.likes}',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                        ),
-                        ),
-                    ],
-                    ),
-                ),
-                ),
-            ],
-            ),
-        ),
-        ),
-     );
-    }
-
-Widget _buildGridItem(Post post) {
-  return GestureDetector(
-    onTap: () => _viewPost(post),
-    child: Hero(
-      tag: 'post_${post.id}', // Added hero tag
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                post.imageUrl,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-            
-            // Tags overlay (top)
-            if (post.tags.isNotEmpty)
-              Positioned(
-                top: 4,
-                left: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(
-                    '#${post.tags.first}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.favorite,
+                        color: Colors.white,
+                        size: 10,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${post.likes}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            
-            // Stats overlay (bottom)
-            Positioned(
-              bottom: 4,
-              left: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.favorite,
-                          color: Colors.white,
-                          size: 10,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${post.likes}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.visibility,
-                          color: Colors.white,
-                          size: 10,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${post.views}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildGridItem(Post post) {
+    return GestureDetector(
+      onTap: () => _viewPost(post),
+      child: Hero(
+        tag: 'post_${post.id}', // Added hero tag
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  post.imageUrl,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+
+              // Tags overlay (top)
+              if (post.tags.isNotEmpty)
+                Positioned(
+                  top: 4,
+                  left: 4,
+                  right: 4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '#${post.tags.first}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+
+              // Stats overlay (bottom)
+              Positioned(
+                bottom: 4,
+                left: 4,
+                right: 4,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.favorite,
+                            color: Colors.white,
+                            size: 10,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${post.likes}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.visibility,
+                            color: Colors.white,
+                            size: 10,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${post.views}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildVideosTab() {
     return const Center(
@@ -550,15 +556,18 @@ Widget _buildGridItem(Post post) {
 
   void _viewPost(Post post) {
     final postIndex = widget.user.posts.indexOf(post);
-    
+
     // 🐛 DEBUG: Log navigation (✅ Fixed Provider usage)
     debugPrint('🚀 Navigating to PostViewerScreen');
-    debugPrint('  📊 Current app tab: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
+    debugPrint(
+        '  📊 Current app tab: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
     debugPrint('  📹 Post index: $postIndex');
-    
-    Navigator.of(context).push(
+
+    Navigator.of(context)
+        .push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => PostViewerScreen(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            PostViewerScreen(
           posts: widget.user.posts,
           initialIndex: postIndex,
           user: widget.user,
@@ -572,10 +581,12 @@ Widget _buildGridItem(Post post) {
         },
         transitionDuration: const Duration(milliseconds: 300),
       ),
-    ).then((_) {
+    )
+        .then((_) {
       // 🐛 DEBUG: Log return from navigation (✅ Fixed Provider usage)
       debugPrint('🔙 Returned from PostViewerScreen');
-      debugPrint('  📊 Current app tab: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
+      debugPrint(
+          '  📊 Current app tab: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
       debugPrint('  📊 Expected tab: Profile (4)');
     });
   }

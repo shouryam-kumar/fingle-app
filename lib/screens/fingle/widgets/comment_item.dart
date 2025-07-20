@@ -32,24 +32,23 @@ class CommentItem extends StatefulWidget {
 
 class _CommentItemState extends State<CommentItem>
     with SingleTickerProviderStateMixin {
-  
   late AnimationController _likeAnimationController;
   late Animation<double> _likeScaleAnimation;
-  
+
   bool _showFullContent = false;
 
   @override
   void initState() {
     super.initState();
-    
+
     _likeAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _likeScaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 1.15,
+      end: 1.3,
     ).animate(CurvedAnimation(
       parent: _likeAnimationController,
       curve: Curves.elasticOut,
@@ -67,22 +66,24 @@ class _CommentItemState extends State<CommentItem>
 
   void _handleLike() {
     widget.onResetTimeout?.call();
-    
-    // Animate like button
+
+    // Animate like button with more prominent feedback
     _likeAnimationController.forward().then((_) {
-      _likeAnimationController.reverse();
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _likeAnimationController.reverse();
+      });
     });
-    
+
     widget.onLike?.call();
-    
-    // Haptic feedback
-    HapticFeedback.lightImpact();
+
+    // Enhanced haptic feedback
+    HapticFeedback.mediumImpact();
   }
 
   void _handleReply() {
     widget.onResetTimeout?.call();
     widget.onReply?.call();
-    
+
     // Haptic feedback
     HapticFeedback.lightImpact();
   }
@@ -112,13 +113,13 @@ class _CommentItemState extends State<CommentItem>
       ),
       padding: const EdgeInsets.all(10), // More compact padding
       decoration: BoxDecoration(
-        color: widget.comment.isPinned 
+        color: widget.comment.isPinned
             ? AppColors.primary.withOpacity(0.06)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         border: widget.comment.isPinned
             ? Border.all(
-                color: AppColors.primary.withOpacity(0.25), 
+                color: AppColors.primary.withOpacity(0.25),
                 width: 1,
               )
             : null,
@@ -155,16 +156,16 @@ class _CommentItemState extends State<CommentItem>
                 ],
               ),
             ),
-          
+
           // Main comment content
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Avatar
               _buildAvatar(),
-              
+
               const SizedBox(width: 10),
-              
+
               // Content
               Expanded(
                 child: Column(
@@ -172,20 +173,20 @@ class _CommentItemState extends State<CommentItem>
                   children: [
                     // User info
                     _buildUserInfo(isVideoCreator),
-                    
+
                     const SizedBox(height: 3),
-                    
+
                     // Comment content
                     _buildCommentContent(),
-                    
+
                     const SizedBox(height: 6),
-                    
+
                     // Actions
                     _buildActions(isOwnComment),
                   ],
                 ),
               ),
-              
+
               // Like button
               _buildLikeButton(),
             ],
@@ -212,8 +213,8 @@ class _CommentItemState extends State<CommentItem>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: widget.comment.author.isVerified 
-                ? AppColors.primary 
+            color: widget.comment.author.isVerified
+                ? AppColors.primary
                 : Colors.transparent,
             width: 1.5,
           ),
@@ -239,7 +240,7 @@ class _CommentItemState extends State<CommentItem>
             fontWeight: FontWeight.w600,
           ),
         ),
-        
+
         // Verified badge
         if (widget.comment.author.isVerified) ...[
           const SizedBox(width: 3),
@@ -249,7 +250,7 @@ class _CommentItemState extends State<CommentItem>
             size: widget.isReply ? 10 : 12,
           ),
         ],
-        
+
         // Creator badge
         if (isVideoCreator) ...[
           const SizedBox(width: 4),
@@ -269,7 +270,7 @@ class _CommentItemState extends State<CommentItem>
             ),
           ),
         ],
-        
+
         // Time ago
         const SizedBox(width: 6),
         Text(
@@ -279,7 +280,7 @@ class _CommentItemState extends State<CommentItem>
             fontSize: widget.isReply ? 10 : 11,
           ),
         ),
-        
+
         // Edited indicator
         if (widget.comment.isEdited) ...[
           const SizedBox(width: 3),
@@ -299,16 +300,15 @@ class _CommentItemState extends State<CommentItem>
   Widget _buildCommentContent() {
     final content = widget.comment.content;
     final shouldTruncate = content.length > 80 && !_showFullContent;
-    final displayContent = shouldTruncate 
-        ? '${content.substring(0, 80)}...' 
-        : content;
+    final displayContent =
+        shouldTruncate ? '${content.substring(0, 80)}...' : content;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Comment text
         _buildFormattedText(displayContent),
-        
+
         // Show more/less button
         if (content.length > 80)
           GestureDetector(
@@ -360,7 +360,7 @@ class _CommentItemState extends State<CommentItem>
               ),
             ),
           ),
-        
+
         // Delete button (only for own comments)
         if (isOwnComment) ...[
           const SizedBox(width: 12),
@@ -398,21 +398,22 @@ class _CommentItemState extends State<CommentItem>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    widget.comment.isLiked 
-                        ? Icons.favorite 
+                    widget.comment.isLiked
+                        ? Icons.favorite
                         : Icons.favorite_border,
-                    color: widget.comment.isLiked 
-                        ? Colors.red 
+                    color: widget.comment.isLiked
+                        ? Colors.red
                         : Colors.white.withOpacity(0.6),
                     size: widget.isReply ? 14 : 16,
                   ),
-                  
                   if (widget.comment.likes > 0) ...[
                     const SizedBox(height: 1),
                     Text(
                       _formatLikeCount(widget.comment.likes),
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
+                        color: widget.comment.isLiked
+                            ? Colors.red.withOpacity(0.8)
+                            : Colors.white.withOpacity(0.6),
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                       ),

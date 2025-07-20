@@ -11,12 +11,14 @@ class CommentList extends StatefulWidget {
   final VideoPost video;
   final ScrollController scrollController;
   final VoidCallback? onResetTimeout;
+  final FocusNode? focusNode;
 
   const CommentList({
     super.key,
     required this.video,
     required this.scrollController,
     this.onResetTimeout,
+    this.focusNode,
   });
 
   @override
@@ -27,7 +29,7 @@ class _CommentListState extends State<CommentList> {
   @override
   void initState() {
     super.initState();
-    
+
     // Listen to scroll events for pagination
     widget.scrollController.addListener(_onScroll);
   }
@@ -40,12 +42,12 @@ class _CommentListState extends State<CommentList> {
 
   void _onScroll() {
     widget.onResetTimeout?.call();
-    
+
     // Check if we need to load more comments
-    if (widget.scrollController.position.pixels >= 
+    if (widget.scrollController.position.pixels >=
         widget.scrollController.position.maxScrollExtent - 200) {
-      
-      final commentsProvider = Provider.of<CommentsProvider>(context, listen: false);
+      final commentsProvider =
+          Provider.of<CommentsProvider>(context, listen: false);
       commentsProvider.loadMoreComments(widget.video.id);
     }
   }
@@ -55,7 +57,7 @@ class _CommentListState extends State<CommentList> {
     return Consumer<CommentsProvider>(
       builder: (context, commentsProvider, child) {
         final state = commentsProvider.getCommentsState(widget.video.id);
-        
+
         if (state.isLoading && state.comments.isEmpty) {
           return _buildLoadingState();
         }
@@ -123,14 +125,16 @@ class _CommentListState extends State<CommentList> {
     );
   }
 
-  Widget _buildCommentsList(CommentsState state, CommentsProvider commentsProvider) {
+  Widget _buildCommentsList(
+      CommentsState state, CommentsProvider commentsProvider) {
     return Column(
       children: [
         // Comments list
         Expanded(
           child: ListView.builder(
             controller: widget.scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Reduced padding
+            padding: const EdgeInsets.symmetric(
+                horizontal: 12, vertical: 8), // Reduced padding
             itemCount: state.comments.length + (state.isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
               // Show loading indicator at the end
@@ -139,7 +143,7 @@ class _CommentListState extends State<CommentList> {
               }
 
               final comment = state.comments[index];
-              
+
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOut,
@@ -154,24 +158,30 @@ class _CommentListState extends State<CommentList> {
                       onLike: () => _handleLike(comment, commentsProvider),
                       onDelete: () => _handleDelete(comment, commentsProvider),
                     ),
-                    
+
                     // Replies
                     if (comment.hasReplies) ...[
                       const SizedBox(height: 6),
                       ...comment.replies.map((reply) => Padding(
-                        padding: const EdgeInsets.only(left: 40), // Reduced indentation
-                        child: CommentItem(
-                          comment: reply,
-                          video: widget.video,
-                          isReply: true,
-                          onResetTimeout: widget.onResetTimeout,
-                          onReply: () => _handleReply(comment, commentsProvider, replyToReply: reply),
-                          onLike: () => _handleLike(reply, commentsProvider, isReply: true),
-                          onDelete: () => _handleDelete(reply, commentsProvider, parentComment: comment),
-                        ),
-                      )),
+                            padding: const EdgeInsets.only(
+                                left: 40), // Reduced indentation
+                            child: CommentItem(
+                              comment: reply,
+                              video: widget.video,
+                              isReply: true,
+                              onResetTimeout: widget.onResetTimeout,
+                              onReply: () => _handleReply(
+                                  comment, commentsProvider,
+                                  replyToReply: reply),
+                              onLike: () => _handleLike(reply, commentsProvider,
+                                  isReply: true),
+                              onDelete: () => _handleDelete(
+                                  reply, commentsProvider,
+                                  parentComment: comment),
+                            ),
+                          )),
                     ],
-                    
+
                     const SizedBox(height: 12), // Reduced spacing
                   ],
                 ),
@@ -179,7 +189,7 @@ class _CommentListState extends State<CommentList> {
             },
           ),
         ),
-        
+
         // Error message
         if (state.error != null)
           _buildErrorMessage(state.error!, commentsProvider),
@@ -264,15 +274,16 @@ class _CommentListState extends State<CommentList> {
     );
   }
 
-  void _handleReply(Comment comment, CommentsProvider commentsProvider, {Comment? replyToReply}) {
+  void _handleReply(Comment comment, CommentsProvider commentsProvider,
+      {Comment? replyToReply}) {
     widget.onResetTimeout?.call();
-    
+
     // If replying to a reply, use the original comment as parent
     final targetUser = replyToReply?.author ?? comment.author;
-    
+
     // ✅ ENHANCED: Clear any existing reply state first, then set new one
     commentsProvider.clearReplyingTo(widget.video.id);
-    
+
     // Small delay to ensure clean state transition
     Future.delayed(const Duration(milliseconds: 50), () {
       commentsProvider.setReplyingTo(
@@ -280,30 +291,41 @@ class _CommentListState extends State<CommentList> {
         comment.id,
         targetUser,
       );
-      
+
       debugPrint('🔄 Reply state set for: ${targetUser.name}');
+
+      // Auto-focus text input after reply state is set
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (widget.focusNode != null) {
+          widget.focusNode!.requestFocus();
+          debugPrint(
+              '🔍 Auto-focus requested for reply to: ${targetUser.name}');
+        }
+      });
     });
-    
+
     // Show haptic feedback
     HapticFeedback.lightImpact();
   }
 
-  void _handleLike(Comment comment, CommentsProvider commentsProvider, {bool isReply = false}) {
+  void _handleLike(Comment comment, CommentsProvider commentsProvider,
+      {bool isReply = false}) {
     widget.onResetTimeout?.call();
-    
+
     commentsProvider.toggleCommentLike(
       widget.video.id,
       comment.id,
       isReply: isReply,
     );
-    
+
     // Show haptic feedback
     HapticFeedback.lightImpact();
   }
 
-  void _handleDelete(Comment comment, CommentsProvider commentsProvider, {Comment? parentComment}) {
+  void _handleDelete(Comment comment, CommentsProvider commentsProvider,
+      {Comment? parentComment}) {
     widget.onResetTimeout?.call();
-    
+
     // Show confirmation dialog
     showDialog(
       context: context,

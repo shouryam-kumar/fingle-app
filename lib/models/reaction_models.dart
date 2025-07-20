@@ -155,19 +155,20 @@ class ReactionSummary {
     );
   }
 
-  factory ReactionSummary.fromReactions(List<Reaction> reactions, String currentUserId) {
+  factory ReactionSummary.fromReactions(
+      List<Reaction> reactions, String currentUserId) {
     final counts = <ReactionType, int>{};
     final groupedReactions = <ReactionType, List<Reaction>>{};
     ReactionType? userReaction;
 
     for (final reaction in reactions) {
       counts[reaction.type] = (counts[reaction.type] ?? 0) + 1;
-      
+
       if (!groupedReactions.containsKey(reaction.type)) {
         groupedReactions[reaction.type] = [];
       }
       groupedReactions[reaction.type]!.add(reaction);
-      
+
       if (reaction.userId == currentUserId) {
         userReaction = reaction.type;
       }

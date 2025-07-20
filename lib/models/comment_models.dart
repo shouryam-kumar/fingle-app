@@ -11,7 +11,7 @@ class Comment {
   final bool isEdited;
   final bool isPinned;
   final List<Comment> replies;
-  
+
   // Updated reaction fields
   final ReactionSummary reactionSummary;
 

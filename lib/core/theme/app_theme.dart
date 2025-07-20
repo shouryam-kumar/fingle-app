@@ -6,14 +6,11 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'SpaceMono',
-      
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.light,
       ),
-      
       scaffoldBackgroundColor: AppColors.background,
-      
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
@@ -26,7 +23,6 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
       ),
-      
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.primary,
@@ -34,7 +30,6 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
-      
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -52,17 +47,17 @@ class AppTheme {
       ),
     );
   }
-  
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
-    //   fontFamily: 'SpaceMono',
-      
+      //   fontFamily: 'SpaceMono',
+
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
       ),
-      
+
       scaffoldBackgroundColor: AppColors.backgroundDark,
     );
   }

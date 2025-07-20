@@ -52,11 +52,11 @@ class _PostInteractionsState extends State<PostInteractions>
     setState(() {
       _isLiked = !_isLiked;
     });
-    
+
     _likeAnimationController.forward().then((_) {
       _likeAnimationController.reverse();
     });
-    
+
     widget.onLike();
   }
 
@@ -86,9 +86,9 @@ class _PostInteractionsState extends State<PostInteractions>
               },
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Comment button
           GestureDetector(
             onTap: widget.onComment,
@@ -101,9 +101,9 @@ class _PostInteractionsState extends State<PostInteractions>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Share button
           GestureDetector(
             onTap: widget.onShare,
@@ -116,9 +116,9 @@ class _PostInteractionsState extends State<PostInteractions>
               ),
             ),
           ),
-          
+
           const Spacer(),
-          
+
           // Bookmark button
           GestureDetector(
             onTap: () {

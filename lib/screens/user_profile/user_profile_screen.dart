@@ -26,7 +26,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late ScrollController _scrollController;
-  
+
   User? _user;
   bool _isLoading = true;
   bool _isHeaderCollapsed = false;
@@ -38,7 +38,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _scrollController = ScrollController();
-    
+
     _scrollController.addListener(_onScroll);
     _loadUserProfile();
   }
@@ -46,7 +46,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   void _onScroll() {
     const double threshold = 200.0;
     final bool isCollapsed = _scrollController.offset > threshold;
-    
+
     if (isCollapsed != _isHeaderCollapsed) {
       setState(() {
         _isHeaderCollapsed = isCollapsed;
@@ -57,7 +57,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   Future<void> _loadUserProfile() async {
     // Simulate loading user data
     await Future.delayed(const Duration(milliseconds: 800));
-    
+
     if (mounted) {
       setState(() {
         _user = _createMockUser();
@@ -71,8 +71,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       id: widget.userId,
       name: widget.userName ?? 'User ${widget.userId}',
       age: 26,
-      bio: 'Fitness enthusiast 💪 | Yoga lover 🧘‍♀️ | Healthy lifestyle advocate 🌿',
-      profilePic: widget.userAvatar ?? 'https://picsum.photos/200/200?random=${widget.userId}',
+      bio:
+          'Fitness enthusiast 💪 | Yoga lover 🧘‍♀️ | Healthy lifestyle advocate 🌿',
+      profilePic: widget.userAvatar ??
+          'https://picsum.photos/200/200?random=${widget.userId}',
       coverImage: 'https://picsum.photos/800/400?random=${widget.userId}',
       isVerified: widget.userId == 'verified_user',
       isFollowing: false,
@@ -135,11 +137,13 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     setState(() {
       _isFollowing = !_isFollowing;
     });
-    
+
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_isFollowing ? 'Following ${_user?.name}!' : 'Unfollowed ${_user?.name}'),
+        content: Text(_isFollowing
+            ? 'Following ${_user?.name}!'
+            : 'Unfollowed ${_user?.name}'),
         duration: const Duration(seconds: 1),
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
@@ -200,9 +204,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                     ),
                 ],
               ),
-              
+
               const SizedBox(width: 24),
-              
+
               // Name & Bio
               Expanded(
                 child: Column(
@@ -241,16 +245,17 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Follow Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _toggleFollow,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isFollowing ? Colors.grey[700] : AppColors.primary,
+                backgroundColor:
+                    _isFollowing ? Colors.grey[700] : AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -282,9 +287,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: _isLoading
-          ? _buildLoadingState()
-          : _buildProfileContent(),
+      body: _isLoading ? _buildLoadingState() : _buildProfileContent(),
     );
   }
 

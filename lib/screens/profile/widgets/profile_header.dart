@@ -76,9 +76,9 @@ class ProfileHeader extends StatelessWidget {
                     ),
                 ],
               ),
-              
+
               const SizedBox(width: 20),
-              
+
               // Name & Bio (removed age)
               Expanded(
                 child: Column(
@@ -105,9 +105,9 @@ class ProfileHeader extends StatelessWidget {
                         ],
                       ],
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Bio
                     Text(
                       user.bio,
@@ -119,9 +119,9 @@ class ProfileHeader extends StatelessWidget {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Joined Date
                     Row(
                       children: [
@@ -145,9 +145,9 @@ class ProfileHeader extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Interests Tags
           if (user.interests.isNotEmpty) ...[
             Align(
@@ -182,7 +182,7 @@ class ProfileHeader extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
-          
+
           // Action Buttons
           Row(
             children: [
@@ -224,8 +224,18 @@ class ProfileHeader extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[date.month - 1]} ${date.year}';
   }
