@@ -12,3 +12,15 @@ const double kButtonTextSize =
 const double kTotalButtonWidth = 56.0;
 const double kTotalButtonHeight =
     76.0; // Increased from 72.0 to 76.0 to prevent overflow
+
+// Home feed specific constants (smaller for better proportion with other actions)
+const double kHomeButtonContainerSize = 36.0;
+const double kHomeButtonIconSize = 18.0;
+const double kHomeButtonBorderWidth = 1.0;
+const double kHomeTextIconGap = 3.0;
+const double kHomeTextHeight = 16.0;
+const double kHomeButtonTextSize = 12.0;
+
+// Home feed total button dimensions
+const double kHomeTotalButtonWidth = 44.0;
+const double kHomeTotalButtonHeight = 60.0;

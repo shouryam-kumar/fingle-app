@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/home_models.dart';
@@ -12,6 +13,8 @@ class VideoPlayerPost extends StatefulWidget {
   final bool isMuted;
   final VoidCallback? onTap;
   final VoidCallback? onDoubleTap;
+  final VoidCallback? onVisibilityChanged;
+  final Function(Function(bool))? onViewportVisibilityChanged;
 
   const VideoPlayerPost({
     super.key,
@@ -21,29 +24,66 @@ class VideoPlayerPost extends StatefulWidget {
     this.isMuted = true, // Default muted for better UX
     this.onTap,
     this.onDoubleTap,
+    this.onVisibilityChanged,
+    this.onViewportVisibilityChanged,
   });
 
   @override
   State<VideoPlayerPost> createState() => _VideoPlayerPostState();
 }
 
-class _VideoPlayerPostState extends State<VideoPlayerPost> {
+class _VideoPlayerPostState extends State<VideoPlayerPost>
+    with WidgetsBindingObserver {
   late VideoPlayerController _controller;
   bool _isPlaying = false;
   bool _isLoading = true;
   bool _hasError = false;
   bool _isInitialized = false;
+  bool _isHovered = false;
+  bool _showControls = false;
+  bool _wasPlayingBeforeBackground = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeVideoPlayer();
+    
+    // Register the viewport visibility callback in the parent
+    if (widget.onViewportVisibilityChanged != null) {
+      widget.onViewportVisibilityChanged!(handleVisibilityChanged);
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (!_isInitialized || _hasError) return;
+
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        if (_isPlaying) {
+          _wasPlayingBeforeBackground = true;
+          _controller.pause();
+        }
+        break;
+      case AppLifecycleState.resumed:
+        // Don't auto-resume, let user control
+        _wasPlayingBeforeBackground = false;
+        break;
+      case AppLifecycleState.inactive:
+        break;
+    }
   }
 
   void _initializeVideoPlayer() {
@@ -121,6 +161,19 @@ class _VideoPlayerPostState extends State<VideoPlayerPost> {
         _controller.setVolume(1);
       }
     });
+  }
+
+  void handleVisibilityChanged(bool isVisible) {
+    if (!_isInitialized || _hasError) return;
+
+    debugPrint('📹 VideoPlayerPost: Visibility changed to $isVisible, currently playing: $_isPlaying');
+    
+    if (!isVisible && _isPlaying) {
+      debugPrint('📹 VideoPlayerPost: Pausing video due to visibility change');
+      _controller.pause();
+    }
+
+    widget.onVisibilityChanged?.call();
   }
 
   String _formatDuration(Duration duration) {
@@ -208,21 +261,21 @@ class _VideoPlayerPostState extends State<VideoPlayerPost> {
           ),
         ),
 
-        // Play/Pause overlay
-        if (!_isPlaying)
+        // Play/Pause overlay - Show on hover (web) or when paused (mobile)
+        if ((!_isPlaying) || (kIsWeb && _isHovered && _isPlaying))
           Container(
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.3),
             ),
             child: Icon(
-              Icons.play_circle_filled,
+              _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
               color: Colors.white,
               size: widget.isReel ? 80 : 60,
             ),
           ),
 
         // Volume control for reels
-        if (widget.isReel && _isInitialized)
+        if (widget.isReel && _isInitialized && (_isHovered || !kIsWeb))
           Positioned(
             top: 8,
             right: 8,
@@ -246,7 +299,7 @@ class _VideoPlayerPostState extends State<VideoPlayerPost> {
           ),
 
         // Progress bar for regular videos
-        if (!widget.isReel && _isInitialized)
+        if (!widget.isReel && _isInitialized && (_isHovered || !kIsWeb))
           Positioned(
             bottom: 8,
             left: 8,
@@ -294,7 +347,7 @@ class _VideoPlayerPostState extends State<VideoPlayerPost> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    Widget videoWidget = GestureDetector(
       onTap: _togglePlayPause,
       onDoubleTap: widget.onDoubleTap,
       child: ClipRRect(
@@ -320,5 +373,16 @@ class _VideoPlayerPostState extends State<VideoPlayerPost> {
         ),
       ),
     );
+
+    // Add hover detection for web platform
+    if (kIsWeb) {
+      return MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: videoWidget,
+      );
+    }
+
+    return videoWidget;
   }
 }
