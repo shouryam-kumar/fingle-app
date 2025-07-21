@@ -72,6 +72,133 @@ class _PostCardState extends State<PostCard>
     _videoVisibilityHandler?.call(isVisible);
   }
 
+  void _handleMenuAction(String action) {
+    debugPrint('📋 PostCard: Menu action selected: $action for @${widget.post.userName}');
+    
+    switch (action) {
+      case 'report':
+        debugPrint('🚩 Reporting post ${widget.post.id} by @${widget.post.userName}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.flag, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text('Post reported successfully'),
+              ],
+            ),
+            backgroundColor: Colors.orange.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        break;
+      case 'invite':
+        debugPrint('👥 Inviting @${widget.post.userName} to LockerRoom');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.group_add, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text('Invitation sent to LockerRoom'),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        break;
+      case 'unfollow':
+        debugPrint('👤 Unfollowing @${widget.post.userName}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.person_remove, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text('You have unfollowed @${widget.post.userName}'),
+              ],
+            ),
+            backgroundColor: AppColors.warning,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        break;
+      case 'mute':
+        debugPrint('🔇 Muting @${widget.post.userName}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.volume_off, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text('You have muted @${widget.post.userName}'),
+              ],
+            ),
+            backgroundColor: AppColors.textSecondary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        break;
+    }
+  }
+
+  PopupMenuItem<String> _buildMenuItem({
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required String text,
+  }) {
+    return PopupMenuItem<String>(
+      value: value,
+      padding: EdgeInsets.zero,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: iconColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              text,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildUserHeader() {
     return Row(
       children: [
@@ -194,11 +321,76 @@ class _PostCardState extends State<PostCard>
           ),
         ),
         const Spacer(),
-        IconButton(
-          onPressed: () {},
-          icon: Icon(
-            Icons.more_horiz,
-            color: AppColors.textSecondary,
+        Theme(
+          data: Theme.of(context).copyWith(
+            popupMenuTheme: PopupMenuThemeData(
+              color: Colors.white.withOpacity(0.95),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Colors.grey.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              elevation: 8,
+              shadowColor: Colors.black.withOpacity(0.1),
+            ),
+          ),
+          child: Builder(
+            builder: (context) => PopupMenuButton<String>(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.glassMorphism,
+                ),
+                child: Icon(
+                  Icons.more_horiz,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
+              ),
+              onSelected: _handleMenuAction,
+              offset: const Offset(-20, 40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Colors.grey.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              color: Colors.white.withOpacity(0.9),
+              elevation: 4,
+              itemBuilder: (context) => <PopupMenuEntry<String>>[
+                  _buildMenuItem(
+                    value: 'report',
+                    icon: Icons.flag_outlined,
+                    iconColor: Colors.orange.shade700,
+                    text: 'Report',
+                  ),
+                  PopupMenuDivider(
+                    height: 1,
+                  ),
+                  _buildMenuItem(
+                    value: 'invite',
+                    icon: Icons.group_add_outlined,
+                    iconColor: AppColors.success,
+                    text: 'Invite to LockerRoom',
+                  ),
+                  _buildMenuItem(
+                    value: 'unfollow',
+                    icon: Icons.person_remove_outlined,
+                    iconColor: AppColors.warning,
+                    text: 'Unfollow',
+                  ),
+                  _buildMenuItem(
+                    value: 'mute',
+                    icon: Icons.volume_off_outlined,
+                    iconColor: AppColors.textSecondary,
+                    text: 'Mute',
+                  ),
+                ],
+            ),
           ),
         ),
       ],
