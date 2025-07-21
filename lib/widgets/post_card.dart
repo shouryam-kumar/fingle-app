@@ -8,8 +8,10 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../screens/fingle/widgets/reaction_button.dart';
 import '../screens/fingle/widgets/enhanced_reaction_picker.dart';
+import '../models/post_action.dart';
 import 'action_button.dart';
 import 'video_player_post.dart';
+import 'common/enhanced_glassmorphic_modal.dart';
 
 class PostCard extends StatefulWidget {
   final FeedPost post;
@@ -73,11 +75,13 @@ class _PostCardState extends State<PostCard>
   }
 
   void _handleMenuAction(String action) {
+    if (!mounted) return;
     debugPrint('📋 PostCard: Menu action selected: $action for @${widget.post.userName}');
     
     switch (action) {
       case 'report':
         debugPrint('🚩 Reporting post ${widget.post.id} by @${widget.post.userName}');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -98,6 +102,7 @@ class _PostCardState extends State<PostCard>
         break;
       case 'invite':
         debugPrint('👥 Inviting @${widget.post.userName} to LockerRoom');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -118,6 +123,7 @@ class _PostCardState extends State<PostCard>
         break;
       case 'unfollow':
         debugPrint('👤 Unfollowing @${widget.post.userName}');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -138,6 +144,7 @@ class _PostCardState extends State<PostCard>
         break;
       case 'mute':
         debugPrint('🔇 Muting @${widget.post.userName}');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -159,45 +166,61 @@ class _PostCardState extends State<PostCard>
     }
   }
 
-  PopupMenuItem<String> _buildMenuItem({
-    required String value,
-    required IconData icon,
-    required Color iconColor,
-    required String text,
-  }) {
-    return PopupMenuItem<String>(
-      value: value,
-      padding: EdgeInsets.zero,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                size: 18,
-                color: iconColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              text,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
+  List<PostAction> _getPostActions() {
+    return [
+      PostAction(
+        type: PostActionType.report,
+        title: 'Report',
+        subtitle: 'Report this post',
+        icon: Icons.flag_outlined,
+        iconColor: Colors.orange.shade700,
+        onPressed: () => _handleMenuAction('report'),
+      ),
+      PostAction(
+        type: PostActionType.invite,
+        title: 'Invite to LockerRoom',
+        subtitle: 'Send invitation',
+        icon: Icons.group_add_outlined,
+        iconColor: AppColors.success,
+        onPressed: () => _handleMenuAction('invite'),
+      ),
+      PostAction(
+        type: PostActionType.unfollow,
+        title: 'Unfollow',
+        subtitle: '@${widget.post.userName}',
+        icon: Icons.person_remove_outlined,
+        iconColor: AppColors.warning,
+        onPressed: () => _handleMenuAction('unfollow'),
+      ),
+      PostAction(
+        type: PostActionType.mute,
+        title: 'Mute',
+        subtitle: 'Hide posts from this user',
+        icon: Icons.volume_off_outlined,
+        iconColor: AppColors.textSecondary,
+        onPressed: () => _handleMenuAction('mute'),
+      ),
+    ];
+  }
+
+  void _showGlassmorphicModal() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      barrierDismissible: false,
+      builder: (context) => EnhancedGlassmorphicModal(
+        actions: _getPostActions(),
+        userName: widget.post.userName,
+        onClose: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        },
       ),
     );
   }
+
 
   Widget _buildUserHeader() {
     return Row(
@@ -321,75 +344,18 @@ class _PostCardState extends State<PostCard>
           ),
         ),
         const Spacer(),
-        Theme(
-          data: Theme.of(context).copyWith(
-            popupMenuTheme: PopupMenuThemeData(
-              color: Colors.white.withOpacity(0.95),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              elevation: 8,
-              shadowColor: Colors.black.withOpacity(0.1),
+        GestureDetector(
+          onTap: _showGlassmorphicModal,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.glassMorphism,
             ),
-          ),
-          child: Builder(
-            builder: (context) => PopupMenuButton<String>(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.glassMorphism,
-                ),
-                child: Icon(
-                  Icons.more_horiz,
-                  color: AppColors.textSecondary,
-                  size: 20,
-                ),
-              ),
-              onSelected: _handleMenuAction,
-              offset: const Offset(-20, 40),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              color: Colors.white.withOpacity(0.9),
-              elevation: 4,
-              itemBuilder: (context) => <PopupMenuEntry<String>>[
-                  _buildMenuItem(
-                    value: 'report',
-                    icon: Icons.flag_outlined,
-                    iconColor: Colors.orange.shade700,
-                    text: 'Report',
-                  ),
-                  PopupMenuDivider(
-                    height: 1,
-                  ),
-                  _buildMenuItem(
-                    value: 'invite',
-                    icon: Icons.group_add_outlined,
-                    iconColor: AppColors.success,
-                    text: 'Invite to LockerRoom',
-                  ),
-                  _buildMenuItem(
-                    value: 'unfollow',
-                    icon: Icons.person_remove_outlined,
-                    iconColor: AppColors.warning,
-                    text: 'Unfollow',
-                  ),
-                  _buildMenuItem(
-                    value: 'mute',
-                    icon: Icons.volume_off_outlined,
-                    iconColor: AppColors.textSecondary,
-                    text: 'Mute',
-                  ),
-                ],
+            child: Icon(
+              Icons.more_horiz,
+              color: AppColors.textSecondary,
+              size: 20,
             ),
           ),
         ),

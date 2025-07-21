@@ -219,7 +219,7 @@ class _FingleVideoProgressIndicatorState
       _dragPosition = newPosition;
     });
 
-    // For immediate feedback during tap (not just drag)
+   // For immediate feedback during tap (not just drag)
     if (!_isDragging) {
       controller.seekTo(newPosition);
     }
