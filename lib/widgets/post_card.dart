@@ -8,8 +8,10 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
 import '../screens/fingle/widgets/reaction_button.dart';
 import '../screens/fingle/widgets/enhanced_reaction_picker.dart';
+import '../models/post_action.dart';
 import 'action_button.dart';
 import 'video_player_post.dart';
+import 'common/enhanced_glassmorphic_modal.dart';
 
 class PostCard extends StatefulWidget {
   final FeedPost post;
@@ -71,6 +73,154 @@ class _PostCardState extends State<PostCard>
     // Call the VideoPlayerPost's visibility handler if available
     _videoVisibilityHandler?.call(isVisible);
   }
+
+  void _handleMenuAction(String action) {
+    if (!mounted) return;
+    debugPrint('📋 PostCard: Menu action selected: $action for @${widget.post.userName}');
+    
+    switch (action) {
+      case 'report':
+        debugPrint('🚩 Reporting post ${widget.post.id} by @${widget.post.userName}');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.flag, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text('Post reported successfully'),
+              ],
+            ),
+            backgroundColor: Colors.orange.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        break;
+      case 'invite':
+        debugPrint('👥 Inviting @${widget.post.userName} to LockerRoom');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.group_add, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text('Invitation sent to LockerRoom'),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        break;
+      case 'unfollow':
+        debugPrint('👤 Unfollowing @${widget.post.userName}');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.person_remove, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text('You have unfollowed @${widget.post.userName}'),
+              ],
+            ),
+            backgroundColor: AppColors.warning,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        break;
+      case 'mute':
+        debugPrint('🔇 Muting @${widget.post.userName}');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.volume_off, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Text('You have muted @${widget.post.userName}'),
+              ],
+            ),
+            backgroundColor: AppColors.textSecondary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        break;
+    }
+  }
+
+  List<PostAction> _getPostActions() {
+    return [
+      PostAction(
+        type: PostActionType.report,
+        title: 'Report',
+        subtitle: 'Report this post',
+        icon: Icons.flag_outlined,
+        iconColor: Colors.orange.shade700,
+        onPressed: () => _handleMenuAction('report'),
+      ),
+      PostAction(
+        type: PostActionType.invite,
+        title: 'Invite to LockerRoom',
+        subtitle: 'Send invitation',
+        icon: Icons.group_add_outlined,
+        iconColor: AppColors.success,
+        onPressed: () => _handleMenuAction('invite'),
+      ),
+      PostAction(
+        type: PostActionType.unfollow,
+        title: 'Unfollow',
+        subtitle: '@${widget.post.userName}',
+        icon: Icons.person_remove_outlined,
+        iconColor: AppColors.warning,
+        onPressed: () => _handleMenuAction('unfollow'),
+      ),
+      PostAction(
+        type: PostActionType.mute,
+        title: 'Mute',
+        subtitle: 'Hide posts from this user',
+        icon: Icons.volume_off_outlined,
+        iconColor: AppColors.textSecondary,
+        onPressed: () => _handleMenuAction('mute'),
+      ),
+    ];
+  }
+
+  void _showGlassmorphicModal() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      barrierDismissible: false,
+      builder: (context) => EnhancedGlassmorphicModal(
+        actions: _getPostActions(),
+        userName: widget.post.userName,
+        onClose: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        },
+      ),
+    );
+  }
+
 
   Widget _buildUserHeader() {
     return Row(
@@ -194,11 +344,19 @@ class _PostCardState extends State<PostCard>
           ),
         ),
         const Spacer(),
-        IconButton(
-          onPressed: () {},
-          icon: Icon(
-            Icons.more_horiz,
-            color: AppColors.textSecondary,
+        GestureDetector(
+          onTap: _showGlassmorphicModal,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.glassMorphism,
+            ),
+            child: Icon(
+              Icons.more_horiz,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
           ),
         ),
       ],
