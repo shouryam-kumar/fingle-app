@@ -6,6 +6,7 @@ import '../../models/post_action.dart';
 
 class MagneticMenuItem extends StatefulWidget {
   final PostAction action;
+  final VoidCallback? onExitAnimation;
   final Duration magneticDuration;
   final Duration elasticDuration;
   final double magneticStrength;
@@ -13,6 +14,7 @@ class MagneticMenuItem extends StatefulWidget {
   const MagneticMenuItem({
     Key? key,
     required this.action,
+    this.onExitAnimation,
     this.magneticDuration = const Duration(milliseconds: 300),
     this.elasticDuration = const Duration(milliseconds: 200),
     this.magneticStrength = 0.12,
@@ -26,7 +28,9 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
     with TickerProviderStateMixin {
   late AnimationController _magneticController;
   late AnimationController _scaleController;
+  late AnimationController _bounceController;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _bounceAnimation;
   
   Offset _currentOffset = Offset.zero;
   Offset _targetOffset = Offset.zero;
@@ -47,6 +51,11 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
       vsync: this,
     );
     
+    _bounceController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.02,
@@ -54,6 +63,25 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
       parent: _magneticController,
       curve: Curves.easeOutQuart,
     ));
+    
+    // Create the bounce sequence animation
+    _bounceAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 0.97)
+            .chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.97, end: 1.03)
+            .chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 40,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.03, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 30,
+      ),
+    ]).animate(_bounceController);
     
     _magneticController.addListener(() {
       if (!mounted) return;
@@ -71,6 +99,7 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
   void dispose() {
     _magneticController.dispose();
     _scaleController.dispose();
+    _bounceController.dispose();
     super.dispose();
   }
   
@@ -130,25 +159,14 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
     if (!mounted) return;
     setState(() => _isPressed = false);
     
-    // Create a smoother bounce sequence
-    final sequence = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.97, end: 1.03)
-            .chain(CurveTween(curve: Curves.easeInOutCubic)),
-        weight: 40,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.03, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeInOutCubic)),
-        weight: 60,
-      ),
-    ]);
-    
-    _scaleController.forward();
+    // Reset and start the bounce animation
+    _bounceController.reset();
+    _bounceController.forward();
   }
   
   void _handleTap() {
     widget.action.onPressed();
+    widget.onExitAnimation?.call();
   }
   
   @override
@@ -159,7 +177,7 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
           onHover: (event) => _handleHover(event, constraints),
           onExit: (_) => _handleHoverExit(),
           child: AnimatedBuilder(
-            animation: Listenable.merge([_scaleAnimation, _magneticController]),
+            animation: Listenable.merge([_scaleAnimation, _magneticController, _bounceAnimation]),
             builder: (context, child) {
               // Ensure offset values are finite
               final safeOffset = Offset(
@@ -167,10 +185,15 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
                 _currentOffset.dy.isFinite ? _currentOffset.dy : 0,
               );
               
+              // Use bounce animation when available, otherwise use scale or pressed state
+              final scale = _bounceController.isAnimating 
+                  ? _bounceAnimation.value
+                  : (_isPressed ? 0.97 : _scaleAnimation.value);
+              
               return Transform.translate(
                 offset: safeOffset,
                 child: Transform.scale(
-                  scale: _isPressed ? 0.97 : _scaleAnimation.value,
+                  scale: scale,
                   child: GestureDetector(
                     onTapDown: (_) => _handleTapDown(),
                     onTapUp: (_) => _handleTapUp(),
