@@ -187,28 +187,68 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: _isHovered 
-                          ? AppColors.glassMorphism.withOpacity(0.15)
-                          : AppColors.glassMorphism,
+                        // Multi-layer background for better contrast
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: _isHovered ? [
+                            Colors.white.withOpacity(0.25),
+                            Colors.white.withOpacity(0.15),
+                          ] : [
+                            Colors.white.withOpacity(0.15),
+                            Colors.white.withOpacity(0.08),
+                          ],
+                        ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: _isHovered
-                            ? AppColors.glassBorder.withOpacity(0.3)
-                            : AppColors.glassBorder,
+                            ? Colors.white.withOpacity(0.6)
+                            : Colors.white.withOpacity(0.3),
                           width: 1,
                         ),
+                        boxShadow: [
+                          // Dark underlay for contrast
+                          BoxShadow(
+                            color: Colors.black.withOpacity(_isHovered ? 0.15 : 0.1),
+                            blurRadius: _isHovered ? 12 : 8,
+                            spreadRadius: -2,
+                            offset: const Offset(0, 2),
+                          ),
+                          // Inner highlight
+                          BoxShadow(
+                            color: Colors.white.withOpacity(_isHovered ? 0.3 : 0.2),
+                            blurRadius: 1,
+                            spreadRadius: -1,
+                            offset: const Offset(0, -1),
+                          ),
+                          // Subtle glow on hover
+                          if (_isHovered) BoxShadow(
+                            color: Colors.white.withOpacity(0.1),
+                            blurRadius: 20,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 0),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: widget.action.iconColor.withOpacity(0.1),
+                              color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: Icon(
                               widget.action.icon,
-                              color: widget.action.iconColor,
+                              color: widget.action.iconColor.withOpacity(0.9),
                               size: 20,
                             ),
                           ),
@@ -220,15 +260,30 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
                                 Text(
                                   widget.action.title,
                                   style: AppTextStyles.body1.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.5),
+                                        blurRadius: 2,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   widget.action.subtitle,
                                   style: AppTextStyles.body2.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: Colors.white.withOpacity(0.85),
+                                    fontWeight: FontWeight.w400,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.4),
+                                        blurRadius: 1,
+                                        offset: const Offset(0, 0.5),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

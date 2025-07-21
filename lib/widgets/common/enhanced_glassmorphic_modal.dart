@@ -42,12 +42,12 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
     super.initState();
     
     _modalController = AnimationController(
-      duration: const Duration(milliseconds: 750),
+      duration: const Duration(milliseconds: 250),
       vsync: this,
     );
     
     _backgroundController = AnimationController(
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     
@@ -94,7 +94,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
     // Create staggered animations for menu items
     for (int i = 0; i < widget.actions.length; i++) {
       final controller = AnimationController(
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 200),
         vsync: this,
       );
       
@@ -115,12 +115,11 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
   
   void _startEntranceAnimation() async {
     _backgroundController.forward();
-    await Future.delayed(const Duration(milliseconds: 50));
-    _modalController.forward();
+    _modalController.forward(); // Start immediately with background
     
-    // Stagger menu item animations with tighter timing
+    // Ultra-fast stagger timing
     for (int i = 0; i < _itemControllers.length; i++) {
-      Future.delayed(Duration(milliseconds: 150 + (80 * i)), () {
+      Future.delayed(Duration(milliseconds: 50 + (30 * i)), () {
         if (mounted && i < _itemControllers.length) {
           _itemControllers[i].forward();
         }
@@ -129,20 +128,20 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
   }
   
   void _startExitAnimation() async {
-    // Reverse menu items quickly
+    // Ultra-fast reverse sequence
     for (int i = _itemControllers.length - 1; i >= 0; i--) {
       if (i < _itemControllers.length) {
         _itemControllers[i].reverse();
-        await Future.delayed(const Duration(milliseconds: 30));
+        await Future.delayed(const Duration(milliseconds: 15));
       }
     }
     
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(const Duration(milliseconds: 20));
     _modalController.reverse();
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 30));
     _backgroundController.reverse();
     
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 100));
     if (mounted) widget.onClose();
   }
   
@@ -172,7 +171,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
                   sigmaY: _blurAnimation.value,
                 ),
                 child: Container(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.05),
                 ),
               );
             },
@@ -217,33 +216,55 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
                           ),
                           margin: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
+                            // Multi-layer background for better visibility
                             gradient: LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                Colors.white.withOpacity(0.25),
-                                Colors.white.withOpacity(0.1),
+                                Colors.black.withOpacity(0.7), // Dark base
+                                Colors.black.withOpacity(0.6),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withOpacity(0.5), // Stronger border
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 25,
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 30,
                                 spreadRadius: 0,
                                 offset: const Offset(0, 25),
+                              ),
+                              // Inner shadow for depth
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.1),
+                                blurRadius: 3,
+                                spreadRadius: -1,
+                                offset: const Offset(0, -1),
                               ),
                             ],
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(28),
                             child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                              child: _buildModalContent(),
+                              filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  // White glass overlay for glassmorphic effect
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.15),
+                                      Colors.white.withOpacity(0.05),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(26),
+                                ),
+                                child: _buildModalContent(),
+                              ),
                             ),
                           ),
                         ),
@@ -280,7 +301,15 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
                 child: Text(
                   'Post Actions',
                   style: AppTextStyles.heading3.copyWith(
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.6),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -289,16 +318,23 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.glassMorphism,
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.glassBorder,
+                      color: Colors.white.withOpacity(0.4),
                       width: 1,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     Icons.close,
-                    color: AppColors.textSecondary,
+                    color: Colors.white.withOpacity(0.8),
                     size: 18,
                   ),
                 ),
