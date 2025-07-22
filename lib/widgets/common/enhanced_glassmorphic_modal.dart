@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../models/post_action.dart';
-import '../../painters/glass_ripple_painter.dart';
+import 'glass_ripple_effect.dart';
 import 'magnetic_menu_item.dart';
 
 class EnhancedGlassmorphicModal extends StatefulWidget {
@@ -36,6 +36,8 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
   
   final List<AnimationController> _itemControllers = [];
   final List<Animation<double>> _itemAnimations = [];
+  
+  bool _isExiting = false;
   
   @override
   void initState() {
@@ -128,25 +130,48 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
   }
   
   void _startExitAnimation() async {
-    // Ultra-fast reverse sequence
-    for (int i = _itemControllers.length - 1; i >= 0; i--) {
-      if (i < _itemControllers.length) {
-        _itemControllers[i].reverse();
-        await Future.delayed(const Duration(milliseconds: 15));
+    // Early return if exit animation is already running
+    if (_isExiting) return;
+    
+    // Set flag to prevent duplicate executions
+    _isExiting = true;
+    
+    try {
+      // Ultra-fast reverse sequence
+      for (int i = _itemControllers.length - 1; i >= 0; i--) {
+        if (i < _itemControllers.length && mounted) {
+          _itemControllers[i].reverse();
+          await Future.delayed(const Duration(milliseconds: 15));
+        }
       }
+      
+      if (!mounted) return;
+      await Future.delayed(const Duration(milliseconds: 20));
+      _modalController.reverse();
+      
+      if (!mounted) return;
+      await Future.delayed(const Duration(milliseconds: 30));
+      _backgroundController.reverse();
+      
+      if (!mounted) return;
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (mounted) {
+        widget.onClose();
+      }
+    } catch (e) {
+      // Handle any animation errors gracefully
+      debugPrint('Exit animation error: $e');
+    } finally {
+      // Always reset the flag, even if an error occurred
+      _isExiting = false;
     }
-    
-    await Future.delayed(const Duration(milliseconds: 20));
-    _modalController.reverse();
-    await Future.delayed(const Duration(milliseconds: 30));
-    _backgroundController.reverse();
-    
-    await Future.delayed(const Duration(milliseconds: 100));
-    if (mounted) widget.onClose();
   }
   
   @override
   void dispose() {
+    // Reset exit flag as cleanup
+    _isExiting = false;
+    
     _modalController.dispose();
     _backgroundController.dispose();
     for (final controller in _itemControllers) {
@@ -247,7 +272,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
                             ],
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(28),
+                            borderRadius: BorderRadius.circular(26),
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
                               child: Container(
@@ -363,17 +388,8 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
                       child: Opacity(
                         opacity: _itemAnimations[index].value.clamp(0.0, 1.0),
                         child: MagneticMenuItem(
-                          action: PostAction(
-                            type: widget.actions[index].type,
-                            title: widget.actions[index].title,
-                            subtitle: widget.actions[index].subtitle,
-                            icon: widget.actions[index].icon,
-                            iconColor: widget.actions[index].iconColor,
-                            onPressed: () {
-                              widget.actions[index].onPressed();
-                              _startExitAnimation();
-                            },
-                          ),
+                          action: widget.actions[index],
+                          onExitAnimation: _startExitAnimation,
                         ),
                       ),
                     ),

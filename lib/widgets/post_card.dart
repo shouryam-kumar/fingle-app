@@ -81,89 +81,63 @@ class _PostCardState extends State<PostCard>
     switch (action) {
       case 'report':
         debugPrint('🚩 Reporting post ${widget.post.id} by @${widget.post.userName}');
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.flag, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                const Text('Post reported successfully'),
-              ],
-            ),
-            backgroundColor: Colors.orange.shade700,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
+        _showActionSnackBar(
+          icon: Icons.flag,
+          message: 'Post reported successfully',
+          backgroundColor: Colors.orange.shade700,
         );
         break;
       case 'invite':
         debugPrint('👥 Inviting @${widget.post.userName} to LockerRoom');
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.group_add, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                const Text('Invitation sent to LockerRoom'),
-              ],
-            ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
+        _showActionSnackBar(
+          icon: Icons.group_add,
+          message: 'Invitation sent to LockerRoom',
+          backgroundColor: AppColors.success,
         );
         break;
       case 'unfollow':
         debugPrint('👤 Unfollowing @${widget.post.userName}');
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.person_remove, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Text('You have unfollowed @${widget.post.userName}'),
-              ],
-            ),
-            backgroundColor: AppColors.warning,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
+        _showActionSnackBar(
+          icon: Icons.person_remove,
+          message: 'You have unfollowed @${widget.post.userName}',
+          backgroundColor: AppColors.warning,
         );
         break;
       case 'mute':
         debugPrint('🔇 Muting @${widget.post.userName}');
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.volume_off, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Text('You have muted @${widget.post.userName}'),
-              ],
-            ),
-            backgroundColor: AppColors.textSecondary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
+        _showActionSnackBar(
+          icon: Icons.volume_off,
+          message: 'You have muted @${widget.post.userName}',
+          backgroundColor: AppColors.textSecondary,
         );
         break;
     }
+  }
+
+  void _showActionSnackBar({
+    required IconData icon,
+    required String message,
+    required Color backgroundColor,
+  }) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   List<PostAction> _getPostActions() {
