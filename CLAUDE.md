@@ -12,7 +12,8 @@ Fingle is a fitness-focused social media Flutter application with video feed, co
 - **Install dependencies**: `flutter pub get`
 - **Run the app**: `flutter run`
 - **Run on specific device**: `flutter run -d [device_id]` (use `flutter devices` to list)
-- **Build release versions**:
+- **Build release versions
+- **:
   - Android APK: `flutter build apk`
   - Android App Bundle: `flutter build appbundle`
   - iOS: `flutter build ios`
@@ -73,3 +74,5 @@ lib/
 3. Test on multiple platforms when making UI changes
 4. The app uses Material Design - follow Material guidelines for new UI components
 5. State changes should go through appropriate providers, not direct widget state
+
+Always make sure to maintain top-notch production grade code quuality without over-engineering things.
