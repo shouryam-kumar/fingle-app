@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/search_provider.dart';
 import '../../../models/search_models.dart';
@@ -15,64 +16,56 @@ class PostsResults extends StatelessWidget {
     return Consumer<SearchProvider>(
       builder: (context, searchProvider, child) {
         final postResults = searchProvider.filteredResults;
+        
+        // Debug logging to diagnose data flow
+        debugPrint('🔍 PostsResults: Current tab = ${searchProvider.currentTab}');
+        debugPrint('🔍 PostsResults: All results count = ${searchProvider.searchResults.length}');
+        debugPrint('🔍 PostsResults: Filtered results count = ${postResults.length}');
+        debugPrint('🔍 PostsResults: Post types = ${postResults.map((r) => r.type).toList()}');
 
         if (postResults.isEmpty) {
+          debugPrint('🔍 PostsResults: Showing empty state');
           return _buildEmptyState();
         }
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            // Get device pixel ratio for high-DPI screen adjustments
-            final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
-            
-            // Calculate precise content height requirements
-            const double imageHeight = 120;
-            const double contentPadding = 24; // 12px top + 12px bottom
-            const double badgeHeight = 22; // GlassBadge small size
-            const double badgeSpacing = 6;
-            const double titleHeight = 42; // Increased for bold text (18px × 2 lines + 6px buffer)
-            const double titleSpacing = 4;
-            const double creatorHeight = 20; // CircleAvatar + text
-            const double statsHeight = 16; // Engagement stats
-            const double deviceBuffer = 26; // Increased for Android device compatibility
-            const double precisionBuffer = 6; // Increased buffer for emoji and special characters
-            
-            // Calculate total height with precision-safe rounding
-            final double baseHeight = imageHeight + 
-                                    contentPadding + 
-                                    badgeHeight + 
-                                    badgeSpacing + 
-                                    titleHeight + 
-                                    titleSpacing + 
-                                    creatorHeight + 
-                                    statsHeight + 
-                                    deviceBuffer + 
-                                    precisionBuffer;
-            
-            // Adjust for high-DPI screens and use ceiling to avoid sub-pixel issues
-            final double adjustedHeight = (baseHeight * (devicePixelRatio > 2 ? 1.02 : 1.0));
-            final double mainAxisExtent = adjustedHeight.ceilToDouble();
-            
-            return GridView.builder(
-              padding: const EdgeInsets.all(20),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                mainAxisExtent: mainAxisExtent, // Use fixed height instead of aspect ratio
-              ),
-              itemCount: postResults.length,
-              itemBuilder: (context, index) {
-                final result = postResults[index];
-                if (result.post != null) {
-                  return _PostCard(post: result.post!);
-                } else if (result.video != null) {
-                  return _VideoCard(post: result.video!);
-                }
-                return const SizedBox.shrink();
-              },
-            );
-          },
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Responsive grid configuration like all_results_feed.dart
+              int crossAxisCount;
+              double spacing;
+
+              if (constraints.maxWidth >= 600) {
+                crossAxisCount = 3;
+                spacing = 16;
+              } else if (constraints.maxWidth >= 360) {
+                crossAxisCount = 2;
+                spacing = 12;
+              } else {
+                crossAxisCount = 1;
+                spacing = 10;
+              }
+
+              return MasonryGridView.count(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: spacing,
+                crossAxisSpacing: spacing,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: postResults.length,
+                itemBuilder: (context, index) {
+                  final result = postResults[index];
+                  if (result.post != null) {
+                    return _PostCard(post: result.post!);
+                  } else if (result.video != null) {
+                    return _VideoCard(post: result.video!);
+                  }
+                  return const SizedBox.shrink();
+                },
+              );
+            },
+          ),
         );
       },
     );
@@ -119,113 +112,72 @@ class _PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return ClipRect(
-          child: GlassContainer(
-            borderRadius: 16,
-            padding: EdgeInsets.zero,
-            hasHoverEffect: true,
+    return GlassContainer(
+      borderRadius: 16,
+      padding: EdgeInsets.zero,
+      hasHoverEffect: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Post image/content
+          _buildPostImage(),
+
+          // Content with responsive layout
+          Padding(
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Post image/content
-                _buildPostImage(),
-                
-                // Content with overflow-safe constraints
-                Expanded(
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minHeight: 100, // Minimum content height
-                      maxHeight: (constraints.maxHeight - 120).clamp(100, double.infinity), // Safe height calculation
+                // Content type badge
+                _buildContentTypeBadge(),
+
+                const SizedBox(height: 6),
+
+                // Title
+                Text(
+                  post.content,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 4),
+
+                // Creator info
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 8,
+                      backgroundImage: NetworkImage(post.userAvatar),
                     ),
-                    child: ClipRect(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: IntrinsicHeight(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Content type badge
-                              _buildContentTypeBadge(),
-                              
-                              const SizedBox(height: 6),
-                              
-                              // Title with fixed height constraints and enhanced overflow protection
-                              SizedBox(
-                                height: 40, // Fixed height for 2 lines of bold text
-                                child: ClipRect(
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxHeight: 40,
-                                      minHeight: 36,
-                                    ),
-                                    child: Text(
-                                      post.content,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary,
-                                        height: 1.3, // Explicit line height for consistency
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      textHeightBehavior: const TextHeightBehavior(
-                                        applyHeightToFirstAscent: false,
-                                        applyHeightToLastDescent: false,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 4),
-                              
-                              // Creator info with height constraints
-                              SizedBox(
-                                height: 18, // Fixed height for creator info
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 8,
-                                      backgroundImage: NetworkImage(post.userAvatar),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: ClipRect(
-                                        child: Text(
-                                          post.userName,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.textSecondary,
-                                            height: 1.2,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              
-                              const Spacer(),
-                              
-                              // Engagement stats
-                              _buildEngagementStats(),
-                            ],
-                          ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        post.userName,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
+                  ],
                 ),
+
+                const SizedBox(height: 8),
+
+                // Engagement stats
+                _buildEngagementStats(),
               ],
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -235,26 +187,33 @@ class _PostCard extends StatelessWidget {
         topLeft: Radius.circular(16),
         topRight: Radius.circular(16),
       ),
-      child: Container(
-        height: 120,
-        width: double.infinity,
-        child: post.mediaItems?.isNotEmpty == true
-            ? Image.network(
-                post.mediaItems!.first.url,
-                fit: BoxFit.cover,
-              )
-            : Container(
-                decoration: BoxDecoration(
-                  gradient: AppColors.oceanGradient,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.article,
-                    size: 32,
-                    color: Colors.white,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Calculate responsive height based on available width
+          final imageHeight =
+              constraints.maxWidth * 0.6; // 60% of width for better proportions
+          return SizedBox(
+            height: imageHeight.clamp(80.0, 140.0), // Min 80px, max 140px
+            width: double.infinity,
+            child: post.mediaItems?.isNotEmpty == true
+                ? Image.network(
+                    post.mediaItems!.first.url,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      gradient: AppColors.oceanGradient,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.article,
+                        size: 32,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                ),
-              ),
+          );
+        },
       ),
     );
   }
@@ -309,49 +268,35 @@ class _PostCard extends StatelessWidget {
   }
 
   Widget _buildEngagementStats() {
-    return SizedBox(
-      height: 16, // Fixed height for engagement stats
-      child: ClipRect(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(child: _buildStatItem(Icons.favorite_border, post.likes.toString())),
-            const SizedBox(width: 8),
-            Flexible(child: _buildStatItem(Icons.comment_outlined, post.comments.toString())),
-            const SizedBox(width: 8),
-            Flexible(child: _buildStatItem(Icons.share_outlined, post.shares.toString())),
-          ],
-        ),
-      ),
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        _buildStatItem(Icons.favorite_border, post.likes.toString()),
+        _buildStatItem(Icons.comment_outlined, post.comments.toString()),
+        _buildStatItem(Icons.share_outlined, post.shares.toString()),
+      ],
     );
   }
 
   Widget _buildStatItem(IconData icon, String count) {
-    return SizedBox(
-      height: 14, // Fixed height for stat items
-      child: ClipRect(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 12,
-              color: AppColors.textSecondary,
-            ),
-            const SizedBox(width: 2),
-            Text(
-              count,
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-                height: 1.2,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ],
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 12,
+          color: AppColors.textSecondary,
         ),
-      ),
+        const SizedBox(width: 2),
+        Text(
+          count,
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -363,33 +308,37 @@ class _VideoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return ClipRect(
-          child: GlassContainer(
-            borderRadius: 16,
-            padding: EdgeInsets.zero,
-            hasHoverEffect: true,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Video thumbnail
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
+    return GlassContainer(
+      borderRadius: 16,
+      padding: EdgeInsets.zero,
+      hasHoverEffect: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Video thumbnail
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Calculate responsive height based on available width
+                final imageHeight = constraints.maxWidth * 0.6; // 60% of width
+                return SizedBox(
+                  height: imageHeight.clamp(80.0, 140.0), // Min 80px, max 140px
+                  width: double.infinity,
                   child: Stack(
                     children: [
                       Container(
-                        height: 120,
                         width: double.infinity,
+                        height: double.infinity,
                         child: Image.network(
                           post.thumbnailUrl,
                           fit: BoxFit.cover,
                         ),
                       ),
-                      
+
                       // Play button overlay
                       const Positioned.fill(
                         child: Center(
@@ -400,13 +349,14 @@ class _VideoCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      
+
                       // Duration badge
                       Positioned(
                         bottom: 8,
                         right: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(4),
@@ -423,131 +373,93 @@ class _VideoCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
-                
-                // Content with overflow-safe constraints
-                Expanded(
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minHeight: 100, // Minimum content height
-                      maxHeight: (constraints.maxHeight - 120).clamp(100, double.infinity), // Safe height calculation
+                );
+              },
+            ),
+          ),
+
+          // Content with responsive layout
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Video type and difficulty badges
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    GlassBadge(
+                      text: 'LIVE',
+                      style: GlassBadgeStyle.secondary,
+                      customColor: AppColors.error,
+                      size: GlassBadgeSize.small,
                     ),
-                    child: ClipRect(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: IntrinsicHeight(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Video type and difficulty badges
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  GlassBadge(
-                                    text: 'LIVE',
-                                    style: GlassBadgeStyle.secondary,
-                                    customColor: AppColors.error,
-                                    size: GlassBadgeSize.small,
-                                  ),
-                                  
-                                  if (post.difficulty != null) ...[
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: GlassBadge(
-                                        text: post.difficulty!.toUpperCase(),
-                                        style: GlassBadgeStyle.secondary,
-                                        customColor: _getDifficultyColor(post.difficulty!),
-                                        size: GlassBadgeSize.small,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                  
-                              const SizedBox(height: 6),
-                              
-                              // Title with fixed height constraints and enhanced overflow protection
-                              SizedBox(
-                                height: 40, // Fixed height for 2 lines of bold text
-                                child: ClipRect(
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxHeight: 40,
-                                      minHeight: 36,
-                                    ),
-                                    child: Text(
-                                      post.title ?? 'Fitness Video',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary,
-                                        height: 1.3, // Explicit line height for consistency
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      textHeightBehavior: const TextHeightBehavior(
-                                        applyHeightToFirstAscent: false,
-                                        applyHeightToLastDescent: false,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 4),
-                              
-                              // Creator info with height constraints
-                              SizedBox(
-                                height: 18, // Fixed height for creator info
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 8,
-                                      backgroundImage: NetworkImage(post.creator.profilePic),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: ClipRect(
-                                        child: Text(
-                                          post.creator.name,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.textSecondary,
-                                            height: 1.2,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              
-                              const Spacer(),
-                              
-                              // Video stats
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Flexible(child: _buildStatItem(Icons.visibility_outlined, post.views.toString())),
-                                  const SizedBox(width: 6),
-                                  Flexible(child: _buildStatItem(Icons.favorite_border, post.likes.toString())),
-                                ],
-                              ),
-                            ],
-                          ),
+                    if (post.difficulty != null)
+                      GlassBadge(
+                        text: post.difficulty!.toUpperCase(),
+                        style: GlassBadgeStyle.secondary,
+                        customColor: _getDifficultyColor(post.difficulty!),
+                        size: GlassBadgeSize.small,
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 6),
+
+                // Title
+                Text(
+                  post.title ?? 'Fitness Video',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 4),
+
+                // Creator info
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 8,
+                      backgroundImage: NetworkImage(post.creator.profilePic),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        post.creator.name,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                // Video stats
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    _buildStatItem(Icons.visibility_outlined,
+                        post.views.toString()),
+                    _buildStatItem(
+                        Icons.favorite_border, post.likes.toString()),
+                  ],
                 ),
               ],
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -565,31 +477,23 @@ class _VideoCard extends StatelessWidget {
   }
 
   Widget _buildStatItem(IconData icon, String count) {
-    return SizedBox(
-      height: 14, // Fixed height for stat items
-      child: ClipRect(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 12,
-              color: AppColors.textSecondary,
-            ),
-            const SizedBox(width: 2),
-            Text(
-              _formatNumber(int.parse(count)),
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-                height: 1.2,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ],
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 12,
+          color: AppColors.textSecondary,
         ),
-      ),
+        const SizedBox(width: 2),
+        Text(
+          _formatNumber(int.parse(count)),
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 

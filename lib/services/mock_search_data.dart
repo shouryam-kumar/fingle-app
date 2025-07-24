@@ -11,9 +11,12 @@ class MockSearchData {
       id: '2',
       name: 'Maya Chen',
       age: 25,
-      bio: 'Yoga instructor 🧘‍♀️ | Mindfulness coach | Open to meaningful connections',
-      profilePic: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=face',
-      coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
+      bio:
+          'Yoga instructor 🧘‍♀️ | Mindfulness coach | Open to meaningful connections',
+      profilePic:
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=face',
+      coverImage:
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
       isVerified: true,
       isFollowing: false,
       openToMingle: true,
@@ -22,7 +25,8 @@ class MockSearchData {
       followers: 8500,
       following: 1200,
       posts: [],
-      stats: UserStats(totalPosts: 25, followers: 8500, following: 1200, totalViews: 32000),
+      stats: UserStats(
+          totalPosts: 25, followers: 8500, following: 1200, totalViews: 32000),
       achievements: [
         Achievement(
           id: '1',
@@ -38,18 +42,28 @@ class MockSearchData {
       id: '3',
       name: 'Marcus Rodriguez',
       age: 32,
-      bio: 'CrossFit athlete 🏋️‍♂️ | Personal trainer | Let\'s sweat together!',
-      profilePic: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
-      coverImage: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=400&fit=crop',
+      bio:
+          'CrossFit athlete 🏋️‍♂️ | Personal trainer | Let\'s sweat together!',
+      profilePic:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
+      coverImage:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=400&fit=crop',
       isVerified: false,
       isFollowing: true,
       openToMingle: false,
       joinedAt: DateTime(2023, 1, 10),
-      interests: ['CrossFit', 'Strength Training', 'HIIT', 'Powerlifting', 'Nutrition'],
+      interests: [
+        'CrossFit',
+        'Strength Training',
+        'HIIT',
+        'Powerlifting',
+        'Nutrition'
+      ],
       followers: 15600,
       following: 650,
       posts: [],
-      stats: UserStats(totalPosts: 87, followers: 15600, following: 650, totalViews: 89000),
+      stats: UserStats(
+          totalPosts: 87, followers: 15600, following: 650, totalViews: 89000),
       achievements: [
         Achievement(
           id: '1',
@@ -65,9 +79,12 @@ class MockSearchData {
       id: '4',
       name: 'Emma Thompson',
       age: 28,
-      bio: 'Marathon runner 🏃‍♀️ | Adventure seeker | Always up for new challenges',
-      profilePic: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
-      coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
+      bio:
+          'Marathon runner 🏃‍♀️ | Adventure seeker | Always up for new challenges',
+      profilePic:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
+      coverImage:
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
       isVerified: true,
       isFollowing: false,
       openToMingle: true,
@@ -76,7 +93,8 @@ class MockSearchData {
       followers: 12300,
       following: 890,
       posts: [],
-      stats: UserStats(totalPosts: 45, followers: 12300, following: 890, totalViews: 56000),
+      stats: UserStats(
+          totalPosts: 45, followers: 12300, following: 890, totalViews: 56000),
       achievements: [
         Achievement(
           id: '1',
@@ -92,18 +110,28 @@ class MockSearchData {
       id: '5',
       name: 'David Kim',
       age: 30,
-      bio: 'Rock climbing enthusiast 🧗‍♂️ | Outdoor fitness | Looking for adventure partners',
-      profilePic: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
-      coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
+      bio:
+          'Rock climbing enthusiast 🧗‍♂️ | Outdoor fitness | Looking for adventure partners',
+      profilePic:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
+      coverImage:
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
       isVerified: false,
       isFollowing: false,
       openToMingle: true,
       joinedAt: DateTime(2023, 7, 15),
-      interests: ['Rock Climbing', 'Bouldering', 'Hiking', 'Adventure', 'Outdoor'],
+      interests: [
+        'Rock Climbing',
+        'Bouldering',
+        'Hiking',
+        'Adventure',
+        'Outdoor'
+      ],
       followers: 9800,
       following: 1100,
       posts: [],
-      stats: UserStats(totalPosts: 34, followers: 9800, following: 1100, totalViews: 42000),
+      stats: UserStats(
+          totalPosts: 34, followers: 9800, following: 1100, totalViews: 42000),
       achievements: [],
     ),
   ];
@@ -113,9 +141,11 @@ class MockSearchData {
     SearchTopic(
       id: 't1',
       name: 'HIIT Fitness Workouts',
-      description: 'High-intensity interval fitness training for maximum results',
+      description:
+          'High-intensity interval fitness training for maximum results',
       emoji: '🔥',
-      imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=200&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=200&fit=crop',
       analytics: TopicAnalytics(
         postsLast24h: 127,
         activeUsers: 2341,
@@ -129,9 +159,11 @@ class MockSearchData {
     SearchTopic(
       id: 't2',
       name: 'Yoga & Mindfulness Fitness',
-      description: 'Find your inner peace through fitness movement and meditation',
+      description:
+          'Find your inner peace through fitness movement and meditation',
       emoji: '🧘‍♀️',
-      imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=200&fit=crop&crop=center',
+      imageUrl:
+          'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=200&fit=crop&crop=center',
       analytics: TopicAnalytics(
         postsLast24h: 89,
         activeUsers: 1876,
@@ -147,7 +179,8 @@ class MockSearchData {
       name: 'Strength Fitness Training',
       description: 'Build muscle and increase power with fitness weightlifting',
       emoji: '💪',
-      imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=200&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=200&fit=crop',
       analytics: TopicAnalytics(
         postsLast24h: 156,
         activeUsers: 3124,
@@ -163,7 +196,8 @@ class MockSearchData {
       name: 'Running & Cardio Fitness',
       description: 'Improve endurance and cardiovascular fitness health',
       emoji: '🏃‍♂️',
-      imageUrl: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=200&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=200&fit=crop',
       analytics: TopicAnalytics(
         postsLast24h: 73,
         activeUsers: 1567,
@@ -177,9 +211,11 @@ class MockSearchData {
     SearchTopic(
       id: 't5',
       name: 'Fitness Nutrition & Diet',
-      description: 'Fuel your body with the right foods for optimal fitness performance',
+      description:
+          'Fuel your body with the right foods for optimal fitness performance',
       emoji: '🥗',
-      imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=200&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=200&fit=crop',
       analytics: TopicAnalytics(
         postsLast24h: 45,
         activeUsers: 987,
@@ -197,10 +233,12 @@ class MockSearchData {
     FeedPost(
       id: 1,
       userId: '2',
-      userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=face',
+      userAvatar:
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=face',
       userName: 'Maya Chen',
       userVerified: true,
-      content: 'Just finished an amazing sunrise yoga fitness session! 🧘‍♀️ Nothing beats starting the day with mindful movement. Who else loves morning yoga fitness routines? #YogaLife #MorningMotivation #Mindfulness #Fitness',
+      content:
+          'Just finished an amazing sunrise yoga fitness session! 🧘‍♀️ Nothing beats starting the day with mindful movement. Who else loves morning yoga fitness routines? #YogaLife #MorningMotivation #Mindfulness #Fitness',
       timeAgo: '2h',
       category: 'Yoga',
       likes: 342,
@@ -212,8 +250,10 @@ class MockSearchData {
       mediaItems: [
         MediaItem(
           type: MediaType.image,
-          url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=800&fit=crop&crop=center',
-          thumbnail: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&crop=center',
+          url:
+              'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=800&fit=crop&crop=center',
+          thumbnail:
+              'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&crop=center',
         ),
       ],
       tags: ['yoga', 'mindfulness', 'morningworkout', 'beachyoga'],
@@ -221,10 +261,12 @@ class MockSearchData {
     FeedPost(
       id: 2,
       userId: '3',
-      userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
+      userAvatar:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
       userName: 'Marcus Rodriguez',
       userVerified: false,
-      content: 'New PR on deadlifts today! 425lbs x 3 reps 💪 The fitness grind never stops. Remember, strength is built one rep at a time. #CrossFit #Powerlifting #StrengthTraining #PR #Fitness',
+      content:
+          'New PR on deadlifts today! 425lbs x 3 reps 💪 The fitness grind never stops. Remember, strength is built one rep at a time. #CrossFit #Powerlifting #StrengthTraining #PR #Fitness',
       timeAgo: '5h',
       category: 'Strength Training',
       likes: 567,
@@ -236,8 +278,10 @@ class MockSearchData {
       mediaItems: [
         MediaItem(
           type: MediaType.video,
-          url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
-          thumbnail: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop',
+          url:
+              'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
+          thumbnail:
+              'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop',
           duration: 45,
         ),
       ],
@@ -246,10 +290,12 @@ class MockSearchData {
     FeedPost(
       id: 3,
       userId: '4',
-      userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
+      userAvatar:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
       userName: 'Emma Thompson',
       userVerified: true,
-      content: 'Marathon training week 8 complete! 🏃‍♀️ Did my long run today - 18 miles at 7:45 pace. Fitness goals are getting closer every week. Boston, here I come! #MarathonTraining #RunningCommunity #BostonMarathon #Fitness',
+      content:
+          'Marathon training week 8 complete! 🏃‍♀️ Did my long run today - 18 miles at 7:45 pace. Fitness goals are getting closer every week. Boston, here I come! #MarathonTraining #RunningCommunity #BostonMarathon #Fitness',
       timeAgo: '8h',
       category: 'Running',
       likes: 892,
@@ -261,8 +307,10 @@ class MockSearchData {
       mediaItems: [
         MediaItem(
           type: MediaType.image,
-          url: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&h=800&fit=crop',
-          thumbnail: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=400&fit=crop',
+          url:
+              'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&h=800&fit=crop',
+          thumbnail:
+              'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=400&fit=crop',
         ),
       ],
       tags: ['marathon', 'running', 'bostonmarathon', 'training'],
@@ -270,10 +318,12 @@ class MockSearchData {
     FeedPost(
       id: 4,
       userId: '5',
-      userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
+      userAvatar:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
       userName: 'David Kim',
       userVerified: false,
-      content: 'Epic climbing fitness session at the gorge today! 🧗‍♂️ Finally sent that V8 boulder problem I\'ve been projecting for weeks. The key was trusting the heel hook and consistent fitness training. #RockClimbing #Bouldering #ClimbingLife #Fitness',
+      content:
+          'Epic climbing fitness session at the gorge today! 🧗‍♂️ Finally sent that V8 boulder problem I\'ve been projecting for weeks. The key was trusting the heel hook and consistent fitness training. #RockClimbing #Bouldering #ClimbingLife #Fitness',
       timeAgo: '1d',
       category: 'Adventure',
       likes: 423,
@@ -285,13 +335,17 @@ class MockSearchData {
       mediaItems: [
         MediaItem(
           type: MediaType.image,
-          url: 'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&h=800&fit=crop',
-          thumbnail: 'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=400&h=400&fit=crop',
+          url:
+              'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&h=800&fit=crop',
+          thumbnail:
+              'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=400&h=400&fit=crop',
         ),
         MediaItem(
           type: MediaType.image,
-          url: 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=800&h=800&fit=crop',
-          thumbnail: 'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=400&fit=crop',
+          url:
+              'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=800&h=800&fit=crop',
+          thumbnail:
+              'https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=400&h=400&fit=crop',
         ),
       ],
       tags: ['climbing', 'bouldering', 'outdoor', 'adventure'],
@@ -299,10 +353,12 @@ class MockSearchData {
     FeedPost(
       id: 5,
       userId: '2',
-      userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=face',
+      userAvatar:
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=face',
       userName: 'Maya Chen',
       userVerified: true,
-      content: 'Quick HIIT yoga fitness flow to get your heart pumping! 🔥 This 15-minute sequence combines traditional poses with cardio bursts. Save for your next fitness workout! #HIITYoga #YogaFlow #QuickWorkout #Fitness',
+      content:
+          'Quick HIIT yoga fitness flow to get your heart pumping! 🔥 This 15-minute sequence combines traditional poses with cardio bursts. Save for your next fitness workout! #HIITYoga #YogaFlow #QuickWorkout #Fitness',
       timeAgo: '2d',
       category: 'HIIT',
       likes: 1234,
@@ -314,8 +370,10 @@ class MockSearchData {
       mediaItems: [
         MediaItem(
           type: MediaType.video,
-          url: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
-          thumbnail: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=400&h=400&fit=crop',
+          url:
+              'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
+          thumbnail:
+              'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=400&h=400&fit=crop',
           duration: 30,
         ),
       ],
@@ -327,11 +385,14 @@ class MockSearchData {
   static final List<VideoPost> _sampleVideos = [
     VideoPost(
       id: 'v1',
-      videoUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
-      thumbnailUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop',
+      videoUrl:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop',
       creator: _sampleUsers[1], // Marcus Rodriguez
       title: '30-Minute Full Body HIIT Fitness Workout',
-      description: 'High-intensity interval fitness training for maximum calorie burn. No equipment needed!',
+      description:
+          'High-intensity interval fitness training for maximum calorie burn. No equipment needed!',
       tags: ['hiit', 'fullbody', 'noequipment', 'homeworkout'],
       workoutType: 'HIIT',
       difficulty: 'intermediate',
@@ -347,11 +408,14 @@ class MockSearchData {
     ),
     VideoPost(
       id: 'v2',
-      videoUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
-      thumbnailUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&crop=center',
+      videoUrl:
+          'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=400&fit=crop&crop=center',
       creator: _sampleUsers[0], // Maya Chen
       title: 'Morning Yoga Fitness Flow for Beginners',
-      description: 'Gentle 20-minute fitness flow to start your day with mindfulness and movement.',
+      description:
+          'Gentle 20-minute fitness flow to start your day with mindfulness and movement.',
       tags: ['yoga', 'morning', 'beginner', 'mindfulness'],
       workoutType: 'Yoga',
       difficulty: 'beginner',
@@ -367,11 +431,14 @@ class MockSearchData {
     ),
     VideoPost(
       id: 'v3',
-      videoUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
-      thumbnailUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop',
+      videoUrl:
+          'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop&crop=center', // Placeholder image instead of video
+      thumbnailUrl:
+          'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop',
       creator: _sampleUsers[1], // Marcus Rodriguez
       title: 'Advanced Calisthenics Fitness Progressions',
-      description: 'Master the muscle-up, human flag, and planche with these fitness progression exercises.',
+      description:
+          'Master the muscle-up, human flag, and planche with these fitness progression exercises.',
       tags: ['calisthenics', 'advanced', 'strength', 'bodyweight'],
       workoutType: 'Strength',
       difficulty: 'advanced',
@@ -393,7 +460,8 @@ class MockSearchData {
       id: 'c1',
       name: 'Morning Warriors',
       description: 'Early birds who start their day with intense workouts',
-      imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=300&fit=crop',
       memberCount: 12500,
       postsToday: 89,
       activityLevel: ActivityLevel.veryActive,
@@ -406,7 +474,8 @@ class MockSearchData {
       id: 'c2',
       name: 'Yoga Enthusiasts',
       description: 'A peaceful community for yoga lovers of all levels',
-      imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&h=300&fit=crop&crop=center',
+      imageUrl:
+          'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&h=300&fit=crop&crop=center',
       memberCount: 8900,
       postsToday: 34,
       activityLevel: ActivityLevel.active,
@@ -419,7 +488,8 @@ class MockSearchData {
       id: 'c3',
       name: 'CrossFit Champions',
       description: 'Elite CrossFit athletes pushing their limits',
-      imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&h=300&fit=crop',
       memberCount: 6700,
       postsToday: 67,
       activityLevel: ActivityLevel.veryActive,
@@ -432,7 +502,8 @@ class MockSearchData {
       id: 'c4',
       name: 'Adventure Seekers',
       description: 'Outdoor fitness and adventure sports community',
-      imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop',
+      imageUrl:
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop',
       memberCount: 4500,
       postsToday: 23,
       activityLevel: ActivityLevel.moderate,
@@ -445,14 +516,46 @@ class MockSearchData {
 
   // Search suggestions
   static final List<SearchSuggestion> _suggestions = [
-    SearchSuggestion(id: 's1', text: 'HIIT workouts', type: SearchResultType.posts, popularity: 95),
-    SearchSuggestion(id: 's2', text: 'Yoga poses', type: SearchResultType.posts, popularity: 87),
-    SearchSuggestion(id: 's3', text: 'Strength training', type: SearchResultType.topics, popularity: 92),
-    SearchSuggestion(id: 's4', text: 'Open to mingle', type: SearchResultType.people, popularity: 78),
-    SearchSuggestion(id: 's5', text: 'CrossFit', type: SearchResultType.communities, popularity: 83),
-    SearchSuggestion(id: 's6', text: 'Marathon training', type: SearchResultType.posts, popularity: 76),
-    SearchSuggestion(id: 's7', text: 'Morning workouts', type: SearchResultType.communities, popularity: 82),
-    SearchSuggestion(id: 's8', text: 'Nutrition tips', type: SearchResultType.topics, popularity: 74),
+    SearchSuggestion(
+        id: 's1',
+        text: 'HIIT workouts',
+        type: SearchResultType.posts,
+        popularity: 95),
+    SearchSuggestion(
+        id: 's2',
+        text: 'Yoga poses',
+        type: SearchResultType.posts,
+        popularity: 87),
+    SearchSuggestion(
+        id: 's3',
+        text: 'Strength training',
+        type: SearchResultType.topics,
+        popularity: 92),
+    SearchSuggestion(
+        id: 's4',
+        text: 'Open to mingle',
+        type: SearchResultType.people,
+        popularity: 78),
+    SearchSuggestion(
+        id: 's5',
+        text: 'CrossFit',
+        type: SearchResultType.communities,
+        popularity: 83),
+    SearchSuggestion(
+        id: 's6',
+        text: 'Marathon training',
+        type: SearchResultType.posts,
+        popularity: 76),
+    SearchSuggestion(
+        id: 's7',
+        text: 'Morning workouts',
+        type: SearchResultType.communities,
+        popularity: 82),
+    SearchSuggestion(
+        id: 's8',
+        text: 'Nutrition tips',
+        type: SearchResultType.topics,
+        popularity: 74),
   ];
 
   // Search method
@@ -464,21 +567,21 @@ class MockSearchData {
     if (filter.type == null || filter.type == SearchResultType.people) {
       for (final user in _sampleUsers) {
         double score = 0.0;
-        
+
         // Name match
         if (user.name.toLowerCase().contains(lowerQuery)) score += 1.0;
-        
+
         // Bio match
         if (user.bio.toLowerCase().contains(lowerQuery)) score += 0.5;
-        
+
         // Interests match
         for (final interest in user.interests) {
           if (interest.toLowerCase().contains(lowerQuery)) score += 0.3;
         }
-        
+
         // Filter by openToMingle if specified
         if (filter.openToMingleOnly && !user.openToMingle) continue;
-        
+
         if (score > 0) {
           results.add(SearchResult.user(
             id: 'user_${user.id}',
@@ -493,18 +596,18 @@ class MockSearchData {
     if (filter.type == null || filter.type == SearchResultType.topics) {
       for (final topic in _sampleTopics) {
         double score = 0.0;
-        
+
         // Name match
         if (topic.name.toLowerCase().contains(lowerQuery)) score += 1.0;
-        
+
         // Description match
         if (topic.description.toLowerCase().contains(lowerQuery)) score += 0.7;
-        
+
         // Tags match
         for (final tag in topic.tags) {
           if (tag.toLowerCase().contains(lowerQuery)) score += 0.4;
         }
-        
+
         if (score > 0) {
           results.add(SearchResult.topic(
             id: 'topic_${topic.id}',
@@ -519,18 +622,19 @@ class MockSearchData {
     if (filter.type == null || filter.type == SearchResultType.communities) {
       for (final community in _sampleCommunities) {
         double score = 0.0;
-        
+
         // Name match
         if (community.name.toLowerCase().contains(lowerQuery)) score += 1.0;
-        
+
         // Description match
-        if (community.description.toLowerCase().contains(lowerQuery)) score += 0.7;
-        
+        if (community.description.toLowerCase().contains(lowerQuery))
+          score += 0.7;
+
         // Tags match
         for (final tag in community.tags) {
           if (tag.toLowerCase().contains(lowerQuery)) score += 0.4;
         }
-        
+
         if (score > 0) {
           results.add(SearchResult.community(
             id: 'community_${community.id}',
@@ -545,21 +649,21 @@ class MockSearchData {
     if (filter.type == null || filter.type == SearchResultType.posts) {
       for (final post in _samplePosts) {
         double score = 0.0;
-        
+
         // Content match
         if (post.content.toLowerCase().contains(lowerQuery)) score += 1.0;
-        
+
         // Username match
         if (post.userName.toLowerCase().contains(lowerQuery)) score += 0.5;
-        
+
         // Category match
         if (post.category.toLowerCase().contains(lowerQuery)) score += 0.3;
-        
+
         // Tags match
         for (final tag in post.tags) {
           if (tag.toLowerCase().contains(lowerQuery)) score += 0.4;
         }
-        
+
         if (score > 0) {
           results.add(SearchResult.post(
             id: 'post_${post.id}',
@@ -568,28 +672,28 @@ class MockSearchData {
           ));
         }
       }
-      
+
       // Also search videos for the posts tab
       for (final video in _sampleVideos) {
         double score = 0.0;
-        
+
         // Title match
         if (video.title.toLowerCase().contains(lowerQuery)) score += 1.0;
-        
+
         // Description match
         if (video.description.toLowerCase().contains(lowerQuery)) score += 0.7;
-        
+
         // Creator name match
         if (video.creator.name.toLowerCase().contains(lowerQuery)) score += 0.5;
-        
+
         // Workout type match
         if (video.workoutType.toLowerCase().contains(lowerQuery)) score += 0.6;
-        
+
         // Tags match
         for (final tag in video.tags) {
           if (tag.toLowerCase().contains(lowerQuery)) score += 0.4;
         }
-        
+
         if (score > 0) {
           results.add(SearchResult.video(
             id: 'video_${video.id}',
@@ -602,17 +706,18 @@ class MockSearchData {
 
     // Sort by relevance score (highest first)
     results.sort((a, b) => b.relevanceScore.compareTo(a.relevanceScore));
-    
+
     return results;
   }
 
   // Get search suggestions
   static List<SearchSuggestion> getSuggestions(String query) {
     if (query.length < 2) return [];
-    
+
     final lowerQuery = query.toLowerCase();
     return _suggestions
-        .where((suggestion) => suggestion.text.toLowerCase().contains(lowerQuery))
+        .where(
+            (suggestion) => suggestion.text.toLowerCase().contains(lowerQuery))
         .take(5)
         .toList();
   }

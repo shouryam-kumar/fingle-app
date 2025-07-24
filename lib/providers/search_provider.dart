@@ -23,7 +23,7 @@ class SearchProvider extends ChangeNotifier {
     SearchResultType.communities,
     SearchResultType.trending,
   ];
-  
+
   // Enhanced tab state
   List<MixedContentResult> _mixedContentResults = [];
   List<TrendingMetrics> _trendingMetrics = [];
@@ -40,7 +40,7 @@ class SearchProvider extends ChangeNotifier {
   int get selectedTabIndex => _selectedTabIndex;
   List<SearchResultType> get tabs => _tabs;
   SearchResultType get currentTab => _tabs[_selectedTabIndex];
-  
+
   // Enhanced getters
   List<MixedContentResult> get mixedContentResults => _mixedContentResults;
   List<TrendingMetrics> get trendingMetrics => _trendingMetrics;
@@ -49,7 +49,7 @@ class SearchProvider extends ChangeNotifier {
   // Filtered results by current tab
   List<SearchResult> get filteredResults {
     if (_searchResults.isEmpty) return [];
-    
+
     return _searchResults.where((result) {
       switch (currentTab) {
         case SearchResultType.all:
@@ -64,10 +64,9 @@ class SearchProvider extends ChangeNotifier {
           return result.type == SearchResultType.communities;
         case SearchResultType.trending:
           // Show results that have trending metrics
-          return _trendingMetrics.any((metric) => 
-            metric.trendingScore > 0.7 && 
-            DateTime.now().difference(metric.lastUpdated).inHours < 24
-          );
+          return _trendingMetrics.any((metric) =>
+              metric.trendingScore > 0.7 &&
+              DateTime.now().difference(metric.lastUpdated).inHours < 24);
       }
     }).toList();
   }
@@ -75,7 +74,7 @@ class SearchProvider extends ChangeNotifier {
   // Search methods
   void updateSearchQuery(String query) {
     _searchQuery = query.trim();
-    
+
     if (_searchQuery.isEmpty) {
       _suggestions.clear();
       _searchResults.clear();
@@ -83,7 +82,7 @@ class SearchProvider extends ChangeNotifier {
     } else {
       _loadSuggestions();
     }
-    
+
     notifyListeners();
   }
 
@@ -115,12 +114,11 @@ class SearchProvider extends ChangeNotifier {
       // Perform search
       _searchResults = MockSearchData.search(searchTerm, _filter);
       _suggestions.clear();
-      
+
       // Generate mixed content and trending analysis
       await _generateMixedContent();
       await _analyzeTrending();
       _updateTabBadges();
-      
     } catch (e) {
       debugPrint('Search error: $e');
       _searchResults.clear();
@@ -163,15 +161,16 @@ class SearchProvider extends ChangeNotifier {
   // Topic actions
   void toggleTopicFollow(String topicId) {
     final resultIndex = _searchResults.indexWhere(
-      (result) => result.type == SearchResultType.topics && result.topic?.id == topicId,
+      (result) =>
+          result.type == SearchResultType.topics && result.topic?.id == topicId,
     );
-    
+
     if (resultIndex != -1) {
       final result = _searchResults[resultIndex];
       final updatedTopic = result.topic?.copyWith(
         isFollowing: !(result.topic?.isFollowing ?? false),
       );
-      
+
       if (updatedTopic != null) {
         _searchResults[resultIndex] = SearchResult.topic(
           id: result.id,
@@ -186,15 +185,17 @@ class SearchProvider extends ChangeNotifier {
   // Community actions
   void toggleCommunityMembership(String communityId) {
     final resultIndex = _searchResults.indexWhere(
-      (result) => result.type == SearchResultType.communities && result.community?.id == communityId,
+      (result) =>
+          result.type == SearchResultType.communities &&
+          result.community?.id == communityId,
     );
-    
+
     if (resultIndex != -1) {
       final result = _searchResults[resultIndex];
       final updatedCommunity = result.community?.copyWith(
         isMember: !(result.community?.isMember ?? false),
       );
-      
+
       if (updatedCommunity != null) {
         _searchResults[resultIndex] = SearchResult.community(
           id: result.id,
@@ -209,15 +210,16 @@ class SearchProvider extends ChangeNotifier {
   // User actions
   void toggleUserFollow(String userId) {
     final resultIndex = _searchResults.indexWhere(
-      (result) => result.type == SearchResultType.people && result.user?.id == userId,
+      (result) =>
+          result.type == SearchResultType.people && result.user?.id == userId,
     );
-    
+
     if (resultIndex != -1) {
       final result = _searchResults[resultIndex];
       final updatedUser = result.user?.copyWith(
         isFollowing: !(result.user?.isFollowing ?? false),
       );
-      
+
       if (updatedUser != null) {
         _searchResults[resultIndex] = SearchResult.user(
           id: result.id,
@@ -279,29 +281,29 @@ class SearchProvider extends ChangeNotifier {
   // Mixed content algorithm for All tab
   Future<void> _generateMixedContent() async {
     _mixedContentResults.clear();
-    
+
     if (_searchResults.isEmpty) return;
 
     // Algorithm: Mix content types based on relevance and diversity
     final List<MixedContentResult> mixed = [];
-    
+
     // Group results by type
     final Map<SearchResultType, List<SearchResult>> grouped = {};
     for (final result in _searchResults) {
       grouped.putIfAbsent(result.type, () => []).add(result);
     }
-    
+
     // Calculate priority scores for each result
     for (final entry in grouped.entries) {
       final type = entry.key;
       final results = entry.value;
-      
+
       for (int i = 0; i < results.length; i++) {
         final result = results[i];
-        
+
         // Base algorithm score considering relevance and position
         double algorithmScore = result.relevanceScore * 0.6;
-        
+
         // Boost score based on content type popularity
         switch (type) {
           case SearchResultType.people:
@@ -319,10 +321,10 @@ class SearchProvider extends ChangeNotifier {
           default:
             break;
         }
-        
+
         // Penalty for lower positions within type
         algorithmScore -= (i * 0.02);
-        
+
         // Boost for certain criteria
         String displayReason = 'High relevance';
         if (result.user?.openToMingle == true) {
@@ -333,7 +335,7 @@ class SearchProvider extends ChangeNotifier {
           algorithmScore += 0.15;
           displayReason = 'Trending topic';
         }
-        
+
         mixed.add(MixedContentResult(
           result: result,
           algorithmScore: algorithmScore,
@@ -342,7 +344,7 @@ class SearchProvider extends ChangeNotifier {
         ));
       }
     }
-    
+
     // Sort by algorithm score and take top results
     mixed.sort((a, b) => b.algorithmScore.compareTo(a.algorithmScore));
     _mixedContentResults = mixed.take(20).toList(); // Limit to top 20
@@ -351,33 +353,34 @@ class SearchProvider extends ChangeNotifier {
   // Trending analysis algorithm
   Future<void> _analyzeTrending() async {
     _trendingMetrics.clear();
-    
+
     final now = DateTime.now();
-    
+
     // Generate trending metrics for results
     for (final result in _searchResults) {
       double trendingScore = 0.0;
       int engagementRate = 0;
       int recentActivity = 0;
       String reason = '';
-      
+
       // Calculate trending based on content type
       switch (result.type) {
         case SearchResultType.topics:
           if (result.topic != null) {
             final topic = result.topic!;
-            trendingScore = (topic.analytics.postsLast24h / 100.0).clamp(0.0, 1.0);
+            trendingScore =
+                (topic.analytics.postsLast24h / 100.0).clamp(0.0, 1.0);
             engagementRate = topic.analytics.activeUsers;
             recentActivity = topic.analytics.postsLast24h;
             reason = 'High activity in last 24h';
-            
+
             if (topic.isTrending) {
               trendingScore += 0.3;
               reason = 'Marked as trending';
             }
           }
           break;
-          
+
         case SearchResultType.people:
           if (result.user != null) {
             final user = result.user!;
@@ -386,14 +389,14 @@ class SearchProvider extends ChangeNotifier {
             engagementRate = (user.stats.totalPosts * 2);
             recentActivity = user.stats.totalPosts; // Simulate recent posts
             reason = 'Active user with high engagement';
-            
+
             if (user.openToMingle) {
               trendingScore += 0.2;
               reason = 'Open to Mingle and active';
             }
           }
           break;
-          
+
         case SearchResultType.communities:
           if (result.community != null) {
             final community = result.community!;
@@ -403,7 +406,7 @@ class SearchProvider extends ChangeNotifier {
             reason = 'Active community with recent posts';
           }
           break;
-          
+
         case SearchResultType.posts:
           // Simulate post engagement metrics
           trendingScore = (result.relevanceScore * 0.8).clamp(0.0, 1.0);
@@ -414,7 +417,7 @@ class SearchProvider extends ChangeNotifier {
         default:
           continue;
       }
-      
+
       if (trendingScore > 0.3) {
         _trendingMetrics.add(TrendingMetrics(
           trendingScore: trendingScore,
@@ -425,7 +428,7 @@ class SearchProvider extends ChangeNotifier {
         ));
       }
     }
-    
+
     // Sort by trending score
     _trendingMetrics.sort((a, b) => b.trendingScore.compareTo(a.trendingScore));
   }
@@ -433,23 +436,27 @@ class SearchProvider extends ChangeNotifier {
   // Update tab badges with counts and indicators
   void _updateTabBadges() {
     _tabBadges.clear();
-    
+
     for (final tab in _tabs) {
       final count = getTabResultCount(tab);
       bool hasTrending = false;
       bool hasNewContent = false;
       int newContentCount = 0;
       ActivityLevel? activityLevel;
-      
+
       // Check for trending content
       if (tab == SearchResultType.trending) {
         hasTrending = _trendingMetrics.isNotEmpty;
-        activityLevel = _trendingMetrics.isNotEmpty ? ActivityLevel.veryActive : ActivityLevel.moderate;
+        activityLevel = _trendingMetrics.isNotEmpty
+            ? ActivityLevel.veryActive
+            : ActivityLevel.moderate;
       } else if (tab == SearchResultType.all) {
         hasTrending = _trendingMetrics.length > 3;
         hasNewContent = true;
         newContentCount = _searchResults.length;
-        activityLevel = _searchResults.length > 10 ? ActivityLevel.veryActive : ActivityLevel.active;
+        activityLevel = _searchResults.length > 10
+            ? ActivityLevel.veryActive
+            : ActivityLevel.active;
       } else {
         // Check if this tab type has trending items
         final typeResults = _searchResults.where((r) => r.type == tab).toList();
@@ -463,10 +470,10 @@ class SearchProvider extends ChangeNotifier {
               return false;
           }
         });
-        
+
         hasNewContent = typeResults.isNotEmpty;
         newContentCount = typeResults.length;
-        
+
         // Set activity level based on count
         if (typeResults.length > 5) {
           activityLevel = ActivityLevel.veryActive;
@@ -476,7 +483,7 @@ class SearchProvider extends ChangeNotifier {
           activityLevel = ActivityLevel.moderate;
         }
       }
-      
+
       _tabBadges[tab] = TabBadgeInfo(
         resultCount: count,
         hasTrending: hasTrending,

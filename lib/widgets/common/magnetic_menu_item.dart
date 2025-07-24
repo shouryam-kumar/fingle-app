@@ -10,7 +10,7 @@ class MagneticMenuItem extends StatefulWidget {
   final Duration magneticDuration;
   final Duration elasticDuration;
   final double magneticStrength;
-  
+
   const MagneticMenuItem({
     Key? key,
     required this.action,
@@ -19,7 +19,7 @@ class MagneticMenuItem extends StatefulWidget {
     this.elasticDuration = const Duration(milliseconds: 200),
     this.magneticStrength = 0.12,
   }) : super(key: key);
-  
+
   @override
   State<MagneticMenuItem> createState() => _MagneticMenuItemState();
 }
@@ -31,31 +31,31 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
   late AnimationController _bounceController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _bounceAnimation;
-  
+
   Offset _currentOffset = Offset.zero;
   Offset _targetOffset = Offset.zero;
   bool _isHovered = false;
   bool _isPressed = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _magneticController = AnimationController(
       duration: widget.magneticDuration,
       vsync: this,
     );
-    
+
     _scaleController = AnimationController(
       duration: widget.elasticDuration,
       vsync: this,
     );
-    
+
     _bounceController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.02,
@@ -63,7 +63,7 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
       parent: _magneticController,
       curve: Curves.easeOutQuart,
     ));
-    
+
     // Create the bounce sequence animation
     _bounceAnimation = TweenSequence<double>([
       TweenSequenceItem(
@@ -82,19 +82,20 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
         weight: 30,
       ),
     ]).animate(_bounceController);
-    
+
     _magneticController.addListener(() {
       if (!mounted) return;
       setState(() {
         _currentOffset = Offset.lerp(
-          Offset.zero,
-          _targetOffset,
-          _magneticController.value,
-        ) ?? Offset.zero;
+              Offset.zero,
+              _targetOffset,
+              _magneticController.value,
+            ) ??
+            Offset.zero;
       });
     });
   }
-  
+
   @override
   void dispose() {
     _magneticController.dispose();
@@ -102,34 +103,34 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
     _bounceController.dispose();
     super.dispose();
   }
-  
+
   void _handleHover(PointerEvent event, BoxConstraints constraints) {
     if (!mounted) return;
-    
+
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null || !renderBox.hasSize) return;
-    
+
     // Ensure constraints are valid
     if (constraints.maxWidth <= 0 || constraints.maxHeight <= 0) return;
-    
+
     try {
       final localPosition = renderBox.globalToLocal(event.position);
       final center = Offset(
         constraints.maxWidth / 2,
         constraints.maxHeight / 2,
       );
-      
+
       final deltaX = localPosition.dx - center.dx;
       final deltaY = localPosition.dy - center.dy;
-      
+
       // Ensure values are finite
       if (!deltaX.isFinite || !deltaY.isFinite) return;
-      
+
       _targetOffset = Offset(
         deltaX * widget.magneticStrength,
         deltaY * widget.magneticStrength,
       );
-      
+
       if (!_isHovered) {
         _isHovered = true;
         _magneticController.forward();
@@ -141,34 +142,34 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
       debugPrint('Magnetic hover error: $e');
     }
   }
-  
+
   void _handleHoverExit() {
     if (!mounted) return;
     _isHovered = false;
     _targetOffset = Offset.zero;
     _magneticController.reverse();
   }
-  
+
   void _handleTapDown() {
     setState(() => _isPressed = true);
     _scaleController.forward();
     HapticFeedback.lightImpact();
   }
-  
+
   void _handleTapUp() {
     if (!mounted) return;
     setState(() => _isPressed = false);
-    
+
     // Reset and start the bounce animation
     _bounceController.reset();
     _bounceController.forward();
   }
-  
+
   void _handleTap() {
     widget.action.onPressed();
     widget.onExitAnimation?.call();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -177,19 +178,20 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
           onHover: (event) => _handleHover(event, constraints),
           onExit: (_) => _handleHoverExit(),
           child: AnimatedBuilder(
-            animation: Listenable.merge([_scaleAnimation, _magneticController, _bounceAnimation]),
+            animation: Listenable.merge(
+                [_scaleAnimation, _magneticController, _bounceAnimation]),
             builder: (context, child) {
               // Ensure offset values are finite
               final safeOffset = Offset(
                 _currentOffset.dx.isFinite ? _currentOffset.dx : 0,
                 _currentOffset.dy.isFinite ? _currentOffset.dy : 0,
               );
-              
+
               // Use bounce animation when available, otherwise use scale or pressed state
-              final scale = _bounceController.isAnimating 
+              final scale = _bounceController.isAnimating
                   ? _bounceAnimation.value
                   : (_isPressed ? 0.97 : _scaleAnimation.value);
-              
+
               return Transform.translate(
                 offset: safeOffset,
                 child: Transform.scale(
@@ -214,43 +216,48 @@ class _MagneticMenuItemState extends State<MagneticMenuItem>
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: _isHovered ? [
-                            Colors.white.withOpacity(0.25),
-                            Colors.white.withOpacity(0.15),
-                          ] : [
-                            Colors.white.withOpacity(0.15),
-                            Colors.white.withOpacity(0.08),
-                          ],
+                          colors: _isHovered
+                              ? [
+                                  Colors.white.withOpacity(0.25),
+                                  Colors.white.withOpacity(0.15),
+                                ]
+                              : [
+                                  Colors.white.withOpacity(0.15),
+                                  Colors.white.withOpacity(0.08),
+                                ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: _isHovered
-                            ? Colors.white.withOpacity(0.6)
-                            : Colors.white.withOpacity(0.3),
+                              ? Colors.white.withOpacity(0.6)
+                              : Colors.white.withOpacity(0.3),
                           width: 1,
                         ),
                         boxShadow: [
                           // Dark underlay for contrast
                           BoxShadow(
-                            color: Colors.black.withOpacity(_isHovered ? 0.15 : 0.1),
+                            color: Colors.black
+                                .withOpacity(_isHovered ? 0.15 : 0.1),
                             blurRadius: _isHovered ? 12 : 8,
                             spreadRadius: -2,
                             offset: const Offset(0, 2),
                           ),
                           // Inner highlight
                           BoxShadow(
-                            color: Colors.white.withOpacity(_isHovered ? 0.3 : 0.2),
+                            color: Colors.white
+                                .withOpacity(_isHovered ? 0.3 : 0.2),
                             blurRadius: 1,
                             spreadRadius: -1,
                             offset: const Offset(0, -1),
                           ),
                           // Subtle glow on hover
-                          if (_isHovered) BoxShadow(
-                            color: Colors.white.withOpacity(0.1),
-                            blurRadius: 20,
-                            spreadRadius: 0,
-                            offset: const Offset(0, 0),
-                          ),
+                          if (_isHovered)
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.1),
+                              blurRadius: 20,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 0),
+                            ),
                         ],
                       ),
                       child: Row(

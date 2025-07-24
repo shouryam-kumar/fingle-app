@@ -131,14 +131,13 @@ class _PersonCardState extends State<_PersonCard>
         children: [
           // Header with cover image
           _buildHeader(),
-          
+
           // Profile content
           _buildProfileContent(),
-          
+
           // Interests section
-          if (widget.user.interests.isNotEmpty)
-            _buildInterestsSection(),
-          
+          if (widget.user.interests.isNotEmpty) _buildInterestsSection(),
+
           // Action buttons
           _buildActionButtons(),
         ],
@@ -155,30 +154,32 @@ class _PersonCardState extends State<_PersonCard>
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
           ),
-          child: Container(
-            height: 100,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(widget.user.coverImage),
-                fit: BoxFit.cover,
-              ),
-            ),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
             child: Container(
+              width: double.infinity,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.3),
-                  ],
+                image: DecorationImage(
+                  image: NetworkImage(widget.user.coverImage),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.3),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-        
+
         // Open to Mingle badge
         if (widget.user.openToMingle)
           Positioned(
@@ -186,14 +187,14 @@ class _PersonCardState extends State<_PersonCard>
             right: 12,
             child: GlassBadge.mingle(),
           ),
-        
+
         // Profile picture
         Positioned(
           bottom: -30,
           left: 20,
           child: _buildProfileAvatar(),
         ),
-        
+
         // Verified badge
         if (widget.user.isVerified)
           Positioned(
@@ -245,7 +246,7 @@ class _PersonCardState extends State<_PersonCard>
                       height: 70,
                       fit: BoxFit.cover,
                     ),
-                    
+
                     // Shimmer overlay
                     Positioned(
                       left: _shimmerAnimation.value,
@@ -296,9 +297,9 @@ class _PersonCardState extends State<_PersonCard>
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
-                    
+
                     const SizedBox(height: 4),
-                    
+
                     // Stats
                     _buildStats(),
                   ],
@@ -306,9 +307,9 @@ class _PersonCardState extends State<_PersonCard>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Bio
           Text(
             widget.user.bio,
@@ -329,11 +330,17 @@ class _PersonCardState extends State<_PersonCard>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Flexible(child: _buildStat('Posts', widget.user.stats.totalPosts.toString())),
+        Flexible(
+            child:
+                _buildStat('Posts', widget.user.stats.totalPosts.toString())),
         const SizedBox(width: 12),
-        Flexible(child: _buildStat('Followers', _formatNumber(widget.user.followers))),
+        Flexible(
+            child:
+                _buildStat('Followers', _formatNumber(widget.user.followers))),
         const SizedBox(width: 12),
-        Flexible(child: _buildStat('Following', _formatNumber(widget.user.following))),
+        Flexible(
+            child:
+                _buildStat('Following', _formatNumber(widget.user.following))),
       ],
     );
   }
@@ -378,9 +385,7 @@ class _PersonCardState extends State<_PersonCard>
               color: AppColors.textPrimary,
             ),
           ),
-          
           const SizedBox(height: 8),
-          
           Wrap(
             spacing: 8,
             runSpacing: 6,
@@ -407,7 +412,7 @@ class _PersonCardState extends State<_PersonCard>
           Expanded(
             child: GlassButton(
               text: widget.user.isFollowing ? 'Following' : 'Follow',
-              style: widget.user.isFollowing 
+              style: widget.user.isFollowing
                   ? GlassButtonStyle.secondary
                   : GlassButtonStyle.primary,
               prefixIcon: Icon(
@@ -418,9 +423,9 @@ class _PersonCardState extends State<_PersonCard>
               onPressed: widget.onFollowTap,
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Mingle button (if user is open to mingle)
           if (widget.user.openToMingle)
             Expanded(
@@ -443,7 +448,7 @@ class _PersonCardState extends State<_PersonCard>
                 },
               ),
             ),
-          
+
           // Message button
           if (!widget.user.openToMingle)
             GlassButton(

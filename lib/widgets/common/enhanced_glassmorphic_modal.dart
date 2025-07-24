@@ -11,7 +11,7 @@ class EnhancedGlassmorphicModal extends StatefulWidget {
   final VoidCallback onClose;
   final String userName;
   final bool isVisible;
-  
+
   const EnhancedGlassmorphicModal({
     Key? key,
     required this.actions,
@@ -19,9 +19,10 @@ class EnhancedGlassmorphicModal extends StatefulWidget {
     required this.userName,
     this.isVisible = true,
   }) : super(key: key);
-  
+
   @override
-  State<EnhancedGlassmorphicModal> createState() => _EnhancedGlassmorphicModalState();
+  State<EnhancedGlassmorphicModal> createState() =>
+      _EnhancedGlassmorphicModalState();
 }
 
 class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
@@ -33,26 +34,26 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
   late Animation<double> _opacityAnimation;
   late Animation<double> _blurAnimation;
   late Animation<double> _rotationAnimation;
-  
+
   final List<AnimationController> _itemControllers = [];
   final List<Animation<double>> _itemAnimations = [];
-  
+
   bool _isExiting = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _modalController = AnimationController(
       duration: const Duration(milliseconds: 250),
       vsync: this,
     );
-    
+
     _backgroundController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.85,
       end: 1.0,
@@ -60,7 +61,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
       parent: _modalController,
       curve: Curves.fastOutSlowIn,
     ));
-    
+
     _slideAnimation = Tween<double>(
       begin: 30.0,
       end: 0.0,
@@ -68,7 +69,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
       parent: _modalController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _opacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -76,7 +77,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
       parent: _modalController,
       curve: Curves.easeInOutQuad,
     ));
-    
+
     _blurAnimation = Tween<double>(
       begin: 0.0,
       end: 16.0,
@@ -84,7 +85,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
       parent: _backgroundController,
       curve: Curves.easeInOutQuad,
     ));
-    
+
     _rotationAnimation = Tween<double>(
       begin: -0.015,
       end: 0.0,
@@ -92,14 +93,14 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
       parent: _modalController,
       curve: Curves.fastOutSlowIn,
     ));
-    
+
     // Create staggered animations for menu items
     for (int i = 0; i < widget.actions.length; i++) {
       final controller = AnimationController(
         duration: const Duration(milliseconds: 200),
         vsync: this,
       );
-      
+
       final animation = Tween<double>(
         begin: 0.0,
         end: 1.0,
@@ -107,18 +108,18 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
         parent: controller,
         curve: Curves.easeOutCubic,
       ));
-      
+
       _itemControllers.add(controller);
       _itemAnimations.add(animation);
     }
-    
+
     _startEntranceAnimation();
   }
-  
+
   void _startEntranceAnimation() async {
     _backgroundController.forward();
     _modalController.forward(); // Start immediately with background
-    
+
     // Ultra-fast stagger timing
     for (int i = 0; i < _itemControllers.length; i++) {
       Future.delayed(Duration(milliseconds: 50 + (30 * i)), () {
@@ -128,14 +129,14 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
       });
     }
   }
-  
+
   void _startExitAnimation() async {
     // Early return if exit animation is already running
     if (_isExiting) return;
-    
+
     // Set flag to prevent duplicate executions
     _isExiting = true;
-    
+
     try {
       // Ultra-fast reverse sequence
       for (int i = _itemControllers.length - 1; i >= 0; i--) {
@@ -144,15 +145,15 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
           await Future.delayed(const Duration(milliseconds: 15));
         }
       }
-      
+
       if (!mounted) return;
       await Future.delayed(const Duration(milliseconds: 20));
       _modalController.reverse();
-      
+
       if (!mounted) return;
       await Future.delayed(const Duration(milliseconds: 30));
       _backgroundController.reverse();
-      
+
       if (!mounted) return;
       await Future.delayed(const Duration(milliseconds: 100));
       if (mounted) {
@@ -166,12 +167,12 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
       _isExiting = false;
     }
   }
-  
+
   @override
   void dispose() {
     // Reset exit flag as cleanup
     _isExiting = false;
-    
+
     _modalController.dispose();
     _backgroundController.dispose();
     for (final controller in _itemControllers) {
@@ -179,7 +180,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
     }
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -201,7 +202,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
               );
             },
           ),
-          
+
           // Tap to dismiss
           GestureDetector(
             onTap: _startExitAnimation,
@@ -212,7 +213,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
               color: Colors.transparent,
             ),
           ),
-          
+
           // Modal content
           Center(
             child: AnimatedBuilder(
@@ -252,7 +253,8 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
                             ),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.5), // Stronger border
+                              color: Colors.white
+                                  .withOpacity(0.5), // Stronger border
                               width: 2,
                             ),
                             boxShadow: [
@@ -304,7 +306,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
       ),
     );
   }
-  
+
   Widget _buildModalContent() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -367,7 +369,7 @@ class _EnhancedGlassmorphicModalState extends State<EnhancedGlassmorphicModal>
             ],
           ),
         ),
-        
+
         // Menu items with staggered animation
         Flexible(
           child: ListView.builder(

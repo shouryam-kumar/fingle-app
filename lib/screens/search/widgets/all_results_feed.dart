@@ -35,7 +35,7 @@ class AllResultsFeed extends StatelessWidget {
                     // Responsive grid configuration
                     int crossAxisCount;
                     double spacing;
-                    
+
                     if (constraints.maxWidth >= 1200) {
                       crossAxisCount = 4;
                       spacing = 16;
@@ -49,7 +49,7 @@ class AllResultsFeed extends StatelessWidget {
                       crossAxisCount = 1;
                       spacing = 10;
                     }
-                    
+
                     return MasonryGridView.count(
                       crossAxisCount: crossAxisCount,
                       mainAxisSpacing: spacing,
@@ -59,7 +59,8 @@ class AllResultsFeed extends StatelessWidget {
                       itemCount: mixedResults.length,
                       itemBuilder: (context, index) {
                         final mixedResult = mixedResults[index];
-                        return _buildMixedContentCard(mixedResult, index, constraints.maxWidth);
+                        return _buildMixedContentCard(
+                            mixedResult, index, constraints.maxWidth);
                       },
                     );
                   },
@@ -78,10 +79,13 @@ class AllResultsFeed extends StatelessWidget {
 
   Widget _buildQuickStatsHeader(SearchProvider searchProvider) {
     final totalResults = searchProvider.searchResults.length;
-    final peopleCount = searchProvider.getTabResultCount(SearchResultType.people);
-    final topicsCount = searchProvider.getTabResultCount(SearchResultType.topics);
+    final peopleCount =
+        searchProvider.getTabResultCount(SearchResultType.people);
+    final topicsCount =
+        searchProvider.getTabResultCount(SearchResultType.topics);
     final postsCount = searchProvider.getTabResultCount(SearchResultType.posts);
-    final communitiesCount = searchProvider.getTabResultCount(SearchResultType.communities);
+    final communitiesCount =
+        searchProvider.getTabResultCount(SearchResultType.communities);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -104,7 +108,7 @@ class AllResultsFeed extends StatelessWidget {
             builder: (context, constraints) {
               final isSmallScreen = constraints.maxWidth < 500;
               final chipSpacing = isSmallScreen ? 6.0 : 8.0;
-              
+
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -172,7 +176,8 @@ class AllResultsFeed extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
+        padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding, vertical: verticalPadding),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(isSmallScreen ? 12 : 16),
@@ -211,7 +216,8 @@ class AllResultsFeed extends StatelessWidget {
     );
   }
 
-  Widget _buildMixedContentCard(MixedContentResult mixedResult, int index, [double? screenWidth]) {
+  Widget _buildMixedContentCard(MixedContentResult mixedResult, int index,
+      [double? screenWidth]) {
     final result = mixedResult.result;
     final reason = mixedResult.displayReason;
     final typeColor = _getContentTypeColor(result.type);
@@ -244,7 +250,8 @@ class AllResultsFeed extends StatelessWidget {
               if (availableHeight > 100)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                   decoration: BoxDecoration(
                     color: typeColor.withOpacity(0.1),
                     borderRadius: const BorderRadius.only(
@@ -283,7 +290,8 @@ class AllResultsFeed extends StatelessWidget {
                               maxWidth: constraints.maxWidth * 0.3,
                             ),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 1),
                               decoration: BoxDecoration(
                                 color: typeColor.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(6),
@@ -308,8 +316,10 @@ class AllResultsFeed extends StatelessWidget {
 
               // Content area with flexible sizing
               Padding(
-                padding: EdgeInsets.all(screenWidth != null && screenWidth < 500 ? 6 : 8),
-                child: _buildContentByType(result, screenWidth, availableHeight),
+                padding: EdgeInsets.all(
+                    screenWidth != null && screenWidth < 500 ? 6 : 8),
+                child:
+                    _buildContentByType(result, screenWidth, availableHeight),
               ),
             ],
           );
@@ -317,7 +327,6 @@ class AllResultsFeed extends StatelessWidget {
       ),
     );
   }
-
 
   Color _getContentTypeColor(SearchResultType type) {
     switch (type) {
@@ -364,7 +373,8 @@ class AllResultsFeed extends StatelessWidget {
     }
   }
 
-  Widget _buildContentByType(SearchResult result, [double? screenWidth, double? availableHeight]) {
+  Widget _buildContentByType(SearchResult result,
+      [double? screenWidth, double? availableHeight]) {
     switch (result.type) {
       case SearchResultType.people:
         return _buildPersonContent(result.user!, screenWidth, availableHeight);
@@ -373,17 +383,19 @@ class AllResultsFeed extends StatelessWidget {
       case SearchResultType.posts:
         return _buildPostContent(result, screenWidth, availableHeight);
       case SearchResultType.communities:
-        return _buildCommunityContent(result.community!, screenWidth, availableHeight);
+        return _buildCommunityContent(
+            result.community!, screenWidth, availableHeight);
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildPersonContent(User user, [double? screenWidth, double? availableHeight]) {
+  Widget _buildPersonContent(User user,
+      [double? screenWidth, double? availableHeight]) {
     final isSmallScreen = screenWidth != null && screenWidth < 500;
     final isShortHeight = availableHeight != null && availableHeight < 200;
     final verticalSpacing = isSmallScreen || isShortHeight ? 4.0 : 8.0;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -471,16 +483,15 @@ class AllResultsFeed extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: user.isFollowing 
+              backgroundColor: user.isFollowing
                   ? AppColors.textSecondary.withOpacity(0.1)
                   : AppColors.primary,
-              foregroundColor: user.isFollowing 
-                  ? AppColors.textSecondary
-                  : Colors.white,
+              foregroundColor:
+                  user.isFollowing ? AppColors.textSecondary : Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                side: user.isFollowing 
+                side: user.isFollowing
                     ? BorderSide(
                         color: AppColors.textSecondary.withOpacity(0.3),
                         width: 1,
@@ -501,7 +512,8 @@ class AllResultsFeed extends StatelessWidget {
     );
   }
 
-  Widget _buildTopicContent(SearchTopic topic, [double? screenWidth, double? availableHeight]) {
+  Widget _buildTopicContent(SearchTopic topic,
+      [double? screenWidth, double? availableHeight]) {
     final isSmallScreen = screenWidth != null && screenWidth < 500;
     final isShortHeight = availableHeight != null && availableHeight < 200;
     final verticalSpacing = isSmallScreen || isShortHeight ? 4.0 : 8.0;
@@ -601,10 +613,12 @@ class AllResultsFeed extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: _getActivityLevelColor(topic.analytics.activityLevel).withOpacity(0.1),
+                color: _getActivityLevelColor(topic.analytics.activityLevel)
+                    .withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: _getActivityLevelColor(topic.analytics.activityLevel).withOpacity(0.3),
+                  color: _getActivityLevelColor(topic.analytics.activityLevel)
+                      .withOpacity(0.3),
                   width: 1,
                 ),
               ),
@@ -640,16 +654,15 @@ class AllResultsFeed extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: topic.isFollowing 
+              backgroundColor: topic.isFollowing
                   ? AppColors.textSecondary.withOpacity(0.1)
                   : AppColors.accent,
-              foregroundColor: topic.isFollowing 
-                  ? AppColors.textSecondary
-                  : Colors.white,
+              foregroundColor:
+                  topic.isFollowing ? AppColors.textSecondary : Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                side: topic.isFollowing 
+                side: topic.isFollowing
                     ? BorderSide(
                         color: AppColors.textSecondary.withOpacity(0.3),
                         width: 1,
@@ -670,10 +683,11 @@ class AllResultsFeed extends StatelessWidget {
     );
   }
 
-  Widget _buildPostContent(SearchResult result, [double? screenWidth, double? availableHeight]) {
+  Widget _buildPostContent(SearchResult result,
+      [double? screenWidth, double? availableHeight]) {
     final isSmallScreen = screenWidth != null && screenWidth < 500;
     final isShortHeight = availableHeight != null && availableHeight < 180;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -707,7 +721,8 @@ class AllResultsFeed extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.favorite_border, size: isShortHeight ? 14 : 16, color: AppColors.textSecondary),
+            Icon(Icons.favorite_border,
+                size: isShortHeight ? 14 : 16, color: AppColors.textSecondary),
             const SizedBox(width: 4),
             Text(
               '${(result.relevanceScore * 100).round()}',
@@ -717,7 +732,8 @@ class AllResultsFeed extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(Icons.comment_outlined, size: isShortHeight ? 14 : 16, color: AppColors.textSecondary),
+            Icon(Icons.comment_outlined,
+                size: isShortHeight ? 14 : 16, color: AppColors.textSecondary),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
@@ -735,7 +751,8 @@ class AllResultsFeed extends StatelessWidget {
     );
   }
 
-  Widget _buildCommunityContent(SearchCommunity community, [double? screenWidth, double? availableHeight]) {
+  Widget _buildCommunityContent(SearchCommunity community,
+      [double? screenWidth, double? availableHeight]) {
     final isSmallScreen = screenWidth != null && screenWidth < 500;
     final isShortHeight = availableHeight != null && availableHeight < 200;
     final verticalSpacing = isSmallScreen || isShortHeight ? 4.0 : 8.0;
@@ -805,10 +822,12 @@ class AllResultsFeed extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: _getActivityLevelColor(community.activityLevel).withOpacity(0.1),
+                  color: _getActivityLevelColor(community.activityLevel)
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: _getActivityLevelColor(community.activityLevel).withOpacity(0.3),
+                    color: _getActivityLevelColor(community.activityLevel)
+                        .withOpacity(0.3),
                     width: 1,
                   ),
                 ),
@@ -846,16 +865,15 @@ class AllResultsFeed extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: community.isMember 
+              backgroundColor: community.isMember
                   ? AppColors.textSecondary.withOpacity(0.1)
                   : AppColors.success,
-              foregroundColor: community.isMember 
-                  ? AppColors.textSecondary
-                  : Colors.white,
+              foregroundColor:
+                  community.isMember ? AppColors.textSecondary : Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                side: community.isMember 
+                side: community.isMember
                     ? BorderSide(
                         color: AppColors.textSecondary.withOpacity(0.3),
                         width: 1,

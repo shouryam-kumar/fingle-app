@@ -232,12 +232,15 @@ class _CommentItemState extends State<CommentItem>
     return Row(
       children: [
         // Username
-        Text(
-          widget.comment.author.name,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: widget.isReply ? 12 : 13,
-            fontWeight: FontWeight.w600,
+        Flexible(
+          child: Text(
+            widget.comment.author.name,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: widget.isReply ? 12 : 13,
+              fontWeight: FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
 
@@ -342,6 +345,7 @@ class _CommentItemState extends State<CommentItem>
 
   Widget _buildActions(bool isOwnComment) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Reply button
         if (!widget.isReply)

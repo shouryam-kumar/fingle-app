@@ -19,7 +19,8 @@ class EnhancedPremiumSearchDemo extends StatefulWidget {
   const EnhancedPremiumSearchDemo({super.key});
 
   @override
-  State<EnhancedPremiumSearchDemo> createState() => _EnhancedPremiumSearchDemoState();
+  State<EnhancedPremiumSearchDemo> createState() =>
+      _EnhancedPremiumSearchDemoState();
 }
 
 class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
@@ -29,7 +30,7 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    
+
     // Auto-perform a demo search after a delay
     Future.delayed(const Duration(milliseconds: 1000), () {
       if (mounted) {
@@ -53,13 +54,13 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
           return Column(
             children: [
               const SizedBox(height: 50),
-              
+
               // Enhanced search header
               _buildEnhancedSearchHeader(searchProvider),
-              
+
               // Enhanced search tabs
               EnhancedSearchTabs(pageController: _pageController),
-              
+
               // Content area with page view
               Expanded(
                 child: _buildContentArea(searchProvider),
@@ -78,7 +79,6 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
     );
   }
 
-
   Widget _buildEnhancedSearchHeader(SearchProvider searchProvider) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -94,12 +94,12 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
               color: AppColors.textPrimary,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Clean search input
           _buildCleanSearchInput(searchProvider),
-          
+
           const SizedBox(height: 16),
         ],
       ),
@@ -137,8 +137,8 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
             Expanded(
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: searchProvider.searchQuery.isEmpty 
-                      ? 'Search for people, topics, posts...' 
+                  hintText: searchProvider.searchQuery.isEmpty
+                      ? 'Search for people, topics, posts...'
                       : searchProvider.searchQuery,
                   hintStyle: TextStyle(
                     color: AppColors.textSecondary,
@@ -158,7 +158,7 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
                 },
               ),
             ),
-            
+
             // Voice search
             GestureDetector(
               onTap: () {
@@ -184,7 +184,6 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
     );
   }
 
-
   Widget _buildContentArea(SearchProvider searchProvider) {
     return PageView(
       controller: _pageController,
@@ -194,25 +193,24 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
       children: [
         // All tab - Mixed content feed
         const AllResultsFeed(),
-        
+
         // People tab
         const PeopleResults(),
-        
-        // Topics tab  
+
+        // Topics tab
         const TopicsResults(),
-        
+
         // Posts tab
         const PostsResults(),
-        
+
         // Communities tab
         const CommunityResults(),
-        
+
         // Trending tab
         const TrendingResults(),
       ],
     );
   }
-
 
   Widget _buildFloatingDemoButton(SearchProvider searchProvider) {
     return Container(
@@ -289,7 +287,8 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: AppColors.textSecondary.withOpacity(0.2),
@@ -314,10 +313,9 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
     );
   }
 
-
   void _startVoiceSearch() {
     HapticFeedback.lightImpact();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -341,9 +339,7 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
                 size: 24,
               ),
             ),
-            
             const SizedBox(height: 16),
-            
             const Text(
               'Listening...',
               style: TextStyle(
@@ -352,9 +348,7 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
                 color: AppColors.textPrimary,
               ),
             ),
-            
             const SizedBox(height: 8),
-            
             Text(
               'Say your search query',
               style: TextStyle(
@@ -372,8 +366,9 @@ class _EnhancedPremiumSearchDemoState extends State<EnhancedPremiumSearchDemo> {
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      context.read<SearchProvider>().performSearch(query: 'morning workout routine');
+      context
+          .read<SearchProvider>()
+          .performSearch(query: 'morning workout routine');
     });
   }
-
 }

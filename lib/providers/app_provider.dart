@@ -19,7 +19,6 @@ class AppProvider extends ChangeNotifier {
     final oldIndex = _currentIndex; // ✅ Store old value first
     _currentIndex = index;
 
-
     // 🐛 DEBUG: Track tab changes
     debugPrint('🔄 AppProvider: Tab changed from $oldIndex to $index');
     debugPrint(

@@ -88,11 +88,10 @@ class _TopicCard extends StatefulWidget {
   State<_TopicCard> createState() => _TopicCardState();
 }
 
-class _TopicCardState extends State<_TopicCard>
-    with TickerProviderStateMixin {
+class _TopicCardState extends State<_TopicCard> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -139,17 +138,16 @@ class _TopicCardState extends State<_TopicCard>
         children: [
           // Header with background image and badges
           _buildHeader(),
-          
+
           // Content section
           _buildContent(),
-          
+
           // Analytics section
           _buildAnalytics(),
-          
+
           // Tags section
-          if (widget.topic.tags.isNotEmpty)
-            _buildTagsSection(),
-          
+          if (widget.topic.tags.isNotEmpty) _buildTagsSection(),
+
           // Action section
           _buildActions(),
         ],
@@ -166,30 +164,32 @@ class _TopicCardState extends State<_TopicCard>
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
           ),
-          child: Container(
-            height: 120,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(widget.topic.imageUrl),
-                fit: BoxFit.cover,
-              ),
-            ),
+          child: AspectRatio(
+            aspectRatio: 16 / 10,
             child: Container(
+              width: double.infinity,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.6),
-                  ],
+                image: DecorationImage(
+                  image: NetworkImage(widget.topic.imageUrl),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.6),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-        
+
         // Trending badge
         if (widget.topic.isTrending)
           Positioned(
@@ -197,7 +197,7 @@ class _TopicCardState extends State<_TopicCard>
             left: 12,
             child: GlassBadge.trending(text: 'Trending'),
           ),
-        
+
         // Activity level badge
         Positioned(
           top: 12,
@@ -208,7 +208,7 @@ class _TopicCardState extends State<_TopicCard>
             activityLevel: widget.topic.analytics.activityLevel,
           ),
         ),
-        
+
         // Topic emoji and name overlay
         Positioned(
           bottom: 16,
@@ -235,9 +235,9 @@ class _TopicCardState extends State<_TopicCard>
                   style: const TextStyle(fontSize: 24),
                 ),
               ),
-              
+
               const SizedBox(width: 12),
-              
+
               // Topic name
               Expanded(
                 child: Text(
@@ -313,11 +313,13 @@ class _TopicCardState extends State<_TopicCard>
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: _getActivityColor(widget.topic.analytics.activityLevel),
+                        color: _getActivityColor(
+                            widget.topic.analytics.activityLevel),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: _getActivityColor(widget.topic.analytics.activityLevel)
+                            color: _getActivityColor(
+                                    widget.topic.analytics.activityLevel)
                                 .withOpacity(0.6 * _pulseAnimation.value),
                             blurRadius: 8 * _pulseAnimation.value,
                             spreadRadius: 2 * _pulseAnimation.value,
@@ -327,9 +329,9 @@ class _TopicCardState extends State<_TopicCard>
                     );
                   },
                 ),
-                
+
                 const SizedBox(width: 8),
-                
+
                 const Text(
                   'Analytics (24h)',
                   style: TextStyle(
@@ -340,9 +342,9 @@ class _TopicCardState extends State<_TopicCard>
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             // Analytics metrics
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -355,9 +357,7 @@ class _TopicCardState extends State<_TopicCard>
                     AppColors.accent,
                   ),
                 ),
-                
                 const SizedBox(width: 16),
-                
                 Flexible(
                   child: _buildAnalyticMetric(
                     'Users',
@@ -366,9 +366,7 @@ class _TopicCardState extends State<_TopicCard>
                     AppColors.primary,
                   ),
                 ),
-                
                 const SizedBox(width: 16),
-                
                 Flexible(
                   child: _buildAnalyticMetric(
                     'Talks',
@@ -385,7 +383,8 @@ class _TopicCardState extends State<_TopicCard>
     );
   }
 
-  Widget _buildAnalyticMetric(String label, String value, IconData icon, Color color) {
+  Widget _buildAnalyticMetric(
+      String label, String value, IconData icon, Color color) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -441,20 +440,21 @@ class _TopicCardState extends State<_TopicCard>
               color: AppColors.textPrimary,
             ),
           ),
-          
           const SizedBox(height: 8),
-          
           Wrap(
             spacing: 6,
             runSpacing: 4,
-            children: widget.topic.tags.map((tag) {
-              return GlassBadge(
-                text: tag,
-                style: GlassBadgeStyle.secondary,
-                customColor: AppColors.textSecondary,
-                size: GlassBadgeSize.small,
-              );
-            }).toList().cast<Widget>(),
+            children: widget.topic.tags
+                .map((tag) {
+                  return GlassBadge(
+                    text: tag,
+                    style: GlassBadgeStyle.secondary,
+                    customColor: AppColors.textSecondary,
+                    size: GlassBadgeSize.small,
+                  );
+                })
+                .toList()
+                .cast<Widget>(),
           ),
         ],
       ),
@@ -470,16 +470,17 @@ class _TopicCardState extends State<_TopicCard>
           Expanded(
             child: GlassButton(
               text: widget.topic.isFollowing ? 'Following' : 'Follow Topic',
-              style: widget.topic.isFollowing 
-                  ? GlassButtonStyle.secondary 
+              style: widget.topic.isFollowing
+                  ? GlassButtonStyle.secondary
                   : GlassButtonStyle.primary,
-              prefixIcon: Icon(widget.topic.isFollowing ? Icons.check : Icons.add),
+              prefixIcon:
+                  Icon(widget.topic.isFollowing ? Icons.check : Icons.add),
               onPressed: widget.onFollowTap,
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Explore button
           GlassButton(
             text: 'Explore',

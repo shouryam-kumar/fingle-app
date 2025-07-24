@@ -84,7 +84,8 @@ class _TrendingResultsState extends State<TrendingResults>
 
   Widget _buildTrendingHeader(SearchProvider searchProvider) {
     final trendingMetrics = searchProvider.trendingMetrics;
-    final topTrending = trendingMetrics.isNotEmpty ? trendingMetrics.first : null;
+    final topTrending =
+        trendingMetrics.isNotEmpty ? trendingMetrics.first : null;
 
     return Container(
       margin: const EdgeInsets.all(20),
@@ -141,9 +142,7 @@ class _TrendingResultsState extends State<TrendingResults>
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
           if (topTrending != null)
             GlassContainer(
               padding: const EdgeInsets.all(16),
@@ -226,9 +225,7 @@ class _TrendingResultsState extends State<TrendingResults>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildTrendingContent(item),
-                    
                     const SizedBox(height: 8),
-                    
                     _buildTrendingMetrics(item.metrics),
                   ],
                 ),
@@ -287,7 +284,7 @@ class _TrendingResultsState extends State<TrendingResults>
 
   Widget _buildTrendingContent(TrendingItem item) {
     final result = item.result;
-    
+
     switch (result.type) {
       case SearchResultType.people:
         return _buildUniformContent(
@@ -296,7 +293,8 @@ class _TrendingResultsState extends State<TrendingResults>
             backgroundImage: NetworkImage(result.user!.profilePic),
           ),
           title: result.user!.name,
-          subtitle: '${result.user!.followers} followers • ${result.user!.stats.totalPosts} posts',
+          subtitle:
+              '${result.user!.followers} followers • ${result.user!.stats.totalPosts} posts',
           badges: [
             GlassBadge(
               text: 'Person',
@@ -314,7 +312,8 @@ class _TrendingResultsState extends State<TrendingResults>
             style: const TextStyle(fontSize: 32),
           ),
           title: result.topic!.name,
-          subtitle: '${result.topic!.analytics.postsLast24h} posts • ${result.topic!.analytics.activeUsers} active users',
+          subtitle:
+              '${result.topic!.analytics.postsLast24h} posts • ${result.topic!.analytics.activeUsers} active users',
           badges: [
             GlassBadge(
               text: 'Topic',
@@ -330,7 +329,8 @@ class _TrendingResultsState extends State<TrendingResults>
             backgroundImage: NetworkImage(result.community!.imageUrl),
           ),
           title: result.community!.name,
-          subtitle: '${result.community!.memberCount} members • ${result.community!.postsToday} posts today',
+          subtitle:
+              '${result.community!.memberCount} members • ${result.community!.postsToday} posts today',
           badges: [
             GlassBadge(
               text: 'Community',
@@ -411,10 +411,6 @@ class _TrendingResultsState extends State<TrendingResults>
     );
   }
 
-
-
-
-
   Widget _buildTrendingMetrics(TrendingMetrics metrics) {
     return Wrap(
       spacing: 6,
@@ -484,10 +480,11 @@ class _TrendingResultsState extends State<TrendingResults>
     return LayoutBuilder(
       builder: (context, constraints) {
         // Handle infinite or invalid constraints
-        final availableWidth = constraints.maxWidth.isFinite && constraints.maxWidth > 30
-            ? constraints.maxWidth
-            : 80.0; // Fallback width
-            
+        final availableWidth =
+            constraints.maxWidth.isFinite && constraints.maxWidth > 30
+                ? constraints.maxWidth
+                : 80.0; // Fallback width
+
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -547,24 +544,26 @@ class _TrendingResultsState extends State<TrendingResults>
   List<TrendingItem> _getTrendingResults(SearchProvider searchProvider) {
     final trendingMetrics = searchProvider.trendingMetrics;
     final filteredResults = searchProvider.filteredResults;
-    
+
     final trendingItems = <TrendingItem>[];
-    
+
     // Match trending metrics with filtered results
-    for (int i = 0; i < trendingMetrics.length && i < filteredResults.length; i++) {
+    for (int i = 0;
+        i < trendingMetrics.length && i < filteredResults.length;
+        i++) {
       trendingItems.add(TrendingItem(
         result: filteredResults[i],
         metrics: trendingMetrics[i],
       ));
     }
-    
+
     return trendingItems;
   }
 
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     if (difference.inMinutes < 60) {
       return '${difference.inMinutes}m';
     } else if (difference.inHours < 24) {

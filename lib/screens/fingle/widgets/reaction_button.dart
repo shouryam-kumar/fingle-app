@@ -273,13 +273,14 @@ class _ReactionButtonState extends State<ReactionButton>
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final buttonWidth = widget.useHomeSize ? kHomeTotalButtonWidth : kTotalButtonWidth;
-    final buttonHeight = widget.useHomeSize ? kHomeTotalButtonHeight : kTotalButtonHeight;
+    final buttonWidth =
+        widget.useHomeSize ? kHomeTotalButtonWidth : kTotalButtonWidth;
+    final buttonHeight =
+        widget.useHomeSize ? kHomeTotalButtonHeight : kTotalButtonHeight;
     final textIconGap = widget.useHomeSize ? kHomeTextIconGap : kTextIconGap;
-    
+
     debugPrint(
         '🎯 ReactionButton build - hasReactions: ${widget.reactionSummary.hasReactions}');
     debugPrint('🎯 Container height: $buttonHeight');
@@ -377,11 +378,13 @@ class _ReactionButtonState extends State<ReactionButton>
   }
 
   Widget _buildReactionIcon() {
-    final containerSize = widget.useHomeSize ? kHomeButtonContainerSize : kButtonContainerSize;
+    final containerSize =
+        widget.useHomeSize ? kHomeButtonContainerSize : kButtonContainerSize;
     final iconSize = widget.useHomeSize ? kHomeButtonIconSize : kButtonIconSize;
-    final borderWidth = widget.useHomeSize ? kHomeButtonBorderWidth : kButtonBorderWidth;
+    final borderWidth =
+        widget.useHomeSize ? kHomeButtonBorderWidth : kButtonBorderWidth;
     final emojiSize = widget.useHomeSize ? 16.0 : 22.0;
-    
+
     if (widget.reactionSummary.userReaction != null) {
       final reactionData =
           ReactionData.getReactionData(widget.reactionSummary.userReaction!);
@@ -449,10 +452,12 @@ class _ReactionButtonState extends State<ReactionButton>
     final textColor = userReaction != null
         ? ReactionData.getReactionData(userReaction).color
         : Colors.white;
-    
-    final containerSize = widget.useHomeSize ? kHomeButtonContainerSize : kButtonContainerSize;
+
+    final containerSize =
+        widget.useHomeSize ? kHomeButtonContainerSize : kButtonContainerSize;
     final textHeight = widget.useHomeSize ? kHomeTextHeight : kTextHeight;
-    final buttonTextSize = widget.useHomeSize ? kHomeButtonTextSize : kButtonTextSize;
+    final buttonTextSize =
+        widget.useHomeSize ? kHomeButtonTextSize : kButtonTextSize;
     final smallEmojiSize = widget.useHomeSize ? 5.0 : 6.0;
 
     return GestureDetector(
@@ -487,7 +492,9 @@ class _ReactionButtonState extends State<ReactionButton>
                   if (widget.reactionSummary.topReactionTypes.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(top: 1),
-                      height: widget.useHomeSize ? 6.0 : 8.0, // Fixed height for emoji row
+                      height: widget.useHomeSize
+                          ? 6.0
+                          : 8.0, // Fixed height for emoji row
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: widget.reactionSummary.topReactionTypes
@@ -595,5 +602,4 @@ class _MobileReactionPickerOverlay extends StatelessWidget {
       ],
     );
   }
-
 }

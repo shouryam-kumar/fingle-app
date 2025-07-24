@@ -31,7 +31,8 @@ class CommunityResults extends StatelessWidget {
               return _CommunityCard(
                 community: result.community!,
                 onJoinTap: () {
-                  searchProvider.toggleCommunityMembership(result.community!.id);
+                  searchProvider
+                      .toggleCommunityMembership(result.community!.id);
                 },
               );
             }
@@ -139,20 +140,19 @@ class _CommunityCardState extends State<_CommunityCard>
         children: [
           // Header section
           _buildHeader(),
-          
+
           // Content section
           _buildContent(),
-          
+
           // Members preview section
           _buildMembersPreview(),
-          
+
           // Activity stats
           _buildActivityStats(),
-          
+
           // Tags section
-          if (widget.community.tags.isNotEmpty)
-            _buildTagsSection(),
-          
+          if (widget.community.tags.isNotEmpty) _buildTagsSection(),
+
           // Action buttons
           _buildActions(),
         ],
@@ -169,30 +169,32 @@ class _CommunityCardState extends State<_CommunityCard>
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
           ),
-          child: Container(
-            height: 100,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(widget.community.imageUrl),
-                fit: BoxFit.cover,
-              ),
-            ),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
             child: Container(
+              width: double.infinity,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.5),
-                  ],
+                image: DecorationImage(
+                  image: NetworkImage(widget.community.imageUrl),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.5),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-        
+
         // Private badge
         if (widget.community.isPrivate)
           Positioned(
@@ -207,7 +209,7 @@ class _CommunityCardState extends State<_CommunityCard>
               size: GlassBadgeSize.medium,
             ),
           ),
-        
+
         // Activity level badge
         Positioned(
           top: 12,
@@ -218,7 +220,7 @@ class _CommunityCardState extends State<_CommunityCard>
             activityLevel: widget.community.activityLevel,
           ),
         ),
-        
+
         // Member status
         if (widget.community.isMember)
           Positioned(
@@ -252,9 +254,9 @@ class _CommunityCardState extends State<_CommunityCard>
               color: AppColors.textPrimary,
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Member count
           Row(
             children: [
@@ -274,9 +276,9 @@ class _CommunityCardState extends State<_CommunityCard>
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Description
           Text(
             widget.community.description,
@@ -311,18 +313,21 @@ class _CommunityCardState extends State<_CommunityCard>
               color: AppColors.textPrimary,
             ),
           ),
-          
           const SizedBox(height: 8),
-          
           SizedBox(
             height: 32,
             child: Stack(
               children: [
                 // Member avatars stack with proper positioning
-                ...widget.community.recentMembers.take(4).toList().asMap().entries.map((entry) {
+                ...widget.community.recentMembers
+                    .take(4)
+                    .toList()
+                    .asMap()
+                    .entries
+                    .map((entry) {
                   final index = entry.key;
                   final member = entry.value;
-                  
+
                   return Positioned(
                     left: index * 24.0, // 8px overlap: 32 - 8 = 24
                     child: Container(
@@ -344,7 +349,7 @@ class _CommunityCardState extends State<_CommunityCard>
                     ),
                   );
                 }),
-                
+
                 // More members indicator
                 if (widget.community.memberCount > 4)
                   Positioned(
@@ -417,9 +422,9 @@ class _CommunityCardState extends State<_CommunityCard>
                 );
               },
             ),
-            
+
             const SizedBox(width: 8),
-            
+
             Text(
               '${widget.community.postsToday} posts today',
               style: const TextStyle(
@@ -428,9 +433,9 @@ class _CommunityCardState extends State<_CommunityCard>
                 color: AppColors.textPrimary,
               ),
             ),
-            
+
             const Spacer(),
-            
+
             // Activity level text
             Text(
               _getActivityLevelText(widget.community.activityLevel),
@@ -460,22 +465,24 @@ class _CommunityCardState extends State<_CommunityCard>
               color: AppColors.textPrimary,
             ),
           ),
-          
           const SizedBox(height: 6),
-          
           Wrap(
             spacing: 6,
             runSpacing: 4,
-            children: widget.community.tags.take(4).map((tag) {
-              return GlassBadge(
-                text: tag,
-                style: GlassBadgeStyle.secondary,
-                customColor: AppColors.textSecondary,
-                // customBackgroundColor not supported in current API
-                size: GlassBadgeSize.small,
-                // padding not supported in current API
-              );
-            }).toList().cast<Widget>(),
+            children: widget.community.tags
+                .take(4)
+                .map((tag) {
+                  return GlassBadge(
+                    text: tag,
+                    style: GlassBadgeStyle.secondary,
+                    customColor: AppColors.textSecondary,
+                    // customBackgroundColor not supported in current API
+                    size: GlassBadgeSize.small,
+                    // padding not supported in current API
+                  );
+                })
+                .toList()
+                .cast<Widget>(),
           ),
         ],
       ),
@@ -490,21 +497,21 @@ class _CommunityCardState extends State<_CommunityCard>
           // Join/Leave button
           Expanded(
             child: GlassButton(
-              text: widget.community.isMember 
-                  ? 'Leave' 
+              text: widget.community.isMember
+                  ? 'Leave'
                   : (widget.community.isPrivate ? 'Request to Join' : 'Join'),
-              style: widget.community.isMember 
-                  ? GlassButtonStyle.secondary 
+              style: widget.community.isMember
+                  ? GlassButtonStyle.secondary
                   : GlassButtonStyle.success,
-              prefixIcon: Icon(widget.community.isMember 
-                  ? Icons.exit_to_app 
+              prefixIcon: Icon(widget.community.isMember
+                  ? Icons.exit_to_app
                   : (widget.community.isPrivate ? Icons.lock : Icons.add)),
               onPressed: widget.onJoinTap,
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Explore button
           GlassButton(
             text: 'Explore',

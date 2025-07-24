@@ -22,17 +22,17 @@ enum SubFilterType {
   nearby,
   following,
   openToMingle,
-  
+
   // Topics sub-filters
   topicsTrending,
   topicsFollowing,
   topicsRecommended,
-  
+
   // Posts sub-filters
   latest,
   popular,
   mediaOnly,
-  
+
   // Communities sub-filters
   joined,
   recommended,
