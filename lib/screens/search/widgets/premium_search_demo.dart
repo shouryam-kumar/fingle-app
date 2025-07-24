@@ -23,7 +23,7 @@ class PremiumSearchDemo extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-              
+
               // Title
               const Center(
                 child: Text(
@@ -35,29 +35,29 @@ class PremiumSearchDemo extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Enhanced Search Header Demo
               _buildSearchHeaderDemo(),
-              
+
               const SizedBox(height: 32),
-              
+
               // Glass Components Demo
               _buildGlassComponentsDemo(),
-              
+
               const SizedBox(height: 32),
-              
+
               // Enhanced People Cards Demo
               _buildPeopleCardsDemo(),
-              
+
               const SizedBox(height: 32),
-              
+
               // Enhanced Topic Cards Demo
               _buildTopicCardsDemo(),
-              
+
               const SizedBox(height: 32),
-              
+
               // Activity Indicators Demo
               _buildActivityIndicatorsDemo(),
             ],
@@ -79,9 +79,9 @@ class PremiumSearchDemo extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Enhanced search input
         GlassContainer(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -114,9 +114,9 @@ class PremiumSearchDemo extends StatelessWidget {
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Search suggestions
         Wrap(
           spacing: 12,
@@ -172,9 +172,9 @@ class PremiumSearchDemo extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Glass buttons row
         Row(
           children: [
@@ -182,7 +182,8 @@ class PremiumSearchDemo extends StatelessWidget {
               child: GlassButton(
                 text: 'Follow',
                 style: GlassButtonStyle.primary,
-                prefixIcon: const Icon(Icons.add, size: 16, color: Colors.white),
+                prefixIcon:
+                    const Icon(Icons.add, size: 16, color: Colors.white),
                 onPressed: () {},
               ),
             ),
@@ -191,7 +192,8 @@ class PremiumSearchDemo extends StatelessWidget {
               child: GlassButton(
                 text: 'Mingle',
                 style: GlassButtonStyle.mingle,
-                prefixIcon: const Icon(Icons.favorite, size: 16, color: Colors.white),
+                prefixIcon:
+                    const Icon(Icons.favorite, size: 16, color: Colors.white),
                 onPressed: () {},
               ),
             ),
@@ -205,9 +207,9 @@ class PremiumSearchDemo extends StatelessWidget {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Glass badges showcase
         Wrap(
           spacing: 12,
@@ -246,9 +248,7 @@ class PremiumSearchDemo extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        
         const SizedBox(height: 16),
-        
         GlassContainer(
           borderRadius: 24,
           intensity: GlassIntensity.medium,
@@ -276,7 +276,7 @@ class PremiumSearchDemo extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   // Mingle badge
                   const Positioned(
                     top: 16,
@@ -287,7 +287,7 @@ class PremiumSearchDemo extends StatelessWidget {
                       hasGlow: true,
                     ),
                   ),
-                  
+
                   // Profile avatar
                   Positioned(
                     bottom: -30,
@@ -318,7 +318,7 @@ class PremiumSearchDemo extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               // Content
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
@@ -358,9 +358,9 @@ class PremiumSearchDemo extends StatelessWidget {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Stats
                     Row(
                       children: [
@@ -371,9 +371,9 @@ class PremiumSearchDemo extends StatelessWidget {
                         _buildStat('Following', '892'),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Interests
                     const Text(
                       'Interests',
@@ -383,9 +383,9 @@ class PremiumSearchDemo extends StatelessWidget {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     Wrap(
                       spacing: 8,
                       runSpacing: 6,
@@ -397,9 +397,9 @@ class PremiumSearchDemo extends StatelessWidget {
                               ))
                           .toList(),
                     ),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Action buttons
                     Row(
                       children: [
@@ -415,7 +415,8 @@ class PremiumSearchDemo extends StatelessWidget {
                           child: GlassButton(
                             text: 'Mingle',
                             style: GlassButtonStyle.mingle,
-                            prefixIcon: const Icon(Icons.favorite, size: 16, color: Colors.white),
+                            prefixIcon: const Icon(Icons.favorite,
+                                size: 16, color: Colors.white),
                             onPressed: () {},
                           ),
                         ),
@@ -443,9 +444,7 @@ class PremiumSearchDemo extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        
         const SizedBox(height: 16),
-        
         GlassContainer(
           borderRadius: 20,
           intensity: GlassIntensity.medium,
@@ -467,9 +466,9 @@ class PremiumSearchDemo extends StatelessWidget {
                     child: Text('🔥', style: TextStyle(fontSize: 28)),
                   ),
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // Topic info
                 Expanded(
                   child: Column(
@@ -489,13 +488,14 @@ class PremiumSearchDemo extends StatelessWidget {
                           GlassBadge.trending(text: 'Hot'),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // Analytics
                       const Row(
                         children: [
-                          Icon(Icons.article, size: 16, color: AppColors.textSecondary),
+                          Icon(Icons.article,
+                              size: 16, color: AppColors.textSecondary),
                           SizedBox(width: 4),
                           Text(
                             '127 posts today',
@@ -505,7 +505,8 @@ class PremiumSearchDemo extends StatelessWidget {
                             ),
                           ),
                           SizedBox(width: 16),
-                          Icon(Icons.people, size: 16, color: AppColors.textSecondary),
+                          Icon(Icons.people,
+                              size: 16, color: AppColors.textSecondary),
                           SizedBox(width: 4),
                           Text(
                             '2.3K active users',
@@ -516,9 +517,9 @@ class PremiumSearchDemo extends StatelessWidget {
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       // Activity level
                       Row(
                         children: [
@@ -537,7 +538,7 @@ class PremiumSearchDemo extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 // Follow button
                 Column(
                   children: [
@@ -575,9 +576,9 @@ class PremiumSearchDemo extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Activity levels showcase
         Column(
           children: [

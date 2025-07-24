@@ -9,7 +9,7 @@ import '../../../widgets/common/glass_badge.dart';
 
 class EnhancedSearchTabs extends StatefulWidget {
   final PageController pageController;
-  
+
   const EnhancedSearchTabs({super.key, required this.pageController});
 
   @override
@@ -20,16 +20,16 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
     with TickerProviderStateMixin {
   late AnimationController _tabSwitchController;
   late Animation<double> _tabSwitchAnimation;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _tabSwitchController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _tabSwitchAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -48,12 +48,12 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
   void _onTabTap(int index, SearchProvider searchProvider) {
     // Haptic feedback
     HapticFeedback.lightImpact();
-    
+
     // Animate tab switch
     _tabSwitchController.forward().then((_) {
       _tabSwitchController.reverse();
     });
-    
+
     // Update selected tab and animate PageView to sync
     searchProvider.selectTab(index);
     widget.pageController.animateToPage(
@@ -71,10 +71,9 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
           children: [
             // Main tabs
             _buildTabsContainer(searchProvider),
-            
+
             // Sub-filters for selected tab
-            if (searchProvider.hasSearched)
-              _buildSubFilters(searchProvider),
+            if (searchProvider.hasSearched) _buildSubFilters(searchProvider),
           ],
         );
       },
@@ -87,9 +86,10 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
         final isSmallScreen = constraints.maxWidth < 500;
         final horizontalMargin = isSmallScreen ? 12.0 : 16.0;
         final verticalMargin = isSmallScreen ? 8.0 : 12.0;
-        
+
         return Container(
-          margin: EdgeInsets.symmetric(horizontal: horizontalMargin, vertical: verticalMargin),
+          margin: EdgeInsets.symmetric(
+              horizontal: horizontalMargin, vertical: verticalMargin),
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: AppColors.surface,
@@ -117,7 +117,7 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
                   final tab = entry.value;
                   final isSelected = searchProvider.selectedTabIndex == index;
                   final tabBadge = searchProvider.tabBadges[tab];
-                  
+
                   return _buildTab(
                     tab: tab,
                     isSelected: isSelected,
@@ -148,7 +148,7 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
     final displayName = searchProvider.getTabDisplayName(tab);
     final icon = searchProvider.getTabIcon(tab);
     final resultCount = tabBadge?.resultCount ?? 0;
-    
+
     return AnimatedBuilder(
       animation: _tabSwitchAnimation,
       builder: (context, child) {
@@ -190,11 +190,12 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
                       duration: const Duration(milliseconds: 200),
                       child: Icon(
                         icon,
-                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                        color:
+                            isSelected ? Colors.white : AppColors.textSecondary,
                         size: 22,
                       ),
                     ),
-                    
+
                     // Trending indicator
                     if (tabBadge?.hasTrending == true)
                       Positioned(
@@ -209,14 +210,15 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
                           ),
                         ),
                       ),
-                    
+
                     // Count badge
                     if (resultCount > 0)
                       Positioned(
                         top: -6,
                         right: -6,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
                           decoration: BoxDecoration(
                             color: tabColor,
                             borderRadius: BorderRadius.circular(8),
@@ -233,9 +235,9 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
                       ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 6),
-                
+
                 // Tab name
                 ConstrainedBox(
                   constraints: BoxConstraints(
@@ -245,8 +247,10 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
                     displayName,
                     style: TextStyle(
                       fontSize: isSmallScreen ? 10 : 11,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w600,
+                      color:
+                          isSelected ? Colors.white : AppColors.textSecondary,
                       letterSpacing: 0.3,
                     ),
                     maxLines: 1,
@@ -265,9 +269,9 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
   Widget _buildSubFilters(SearchProvider searchProvider) {
     final currentTab = searchProvider.currentTab;
     final subFilters = _getSubFiltersForTab(currentTab);
-    
+
     if (subFilters.isEmpty) return const SizedBox.shrink();
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       height: 40,
@@ -278,7 +282,7 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
         itemBuilder: (context, index) {
           final subFilter = subFilters[index];
           final isSelected = searchProvider.filter.subFilter == subFilter.type;
-          
+
           return _buildSubFilterChip(
             label: subFilter.label,
             isSelected: isSelected,
@@ -357,28 +361,28 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
           SubFilterOption(SubFilterType.following, 'Following'),
           SubFilterOption(SubFilterType.openToMingle, 'Open to Mingle'),
         ];
-      
+
       case SearchResultType.topics:
         return [
           SubFilterOption(SubFilterType.topicsTrending, 'Trending'),
           SubFilterOption(SubFilterType.topicsFollowing, 'Following'),
           SubFilterOption(SubFilterType.topicsRecommended, 'Recommended'),
         ];
-      
+
       case SearchResultType.posts:
         return [
           SubFilterOption(SubFilterType.latest, 'Latest'),
           SubFilterOption(SubFilterType.popular, 'Popular'),
           SubFilterOption(SubFilterType.mediaOnly, 'Media Only'),
         ];
-      
+
       case SearchResultType.communities:
         return [
           SubFilterOption(SubFilterType.joined, 'Joined'),
           SubFilterOption(SubFilterType.recommended, 'Recommended'),
           SubFilterOption(SubFilterType.local, 'Local'),
         ];
-      
+
       default:
         return [];
     }

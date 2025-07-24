@@ -13,11 +13,10 @@ class SearchTabs extends StatefulWidget {
   State<SearchTabs> createState() => _SearchTabsState();
 }
 
-class _SearchTabsState extends State<SearchTabs>
-    with TickerProviderStateMixin {
+class _SearchTabsState extends State<SearchTabs> with TickerProviderStateMixin {
   late AnimationController _slideController;
   late Animation<double> _slideAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -25,7 +24,7 @@ class _SearchTabsState extends State<SearchTabs>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _slideAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -87,7 +86,7 @@ class _SearchTabsState extends State<SearchTabs>
                 final tabType = entry.value;
                 final isSelected = index == searchProvider.selectedTabIndex;
                 final resultCount = searchProvider.getTabResultCount(tabType);
-                
+
                 return Expanded(
                   child: _buildTab(
                     tabType: tabType,
@@ -112,7 +111,8 @@ class _SearchTabsState extends State<SearchTabs>
   }) {
     final tabColor = _getTabColor(tabType);
     final tabIcon = _getTabIcon(tabType);
-    final displayName = context.read<SearchProvider>().getTabDisplayName(tabType);
+    final displayName =
+        context.read<SearchProvider>().getTabDisplayName(tabType);
 
     return AnimatedBuilder(
       animation: _slideAnimation,
@@ -166,27 +166,26 @@ class _SearchTabsState extends State<SearchTabs>
                         : AppColors.textSecondary.withOpacity(0.7),
                   ),
                 ),
-                
+
                 const SizedBox(height: 4),
-                
+
                 // Tab label
                 Text(
                   displayName,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected
-                        ? tabColor
-                        : AppColors.textSecondary,
+                    color: isSelected ? tabColor : AppColors.textSecondary,
                   ),
                 ),
-                
+
                 // Result count indicator
                 if (resultCount > 0) ...[
                   const SizedBox(height: 2),
                   Container(
                     constraints: const BoxConstraints(minWidth: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? tabColor
@@ -198,9 +197,8 @@ class _SearchTabsState extends State<SearchTabs>
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? Colors.white
-                            : AppColors.textSecondary,
+                        color:
+                            isSelected ? Colors.white : AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),

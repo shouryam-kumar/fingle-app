@@ -77,11 +77,11 @@ class _ActionButtonState extends State<ActionButton>
   @override
   Widget build(BuildContext context) {
     // Better design philosophy: Use contrasting colors when active
-    final iconColor = widget.isActive 
-        ? Colors.white  // White icon on colored background for better contrast
+    final iconColor = widget.isActive
+        ? Colors.white // White icon on colored background for better contrast
         : AppColors.textSecondary;
-    
-    final textColor = widget.isActive 
+
+    final textColor = widget.isActive
         ? (widget.activeColor ?? AppColors.primary)
         : AppColors.textSecondary;
 
@@ -97,12 +97,14 @@ class _ActionButtonState extends State<ActionButton>
             height: kHomeButtonContainerSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: widget.isActive 
-                  ? (widget.activeColor ?? AppColors.primary)  // Solid color background when active
+              color: widget.isActive
+                  ? (widget.activeColor ??
+                      AppColors.primary) // Solid color background when active
                   : Colors.white.withOpacity(0.1),
               border: Border.all(
-                color: widget.isActive 
-                    ? (widget.activeColor ?? AppColors.primary)  // Solid color border when active
+                color: widget.isActive
+                    ? (widget.activeColor ??
+                        AppColors.primary) // Solid color border when active
                     : Colors.white.withOpacity(0.25),
                 width: kHomeButtonBorderWidth,
               ),
@@ -114,7 +116,8 @@ class _ActionButtonState extends State<ActionButton>
                 ),
                 if (widget.isActive)
                   BoxShadow(
-                    color: (widget.activeColor ?? AppColors.primary).withOpacity(0.3),
+                    color: (widget.activeColor ?? AppColors.primary)
+                        .withOpacity(0.3),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
@@ -122,17 +125,17 @@ class _ActionButtonState extends State<ActionButton>
             ),
             child: Center(
               child: Icon(
-                widget.isActive && widget.activeIcon != null 
-                    ? widget.activeIcon! 
+                widget.isActive && widget.activeIcon != null
+                    ? widget.activeIcon!
                     : widget.icon,
                 color: iconColor,
                 size: kHomeButtonIconSize,
               ),
             ),
           ),
-          
+
           SizedBox(height: kHomeTextIconGap),
-          
+
           // Count/Label text
           Container(
             width: kHomeButtonContainerSize,

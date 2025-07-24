@@ -130,8 +130,7 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
           ),
 
           // Tab Content (removed Likes tab content)
-          SizedBox(
-            height: 600, // Fixed height for the tab content
+          Expanded(
             child: TabBarView(
               controller: widget.tabController,
               children: [

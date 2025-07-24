@@ -25,12 +25,12 @@ class _SearchHeaderState extends State<SearchHeader>
     super.initState();
     _searchController = TextEditingController();
     _searchFocusNode = FocusNode();
-    
+
     _floatingController = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: this,
     );
-    
+
     _floatingAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -38,7 +38,7 @@ class _SearchHeaderState extends State<SearchHeader>
       parent: _floatingController,
       curve: Curves.easeInOutSine,
     ));
-    
+
     _floatingController.repeat(reverse: true);
 
     // Listen to search provider changes
@@ -90,7 +90,7 @@ class _SearchHeaderState extends State<SearchHeader>
             children: [
               // Floating orbs background
               _buildFloatingOrbs(),
-              
+
               // Main search header content
               SafeArea(
                 child: Padding(
@@ -99,7 +99,7 @@ class _SearchHeaderState extends State<SearchHeader>
                     children: [
                       // Search input
                       _buildSearchInput(searchProvider),
-                      
+
                       // Search suggestions
                       if (searchProvider.suggestions.isNotEmpty)
                         _buildSearchSuggestions(searchProvider),
@@ -115,11 +115,14 @@ class _SearchHeaderState extends State<SearchHeader>
   }
 
   Widget _buildFloatingOrbs() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return AnimatedBuilder(
       animation: _floatingAnimation,
       builder: (context, child) {
         return SizedBox(
-          height: 150,
+          height: screenHeight * 0.18,
           child: Stack(
             children: [
               // Purple orb
@@ -127,8 +130,8 @@ class _SearchHeaderState extends State<SearchHeader>
                 left: -50 + (20 * _floatingAnimation.value),
                 top: 20 + (10 * _floatingAnimation.value),
                 child: Container(
-                  width: 120,
-                  height: 120,
+                  width: screenWidth * 0.28,
+                  height: screenWidth * 0.28,
                   decoration: BoxDecoration(
                     gradient: AppColors.searchOrbGradient1,
                     shape: BoxShape.circle,
@@ -140,8 +143,8 @@ class _SearchHeaderState extends State<SearchHeader>
                 right: -60 + (15 * _floatingAnimation.value),
                 top: 40 + (8 * _floatingAnimation.value),
                 child: Container(
-                  width: 100,
-                  height: 100,
+                  width: screenWidth * 0.24,
+                  height: screenWidth * 0.24,
                   decoration: BoxDecoration(
                     gradient: AppColors.searchOrbGradient2,
                     shape: BoxShape.circle,
@@ -153,8 +156,8 @@ class _SearchHeaderState extends State<SearchHeader>
                 left: MediaQuery.of(context).size.width * 0.4,
                 top: 10 + (12 * _floatingAnimation.value),
                 child: Container(
-                  width: 80,
-                  height: 80,
+                  width: screenWidth * 0.19,
+                  height: screenWidth * 0.19,
                   decoration: BoxDecoration(
                     gradient: AppColors.searchOrbGradient3,
                     shape: BoxShape.circle,
@@ -186,7 +189,7 @@ class _SearchHeaderState extends State<SearchHeader>
                 size: 24,
               ),
             ),
-            
+
             // Search input field
             Expanded(
               child: TextField(
@@ -211,7 +214,7 @@ class _SearchHeaderState extends State<SearchHeader>
                 ),
               ),
             ),
-            
+
             // Clear/Loading button
             Padding(
               padding: const EdgeInsets.only(right: 16),
@@ -270,7 +273,7 @@ class _SearchHeaderState extends State<SearchHeader>
   Widget _buildSuggestionItem(SearchSuggestion suggestion) {
     IconData suggestionIcon;
     Color iconColor;
-    
+
     switch (suggestion.type) {
       case SearchResultType.people:
         suggestionIcon = Icons.person;

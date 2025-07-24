@@ -3,16 +3,16 @@ import 'glass_container.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/search_models.dart';
 
-enum GlassBadgeStyle { 
-  primary, 
-  secondary, 
-  success, 
-  warning, 
-  error, 
-  mingle, 
+enum GlassBadgeStyle {
+  primary,
+  secondary,
+  success,
+  warning,
+  error,
+  mingle,
   trending,
   activity,
-  custom 
+  custom
 }
 
 enum GlassBadgeSize { small, medium, large }
@@ -106,14 +106,16 @@ class GlassBadge extends StatelessWidget {
       style: GlassBadgeStyle.activity,
       size: size,
       activityLevel: level,
-      prefixIcon: showDot ? Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _getActivityColor(level),
-        ),
-      ) : null,
+      prefixIcon: showDot
+          ? Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _getActivityColor(level),
+              ),
+            )
+          : null,
       isPulsing: level == ActivityLevel.veryActive,
       hasGlow: level != ActivityLevel.moderate,
       onTap: onTap,
@@ -166,7 +168,7 @@ class GlassBadge extends StatelessWidget {
 
   Color get _backgroundColor {
     if (customColor != null) return customColor!;
-    
+
     switch (style) {
       case GlassBadgeStyle.primary:
         return AppColors.primary;
@@ -183,7 +185,9 @@ class GlassBadge extends StatelessWidget {
       case GlassBadgeStyle.trending:
         return AppColors.info;
       case GlassBadgeStyle.activity:
-        return activityLevel != null ? _getActivityColor(activityLevel!) : AppColors.primary;
+        return activityLevel != null
+            ? _getActivityColor(activityLevel!)
+            : AppColors.primary;
       case GlassBadgeStyle.custom:
         return customColor ?? AppColors.primary;
     }
@@ -196,16 +200,17 @@ class GlassBadge extends StatelessWidget {
       end: Alignment.bottomRight,
       colors: [
         baseColor,
-        HSLColor.fromColor(baseColor).withLightness(
-          (HSLColor.fromColor(baseColor).lightness - 0.1).clamp(0.0, 1.0)
-        ).toColor(),
+        HSLColor.fromColor(baseColor)
+            .withLightness(
+                (HSLColor.fromColor(baseColor).lightness - 0.1).clamp(0.0, 1.0))
+            .toColor(),
       ],
     );
   }
 
   List<BoxShadow> get _glowEffect {
     if (!hasGlow) return [];
-    
+
     final glowColor = _backgroundColor;
     return [
       BoxShadow(
@@ -234,20 +239,22 @@ class GlassBadge extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Handle infinite or invalid constraints
-          final availableWidth = constraints.maxWidth.isFinite && constraints.maxWidth > 0
-              ? constraints.maxWidth
-              : 200.0; // Fallback width
-          
+          final availableWidth =
+              constraints.maxWidth.isFinite && constraints.maxWidth > 0
+                  ? constraints.maxWidth
+                  : 200.0; // Fallback width
+
           // Calculate space needed for icons with minimum requirements
-          final iconSpace = (prefixIcon != null ? 20 : 0) + (suffixIcon != null ? 20 : 0);
+          final iconSpace =
+              (prefixIcon != null ? 20 : 0) + (suffixIcon != null ? 20 : 0);
           final minTextWidth = 20.0; // Minimum text width for readability
           final calculatedMaxWidth = availableWidth - iconSpace;
-          
+
           // Ensure we have at least minimum text width
-          final safeMaxWidth = calculatedMaxWidth > minTextWidth 
-              ? calculatedMaxWidth 
+          final safeMaxWidth = calculatedMaxWidth > minTextWidth
+              ? calculatedMaxWidth
               : minTextWidth;
-          
+
           return IntrinsicWidth(
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -259,7 +266,6 @@ class GlassBadge extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                 ],
-                
                 Flexible(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
@@ -280,7 +286,6 @@ class GlassBadge extends StatelessWidget {
                     ),
                   ),
                 ),
-                
                 if (suffixIcon != null) ...[
                   const SizedBox(width: 4),
                   Flexible(
@@ -322,7 +327,7 @@ class _PulseBadgeWrapper extends StatefulWidget {
   State<_PulseBadgeWrapper> createState() => _PulseBadgeWrapperState();
 }
 
-class _PulseBadgeWrapperState extends State<_PulseBadgeWrapper> 
+class _PulseBadgeWrapperState extends State<_PulseBadgeWrapper>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -335,7 +340,7 @@ class _PulseBadgeWrapperState extends State<_PulseBadgeWrapper>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.03,
@@ -343,7 +348,7 @@ class _PulseBadgeWrapperState extends State<_PulseBadgeWrapper>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
+
     _glowAnimation = Tween<double>(
       begin: 0.3,
       end: 0.6,
@@ -351,7 +356,7 @@ class _PulseBadgeWrapperState extends State<_PulseBadgeWrapper>
       parent: _controller,
       curve: Curves.easeInOut,
     ));
-    
+
     _controller.repeat(reverse: true);
   }
 
@@ -373,7 +378,8 @@ class _PulseBadgeWrapperState extends State<_PulseBadgeWrapper>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.veryActiveGreen.withOpacity(_glowAnimation.value),
+                  color: AppColors.veryActiveGreen
+                      .withOpacity(_glowAnimation.value),
                   blurRadius: 12,
                   spreadRadius: 1,
                 ),
@@ -411,13 +417,13 @@ class GlassBadgeGroup extends StatelessWidget {
         children: badges,
       );
     }
-    
+
     return Row(
       mainAxisAlignment: alignment,
       children: badges.asMap().entries.map((entry) {
         final index = entry.key;
         final badge = entry.value;
-        
+
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [

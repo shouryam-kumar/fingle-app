@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum PostActionType { 
-  report, 
-  invite, 
-  unfollow, 
-  mute 
-}
+enum PostActionType { report, invite, unfollow, mute }
 
 class PostAction {
   final PostActionType type;
@@ -14,7 +9,7 @@ class PostAction {
   final IconData icon;
   final Color iconColor;
   final VoidCallback onPressed;
-  
+
   const PostAction({
     required this.type,
     required this.title,

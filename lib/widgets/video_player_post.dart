@@ -48,7 +48,7 @@ class _VideoPlayerPostState extends State<VideoPlayerPost>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeVideoPlayer();
-    
+
     // Register the viewport visibility callback in the parent
     if (widget.onViewportVisibilityChanged != null) {
       widget.onViewportVisibilityChanged!(handleVisibilityChanged);
@@ -166,8 +166,9 @@ class _VideoPlayerPostState extends State<VideoPlayerPost>
   void handleVisibilityChanged(bool isVisible) {
     if (!_isInitialized || _hasError) return;
 
-    debugPrint('📹 VideoPlayerPost: Visibility changed to $isVisible, currently playing: $_isPlaying');
-    
+    debugPrint(
+        '📹 VideoPlayerPost: Visibility changed to $isVisible, currently playing: $_isPlaying');
+
     if (!isVisible && _isPlaying) {
       debugPrint('📹 VideoPlayerPost: Pausing video due to visibility change');
       _controller.pause();

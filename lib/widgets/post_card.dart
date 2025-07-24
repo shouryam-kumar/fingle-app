@@ -68,19 +68,22 @@ class _PostCardState extends State<PostCard>
 
   void _handleVideoVisibilityChanged(bool isVisible) {
     // This will be called when video visibility changes
-    debugPrint('📹 PostCard: Video ${widget.post.id} visibility changed: $isVisible');
-    
+    debugPrint(
+        '📹 PostCard: Video ${widget.post.id} visibility changed: $isVisible');
+
     // Call the VideoPlayerPost's visibility handler if available
     _videoVisibilityHandler?.call(isVisible);
   }
 
   void _handleMenuAction(String action) {
     if (!mounted) return;
-    debugPrint('📋 PostCard: Menu action selected: $action for @${widget.post.userName}');
-    
+    debugPrint(
+        '📋 PostCard: Menu action selected: $action for @${widget.post.userName}');
+
     switch (action) {
       case 'report':
-        debugPrint('🚩 Reporting post ${widget.post.id} by @${widget.post.userName}');
+        debugPrint(
+            '🚩 Reporting post ${widget.post.id} by @${widget.post.userName}');
         _showActionSnackBar(
           icon: Icons.flag,
           message: 'Post reported successfully',
@@ -120,7 +123,7 @@ class _PostCardState extends State<PostCard>
     required Color backgroundColor,
   }) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -194,7 +197,6 @@ class _PostCardState extends State<PostCard>
       ),
     );
   }
-
 
   Widget _buildUserHeader() {
     return Row(
@@ -385,7 +387,10 @@ class _PostCardState extends State<PostCard>
 
     return Container(
       width: double.infinity,
-      height: 200,
+      constraints: BoxConstraints(
+        minHeight: 150,
+        maxHeight: MediaQuery.of(context).size.height * 0.3,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
@@ -416,8 +421,9 @@ class _PostCardState extends State<PostCard>
   }
 
   Widget _buildVideoContent() {
-    if (widget.post.mediaItems == null || widget.post.mediaItems!.isEmpty)
+    if (widget.post.mediaItems == null || widget.post.mediaItems!.isEmpty) {
       return const SizedBox.shrink();
+    }
 
     final media = widget.post.mediaItems!.first;
     final isReel = widget.post.postType == PostType.videoReel;
@@ -451,43 +457,50 @@ class _PostCardState extends State<PostCard>
   }
 
   Widget _buildCarouselContent() {
-    if (widget.post.mediaItems == null || widget.post.mediaItems!.isEmpty)
+    if (widget.post.mediaItems == null || widget.post.mediaItems!.isEmpty) {
       return const SizedBox.shrink();
+    }
 
-    return SizedBox(
-      height: 250,
-      child: PageView.builder(
-        itemCount: widget.post.mediaItems!.length,
-        itemBuilder: (context, index) {
-          final media = widget.post.mediaItems![index];
-          return Container(
-            margin: const EdgeInsets.only(right: 8),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: CachedNetworkImage(
-                imageUrl: media.url,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: AppColors.primary.withOpacity(0.1),
-                  child: Icon(
-                    Icons.image,
-                    color: AppColors.primary,
-                    size: 48,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: 200,
+        maxHeight: MediaQuery.of(context).size.height * 0.35,
+      ),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: PageView.builder(
+          itemCount: widget.post.mediaItems!.length,
+          itemBuilder: (context, index) {
+            final media = widget.post.mediaItems![index];
+            return Container(
+              margin: const EdgeInsets.only(right: 8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: media.url,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: AppColors.primary.withOpacity(0.1),
+                    child: Icon(
+                      Icons.image,
+                      color: AppColors.primary,
+                      size: 48,
+                    ),
                   ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: AppColors.primary.withOpacity(0.1),
-                  child: Icon(
-                    Icons.error,
-                    color: AppColors.primary,
-                    size: 48,
+                  errorWidget: (context, url, error) => Container(
+                    color: AppColors.primary.withOpacity(0.1),
+                    child: Icon(
+                      Icons.error,
+                      color: AppColors.primary,
+                      size: 48,
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -503,35 +516,46 @@ class _PostCardState extends State<PostCard>
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: CachedNetworkImage(
-        imageUrl: imageUrl,
-        width: double.infinity,
-        height: 180,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          width: double.infinity,
-          height: 180,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.image,
-            color: AppColors.primary,
-            size: 48,
-          ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: 150,
+          maxHeight: MediaQuery.of(context).size.height * 0.25,
         ),
-        errorWidget: (context, url, error) => Container(
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
           width: double.infinity,
-          height: 180,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            width: double.infinity,
+            constraints: BoxConstraints(
+              minHeight: 150,
+              maxHeight: MediaQuery.of(context).size.height * 0.25,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.image,
+              color: AppColors.primary,
+              size: 48,
+            ),
           ),
-          child: Icon(
-            Icons.error,
-            color: AppColors.primary,
-            size: 48,
+          errorWidget: (context, url, error) => Container(
+            width: double.infinity,
+            constraints: BoxConstraints(
+              minHeight: 150,
+              maxHeight: MediaQuery.of(context).size.height * 0.25,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.error,
+              color: AppColors.primary,
+              size: 48,
+            ),
           ),
         ),
       ),

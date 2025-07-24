@@ -8,10 +8,12 @@ import '../../../widgets/common/glass_button.dart';
 import '../../../widgets/common/glass_badge.dart';
 import 'search_header.dart';
 import 'search_tabs.dart';
+import 'all_results_feed.dart';
 import 'people_results.dart';
 import 'topics_results.dart';
 import 'posts_results.dart';
 import 'community_results.dart';
+import 'trending_results.dart';
 
 class SearchContainer extends StatefulWidget {
   const SearchContainer({Key? key}) : super(key: key);
@@ -24,7 +26,7 @@ class _SearchContainerState extends State<SearchContainer>
     with TickerProviderStateMixin {
   late AnimationController _resultsController;
   late Animation<double> _resultsAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +34,7 @@ class _SearchContainerState extends State<SearchContainer>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _resultsAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -53,7 +55,8 @@ class _SearchContainerState extends State<SearchContainer>
     return Consumer<SearchProvider>(
       builder: (context, searchProvider, child) {
         // Trigger results animation when search results change
-        if (searchProvider.hasSearched && searchProvider.searchResults.isNotEmpty) {
+        if (searchProvider.hasSearched &&
+            searchProvider.searchResults.isNotEmpty) {
           _resultsController.forward();
         } else {
           _resultsController.reverse();
@@ -67,7 +70,7 @@ class _SearchContainerState extends State<SearchContainer>
             children: [
               // Search header with input and suggestions
               const SearchHeader(),
-              
+
               // Search tabs (only show when we have results)
               if (searchProvider.hasSearched)
                 AnimatedBuilder(
@@ -82,7 +85,7 @@ class _SearchContainerState extends State<SearchContainer>
                     );
                   },
                 ),
-              
+
               // Results area
               Expanded(
                 child: _buildResultsArea(searchProvider),
@@ -206,14 +209,14 @@ class _SearchContainerState extends State<SearchContainer>
               ],
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // Search suggestions
           _buildSearchSuggestions(),
-          
+
           const SizedBox(height: 30),
-          
+
           // Trending topics preview
           _buildTrendingTopicsPreview(),
         ],
@@ -242,9 +245,7 @@ class _SearchContainerState extends State<SearchContainer>
             color: AppColors.textPrimary,
           ),
         ),
-        
         const SizedBox(height: 12),
-        
         Wrap(
           spacing: 12,
           runSpacing: 8,
@@ -301,9 +302,9 @@ class _SearchContainerState extends State<SearchContainer>
             color: AppColors.textPrimary,
           ),
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         // Trending topics would come from mock data
         GlassContainer(
           padding: const EdgeInsets.all(20),
@@ -312,7 +313,9 @@ class _SearchContainerState extends State<SearchContainer>
           elevation: GlassElevation.medium,
           hasHoverEffect: true,
           onTap: () {
-            context.read<SearchProvider>().performSearch(query: 'HIIT Workouts');
+            context
+                .read<SearchProvider>()
+                .performSearch(query: 'HIIT Workouts');
           },
           child: Row(
             children: [
@@ -380,9 +383,9 @@ class _SearchContainerState extends State<SearchContainer>
             size: 80,
             color: AppColors.textSecondary,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           const Text(
             'No Results Found',
             style: TextStyle(
@@ -391,9 +394,9 @@ class _SearchContainerState extends State<SearchContainer>
               color: AppColors.textPrimary,
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           Text(
             'We couldn\'t find anything for "${searchProvider.searchQuery}"',
             style: const TextStyle(
@@ -402,9 +405,9 @@ class _SearchContainerState extends State<SearchContainer>
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           const SizedBox(height: 30),
-          
+
           // Suggestions for no results
           const Text(
             'Try searching for:',
@@ -414,9 +417,9 @@ class _SearchContainerState extends State<SearchContainer>
               color: AppColors.textPrimary,
             ),
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -431,6 +434,8 @@ class _SearchContainerState extends State<SearchContainer>
 
   Widget _buildResultsForCurrentTab(SearchProvider searchProvider) {
     switch (searchProvider.currentTab) {
+      case SearchResultType.all:
+        return const AllResultsFeed();
       case SearchResultType.people:
         return const PeopleResults();
       case SearchResultType.topics:
@@ -439,6 +444,8 @@ class _SearchContainerState extends State<SearchContainer>
         return const PostsResults();
       case SearchResultType.communities:
         return const CommunityResults();
+      case SearchResultType.trending:
+        return const TrendingResults();
     }
   }
 }

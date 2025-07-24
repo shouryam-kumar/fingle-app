@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _feedPosts = List.from(sampleFeedPosts); // Create mutable copy
-    
+
     _fabController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -55,10 +55,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       final post = _feedPosts[postIndex];
       final currentReaction = post.reactionSummary.userReaction;
-      
+
       // Create new reaction counts
-      final newCounts = Map<ReactionType, int>.from(post.reactionSummary.counts);
-      
+      final newCounts =
+          Map<ReactionType, int>.from(post.reactionSummary.counts);
+
       // Remove old reaction if exists
       if (currentReaction != null) {
         newCounts[currentReaction] = (newCounts[currentReaction] ?? 1) - 1;
@@ -66,11 +67,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           newCounts.remove(currentReaction);
         }
       }
-      
+
       // Add new reaction or toggle off if same
       ReactionType? newUserReaction;
       int newTotal = post.reactionSummary.totalCount;
-      
+
       if (currentReaction == type) {
         // Toggling off the same reaction
         newUserReaction = null;
@@ -83,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           newTotal++; // Only increment total if user wasn't reacting before
         }
       }
-      
+
       // Update the post with new reaction summary
       final newReactionSummary = ReactionSummary(
         counts: newCounts,
@@ -91,8 +92,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         userReaction: newUserReaction,
         totalCount: newTotal,
       );
-      
-      _feedPosts[postIndex] = post.copyWith(reactionSummary: newReactionSummary);
+
+      _feedPosts[postIndex] =
+          post.copyWith(reactionSummary: newReactionSummary);
     });
   }
 
@@ -100,18 +102,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       final post = _feedPosts[postIndex];
       final isCurrentlyRecommended = post.isRecommended;
-      
+
       // Toggle the recommendation state
       final newIsRecommended = !isCurrentlyRecommended;
-      
+
       // Update the recommendation count
       int newRecommendationCount = post.recommendations;
       if (newIsRecommended) {
         newRecommendationCount++; // Increment when recommending
       } else {
-        newRecommendationCount = (newRecommendationCount - 1).clamp(0, double.infinity).toInt(); // Decrement when unrecommending, don't go below 0
+        newRecommendationCount = (newRecommendationCount - 1)
+            .clamp(0, double.infinity)
+            .toInt(); // Decrement when unrecommending, don't go below 0
       }
-      
+
       // Update the post with new recommendation state
       _feedPosts[postIndex] = post.copyWith(
         isRecommended: newIsRecommended,
@@ -325,7 +329,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       },
                       onReactionSelected: (ReactionType type) {
                         _handleReactionSelected(index, type);
-                        debugPrint('Reaction selected: ${type.name} for post $index');
+                        debugPrint(
+                            'Reaction selected: ${type.name} for post $index');
                       },
                     ),
                   ),

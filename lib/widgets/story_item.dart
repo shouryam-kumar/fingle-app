@@ -55,11 +55,13 @@ class _StoryItemState extends State<StoryItem>
   }
 
   Widget _buildGradientRing() {
+    final double storySize = MediaQuery.of(context).size.width * 0.18;
+
     if (widget.story.isOwn) {
       // Add icon for own story
       return Container(
-        width: 80,
-        height: 80,
+        width: storySize,
+        height: storySize,
         decoration: BoxDecoration(
           gradient: AppColors.purpleGradient,
           shape: BoxShape.circle,
@@ -77,8 +79,8 @@ class _StoryItemState extends State<StoryItem>
     if (widget.story.viewed) {
       // Gray ring for viewed stories
       return Container(
-        width: 80,
-        height: 80,
+        width: storySize,
+        height: storySize,
         decoration: BoxDecoration(
           color: Colors.grey.withOpacity(0.3),
           shape: BoxShape.circle,
@@ -90,8 +92,8 @@ class _StoryItemState extends State<StoryItem>
 
     // Gradient ring for unviewed stories (no rotation)
     return Container(
-      width: 80,
-      height: 80,
+      width: storySize,
+      height: storySize,
       decoration: BoxDecoration(
         gradient: AppColors.oceanGradient,
         shape: BoxShape.circle,
@@ -109,15 +111,17 @@ class _StoryItemState extends State<StoryItem>
   }
 
   Widget _buildAvatar() {
+    final double avatarSize = MediaQuery.of(context).size.width * 0.16;
+
     return ClipOval(
       child: CachedNetworkImage(
         imageUrl: widget.story.avatar,
-        width: 74,
-        height: 74,
+        width: avatarSize,
+        height: avatarSize,
         fit: BoxFit.cover,
         placeholder: (context, url) => Container(
-          width: 74,
-          height: 74,
+          width: avatarSize,
+          height: avatarSize,
           decoration: BoxDecoration(
             color: AppColors.primary.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -129,8 +133,8 @@ class _StoryItemState extends State<StoryItem>
           ),
         ),
         errorWidget: (context, url, error) => Container(
-          width: 74,
-          height: 74,
+          width: avatarSize,
+          height: avatarSize,
           decoration: BoxDecoration(
             color: AppColors.primary.withOpacity(0.1),
             shape: BoxShape.circle,
@@ -162,7 +166,7 @@ class _StoryItemState extends State<StoryItem>
                   _buildGradientRing(),
                   const SizedBox(height: 6),
                   SizedBox(
-                    width: 80,
+                    width: MediaQuery.of(context).size.width * 0.18,
                     child: Text(
                       widget.story.isOwn ? 'Your Story' : widget.story.name,
                       style: AppTextStyles.storyName.copyWith(

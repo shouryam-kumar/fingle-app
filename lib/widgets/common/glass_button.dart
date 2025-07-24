@@ -3,6 +3,7 @@ import 'glass_container.dart';
 import '../../core/theme/app_colors.dart';
 
 enum GlassButtonStyle { primary, secondary, accent, mingle, success, warning }
+
 enum GlassButtonSize { small, medium, large }
 
 class GlassButton extends StatelessWidget {
@@ -90,7 +91,7 @@ class GlassButton extends StatelessWidget {
     if (isOutlined) {
       return AppColors.glassContainerGradient;
     }
-    
+
     switch (style) {
       case GlassButtonStyle.primary:
         return const LinearGradient(
@@ -121,20 +122,25 @@ class GlassButton extends StatelessWidget {
 
   Border? get _customBorder {
     if (!isOutlined) return null;
-    
+
     switch (style) {
       case GlassButtonStyle.primary:
-        return Border.all(color: AppColors.primary.withOpacity(0.5), width: 1.5);
+        return Border.all(
+            color: AppColors.primary.withOpacity(0.5), width: 1.5);
       case GlassButtonStyle.secondary:
-        return Border.all(color: AppColors.secondary.withOpacity(0.5), width: 1.5);
+        return Border.all(
+            color: AppColors.secondary.withOpacity(0.5), width: 1.5);
       case GlassButtonStyle.accent:
         return Border.all(color: AppColors.accent.withOpacity(0.5), width: 1.5);
       case GlassButtonStyle.mingle:
-        return Border.all(color: AppColors.minglePink.withOpacity(0.5), width: 1.5);
+        return Border.all(
+            color: AppColors.minglePink.withOpacity(0.5), width: 1.5);
       case GlassButtonStyle.success:
-        return Border.all(color: AppColors.veryActiveGreen.withOpacity(0.5), width: 1.5);
+        return Border.all(
+            color: AppColors.veryActiveGreen.withOpacity(0.5), width: 1.5);
       case GlassButtonStyle.warning:
-        return Border.all(color: AppColors.activeOrange.withOpacity(0.5), width: 1.5);
+        return Border.all(
+            color: AppColors.activeOrange.withOpacity(0.5), width: 1.5);
     }
   }
 
@@ -153,10 +159,11 @@ class GlassButton extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Handle infinite or invalid constraints
-          final availableWidth = constraints.maxWidth.isFinite && constraints.maxWidth > 0
-              ? constraints.maxWidth
-              : 150.0; // Fallback width for buttons
-          
+          final availableWidth =
+              constraints.maxWidth.isFinite && constraints.maxWidth > 0
+                  ? constraints.maxWidth
+                  : 150.0; // Fallback width for buttons
+
           // Ensure minimum button functionality
           if (availableWidth < 30) {
             // Very constrained space - show minimal version
@@ -188,7 +195,7 @@ class GlassButton extends StatelessWidget {
               ],
             );
           }
-          
+
           return IntrinsicWidth(
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -201,7 +208,6 @@ class GlassButton extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                 ],
-                
                 if (isLoading)
                   Flexible(
                     flex: 0,
@@ -229,7 +235,6 @@ class GlassButton extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                
                 if (suffixIcon != null && !isLoading) ...[
                   const SizedBox(width: 8),
                   Flexible(
@@ -268,7 +273,7 @@ class _PulseWrapper extends StatefulWidget {
   State<_PulseWrapper> createState() => _PulseWrapperState();
 }
 
-class _PulseWrapperState extends State<_PulseWrapper> 
+class _PulseWrapperState extends State<_PulseWrapper>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;

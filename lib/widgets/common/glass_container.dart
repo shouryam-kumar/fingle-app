@@ -3,6 +3,7 @@ import 'dart:ui';
 import '../../core/theme/app_colors.dart';
 
 enum GlassIntensity { subtle, medium, strong }
+
 enum GlassElevation { low, medium, high, floating }
 
 class GlassContainer extends StatefulWidget {
@@ -47,15 +48,15 @@ class GlassContainer extends StatefulWidget {
   State<GlassContainer> createState() => _GlassContainerState();
 }
 
-class _GlassContainerState extends State<GlassContainer> 
+class _GlassContainerState extends State<GlassContainer>
     with TickerProviderStateMixin {
   bool _isHovered = false;
   bool _isPressed = false;
-  
+
   late AnimationController _hoverController;
   late AnimationController _pressController;
   late AnimationController _shimmerController;
-  
+
   late Animation<double> _hoverAnimation;
   late Animation<double> _pressAnimation;
   late Animation<double> _shimmerAnimation;
@@ -63,22 +64,22 @@ class _GlassContainerState extends State<GlassContainer>
   @override
   void initState() {
     super.initState();
-    
+
     _hoverController = AnimationController(
       duration: widget.animationDuration,
       vsync: this,
     );
-    
+
     _pressController = AnimationController(
       duration: const Duration(milliseconds: 100),
       vsync: this,
     );
-    
+
     _shimmerController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
+
     _hoverAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -86,7 +87,7 @@ class _GlassContainerState extends State<GlassContainer>
       parent: _hoverController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _pressAnimation = Tween<double>(
       begin: 1.0,
       end: 0.95,
@@ -94,7 +95,7 @@ class _GlassContainerState extends State<GlassContainer>
       parent: _pressController,
       curve: Curves.easeOut,
     ));
-    
+
     _shimmerAnimation = Tween<double>(
       begin: -2.0,
       end: 2.0,
@@ -102,7 +103,7 @@ class _GlassContainerState extends State<GlassContainer>
       parent: _shimmerController,
       curve: Curves.linear,
     ));
-    
+
     if (widget.enableShimmerEffect) {
       _shimmerController.repeat();
     }
@@ -118,11 +119,11 @@ class _GlassContainerState extends State<GlassContainer>
 
   void _onHover(bool isHovered) {
     if (!widget.hasHoverEffect) return;
-    
+
     setState(() {
       _isHovered = isHovered;
     });
-    
+
     if (isHovered) {
       _hoverController.forward();
     } else {
@@ -132,11 +133,11 @@ class _GlassContainerState extends State<GlassContainer>
 
   void _onTapDown(TapDownDetails details) {
     if (widget.onTap == null) return;
-    
+
     setState(() {
       _isPressed = true;
     });
-    
+
     _pressController.forward();
   }
 
@@ -144,7 +145,7 @@ class _GlassContainerState extends State<GlassContainer>
     setState(() {
       _isPressed = false;
     });
-    
+
     _pressController.reverse();
   }
 
@@ -152,7 +153,7 @@ class _GlassContainerState extends State<GlassContainer>
     setState(() {
       _isPressed = false;
     });
-    
+
     _pressController.reverse();
   }
 
@@ -272,34 +273,31 @@ class _GlassContainerState extends State<GlassContainer>
                   child: Container(
                     padding: widget.padding,
                     decoration: BoxDecoration(
-                      gradient: widget.customGradient ?? 
-                        LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            (widget.customTint ?? Colors.white).withOpacity(
-                              _opacity + (_hoverAnimation.value * 0.1)
-                            ),
-                            (widget.customTint ?? Colors.white).withOpacity(
-                              _opacity * 0.5 + (_hoverAnimation.value * 0.05)
-                            ),
-                          ],
-                        ),
-                      border: widget.customBorder ?? 
-                        Border.all(
-                          color: Colors.white.withOpacity(
-                            0.18 + (_hoverAnimation.value * 0.12)
+                      gradient: widget.customGradient ??
+                          LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              (widget.customTint ?? Colors.white).withOpacity(
+                                  _opacity + (_hoverAnimation.value * 0.1)),
+                              (widget.customTint ?? Colors.white).withOpacity(
+                                  _opacity * 0.5 +
+                                      (_hoverAnimation.value * 0.05)),
+                            ],
                           ),
-                          width: 1.0,
-                        ),
+                      border: widget.customBorder ??
+                          Border.all(
+                            color: Colors.white.withOpacity(
+                                0.18 + (_hoverAnimation.value * 0.12)),
+                            width: 1.0,
+                          ),
                       borderRadius: BorderRadius.circular(widget.borderRadius),
                       boxShadow: _shadows.map((shadow) {
                         if (_isHovered) {
                           return shadow.copyWith(
                             blurRadius: shadow.blurRadius * 1.5,
                             color: shadow.color.withOpacity(
-                              (shadow.color.opacity * 1.5).clamp(0.0, 1.0)
-                            ),
+                                (shadow.color.opacity * 1.5).clamp(0.0, 1.0)),
                           );
                         }
                         return shadow;
@@ -311,9 +309,11 @@ class _GlassContainerState extends State<GlassContainer>
                         if (widget.enableShimmerEffect)
                           Positioned.fill(
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(widget.borderRadius),
+                              borderRadius:
+                                  BorderRadius.circular(widget.borderRadius),
                               child: Transform.translate(
-                                offset: Offset(_shimmerAnimation.value * 300, 0),
+                                offset:
+                                    Offset(_shimmerAnimation.value * 300, 0),
                                 child: Container(
                                   width: 100,
                                   decoration: BoxDecoration(
@@ -335,9 +335,11 @@ class _GlassContainerState extends State<GlassContainer>
                           Positioned.fill(
                             child: Material(
                               color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(widget.borderRadius),
+                              borderRadius:
+                                  BorderRadius.circular(widget.borderRadius),
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(widget.borderRadius),
+                                borderRadius:
+                                    BorderRadius.circular(widget.borderRadius),
                                 splashColor: AppColors.glassRipple,
                                 highlightColor: AppColors.glassActiveHover,
                                 onTap: widget.onTap,
