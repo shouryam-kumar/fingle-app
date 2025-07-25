@@ -563,67 +563,134 @@ class _PostCardState extends State<PostCard>
   }
 
   Widget _buildActionButtons() {
-    return Row(
-      children: [
-        // Reaction button (like with emoji picker)
-        SizedBox(
-          width: 60,
-          height: 60,
-          child: ReactionButton(
-            reactionSummary: widget.post.reactionSummary,
-            onReactionSelected: (ReactionType type) {
-              widget.onReactionSelected?.call(type);
-              // Remove animation for reactions - looks bad
-            },
-            onViewReactions: () {
-              // TODO: Show reaction details
-            },
-            pickerLayout: ReactionPickerLayout.horizontal,
-            useHomeSize: true,
-          ),
-        ),
-        const SizedBox(width: 8),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmallScreen = constraints.maxWidth < 320;
+        
+        if (isSmallScreen) {
+          // For very small screens, use Wrap to prevent overflow
+          return Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              // Reaction button (like with emoji picker)
+              SizedBox(
+                width: 60,
+                height: 60,
+                child: ReactionButton(
+                  reactionSummary: widget.post.reactionSummary,
+                  onReactionSelected: (ReactionType type) {
+                    widget.onReactionSelected?.call(type);
+                    // Remove animation for reactions - looks bad
+                  },
+                  onViewReactions: () {
+                    // TODO: Show reaction details
+                  },
+                  pickerLayout: ReactionPickerLayout.horizontal,
+                  useHomeSize: true,
+                ),
+              ),
+              // Recommend button
+              ActionButton(
+                icon: Icons.keyboard_arrow_up_outlined,
+                activeIcon: Icons.keyboard_arrow_up,
+                count: widget.post.recommendations,
+                isActive: widget.post.isRecommended,
+                activeColor: AppColors.success,
+                showAnimation: true,
+                onTap: () {
+                  widget.onRecommend?.call();
+                  _onLike(); // Use the same animation for recommend
+                },
+              ),
+              // Comment button
+              ActionButton(
+                icon: Icons.comment_outlined,
+                count: widget.post.comments,
+                onTap: widget.onComment,
+              ),
+              // Share button
+              ActionButton(
+                icon: Icons.share_outlined,
+                count: widget.post.shares,
+                onTap: widget.onShare,
+              ),
+              // Bookmark button
+              ActionButton(
+                icon: Icons.bookmark_border,
+                activeIcon: Icons.bookmark,
+                isActive: widget.post.isBookmarked,
+                activeColor: AppColors.warning,
+                onTap: widget.onBookmark,
+              ),
+            ],
+          );
+        }
+        
+        // For larger screens, use Row with Spacer
+        return Row(
+          children: [
+            // Reaction button (like with emoji picker)
+            SizedBox(
+              width: 60,
+              height: 60,
+              child: ReactionButton(
+                reactionSummary: widget.post.reactionSummary,
+                onReactionSelected: (ReactionType type) {
+                  widget.onReactionSelected?.call(type);
+                  // Remove animation for reactions - looks bad
+                },
+                onViewReactions: () {
+                  // TODO: Show reaction details
+                },
+                pickerLayout: ReactionPickerLayout.horizontal,
+                useHomeSize: true,
+              ),
+            ),
+            const SizedBox(width: 8),
 
-        // Recommend button
-        ActionButton(
-          icon: Icons.keyboard_arrow_up_outlined,
-          activeIcon: Icons.keyboard_arrow_up,
-          count: widget.post.recommendations,
-          isActive: widget.post.isRecommended,
-          activeColor: AppColors.success,
-          showAnimation: true,
-          onTap: () {
-            widget.onRecommend?.call();
-            _onLike(); // Use the same animation for recommend
-          },
-        ),
-        const SizedBox(width: 8),
+            // Recommend button
+            ActionButton(
+              icon: Icons.keyboard_arrow_up_outlined,
+              activeIcon: Icons.keyboard_arrow_up,
+              count: widget.post.recommendations,
+              isActive: widget.post.isRecommended,
+              activeColor: AppColors.success,
+              showAnimation: true,
+              onTap: () {
+                widget.onRecommend?.call();
+                _onLike(); // Use the same animation for recommend
+              },
+            ),
+            const SizedBox(width: 8),
 
-        // Comment button
-        ActionButton(
-          icon: Icons.comment_outlined,
-          count: widget.post.comments,
-          onTap: widget.onComment,
-        ),
-        const SizedBox(width: 8),
+            // Comment button
+            ActionButton(
+              icon: Icons.comment_outlined,
+              count: widget.post.comments,
+              onTap: widget.onComment,
+            ),
+            const SizedBox(width: 8),
 
-        // Share button
-        ActionButton(
-          icon: Icons.share_outlined,
-          count: widget.post.shares,
-          onTap: widget.onShare,
-        ),
-        const Spacer(),
+            // Share button
+            ActionButton(
+              icon: Icons.share_outlined,
+              count: widget.post.shares,
+              onTap: widget.onShare,
+            ),
+            const Spacer(),
 
-        // Bookmark button
-        ActionButton(
-          icon: Icons.bookmark_border,
-          activeIcon: Icons.bookmark,
-          isActive: widget.post.isBookmarked,
-          activeColor: AppColors.warning,
-          onTap: widget.onBookmark,
-        ),
-      ],
+            // Bookmark button
+            ActionButton(
+              icon: Icons.bookmark_border,
+              activeIcon: Icons.bookmark,
+              isActive: widget.post.isBookmarked,
+              activeColor: AppColors.warning,
+              onTap: widget.onBookmark,
+            ),
+          ],
+        );
+      },
     );
   }
 

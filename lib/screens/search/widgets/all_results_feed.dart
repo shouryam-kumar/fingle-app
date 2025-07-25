@@ -268,7 +268,7 @@ class AllResultsFeed extends StatelessWidget {
                         color: typeColor,
                       ),
                       const SizedBox(width: 3),
-                      Expanded(
+                      Flexible(
                         flex: reason.isNotEmpty ? 2 : 3,
                         child: Text(
                           _getContentTypeName(result.type),
@@ -285,27 +285,25 @@ class AllResultsFeed extends StatelessWidget {
                         const SizedBox(width: 2),
                         Flexible(
                           flex: 1,
-                          child: ConstrainedBox(
+                          child: Container(
                             constraints: BoxConstraints(
                               maxWidth: constraints.maxWidth * 0.3,
                             ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: typeColor.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: typeColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              reason,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: typeColor,
                               ),
-                              child: Text(
-                                reason,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w500,
-                                  color: typeColor,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
                           ),
                         ),

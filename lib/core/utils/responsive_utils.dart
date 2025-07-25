@@ -1,229 +1,133 @@
 import 'package:flutter/material.dart';
 
-/// Utility class for responsive design calculations
 class ResponsiveUtils {
-  // Breakpoints
-  static const double mobileBreakpoint = 480.0;
-  static const double tabletBreakpoint = 768.0;
-  static const double desktopBreakpoint = 1024.0;
+  // Screen size breakpoints
+  static const double mobileSmall = 320;
+  static const double mobileMedium = 375;
+  static const double mobileLarge = 414;
+  static const double tablet = 600;
+  static const double desktop = 1024;
 
-  /// Get device type based on screen width
-  static DeviceType getDeviceType(BuildContext context) {
+  // Get screen size category
+  static ScreenSize getScreenSize(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    if (width < mobileBreakpoint) {
-      return DeviceType.mobile;
-    } else if (width < tabletBreakpoint) {
-      return DeviceType.largeMobile;
-    } else if (width < desktopBreakpoint) {
-      return DeviceType.tablet;
-    } else {
-      return DeviceType.desktop;
+    
+    if (width < mobileSmall) return ScreenSize.xSmall;
+    if (width < mobileMedium) return ScreenSize.small;
+    if (width < mobileLarge) return ScreenSize.medium;
+    if (width < tablet) return ScreenSize.large;
+    if (width < desktop) return ScreenSize.tablet;
+    return ScreenSize.desktop;
+  }
+
+  // Get responsive font size
+  static double getFontSize(BuildContext context, {
+    required double baseSize,
+    double? xSmallSize,
+    double? smallSize,
+    double? mediumSize,
+    double? largeSize,
+    double? tabletSize,
+    double? desktopSize,
+  }) {
+    final screenSize = getScreenSize(context);
+    
+    switch (screenSize) {
+      case ScreenSize.xSmall:
+        return xSmallSize ?? baseSize * 0.85;
+      case ScreenSize.small:
+        return smallSize ?? baseSize * 0.9;
+      case ScreenSize.medium:
+        return mediumSize ?? baseSize;
+      case ScreenSize.large:
+        return largeSize ?? baseSize;
+      case ScreenSize.tablet:
+        return tabletSize ?? baseSize * 1.1;
+      case ScreenSize.desktop:
+        return desktopSize ?? baseSize * 1.2;
     }
   }
 
-  /// Get responsive padding based on screen size
-  static EdgeInsets getResponsivePadding(
-    BuildContext context, {
-    double? mobile,
-    double? largeMobile,
-    double? tablet,
-    double? desktop,
+  // Get responsive padding
+  static EdgeInsets getPadding(BuildContext context, {
+    required EdgeInsets basePadding,
+    EdgeInsets? xSmallPadding,
+    EdgeInsets? smallPadding,
+    EdgeInsets? tabletPadding,
   }) {
-    final deviceType = getDeviceType(context);
+    final screenSize = getScreenSize(context);
+    
+    switch (screenSize) {
+      case ScreenSize.xSmall:
+        return xSmallPadding ?? basePadding * 0.7;
+      case ScreenSize.small:
+        return smallPadding ?? basePadding * 0.85;
+      case ScreenSize.tablet:
+      case ScreenSize.desktop:
+        return tabletPadding ?? basePadding * 1.2;
+      default:
+        return basePadding;
+    }
+  }
+
+  // Get responsive spacing
+  static double getSpacing(BuildContext context, double baseSpacing) {
+    final screenSize = getScreenSize(context);
+    
+    switch (screenSize) {
+      case ScreenSize.xSmall:
+        return baseSpacing * 0.7;
+      case ScreenSize.small:
+        return baseSpacing * 0.85;
+      case ScreenSize.tablet:
+      case ScreenSize.desktop:
+        return baseSpacing * 1.2;
+      default:
+        return baseSpacing;
+    }
+  }
+
+  // Check if screen is small
+  static bool isSmallScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width < mobileMedium;
+  }
+
+  // Check if screen is tablet or larger
+  static bool isTablet(BuildContext context) {
+    return MediaQuery.of(context).size.width >= tablet;
+  }
+
+  // Get number of grid columns based on screen size
+  static int getGridColumns(BuildContext context, {
+    int mobileColumns = 1,
+    int tabletColumns = 2,
+    int desktopColumns = 3,
+  }) {
     final width = MediaQuery.of(context).size.width;
-
-    double padding;
-    switch (deviceType) {
-      case DeviceType.mobile:
-        padding = mobile ?? width * 0.04; // 4% of screen width
-        break;
-      case DeviceType.largeMobile:
-        padding = largeMobile ?? width * 0.05; // 5% of screen width
-        break;
-      case DeviceType.tablet:
-        padding = tablet ?? width * 0.06; // 6% of screen width
-        break;
-      case DeviceType.desktop:
-        padding = desktop ?? width * 0.08; // 8% of screen width
-        break;
-    }
-
-    // Ensure padding doesn't exceed maximum values
-    padding = padding.clamp(8.0, 32.0);
-
-    return EdgeInsets.all(padding);
-  }
-
-  /// Get responsive horizontal padding
-  static EdgeInsets getResponsiveHorizontalPadding(
-    BuildContext context, {
-    double? mobile,
-    double? largeMobile,
-    double? tablet,
-    double? desktop,
-  }) {
-    final deviceType = getDeviceType(context);
-    final width = MediaQuery.of(context).size.width;
-
-    double padding;
-    switch (deviceType) {
-      case DeviceType.mobile:
-        padding = mobile ?? width * 0.04;
-        break;
-      case DeviceType.largeMobile:
-        padding = largeMobile ?? width * 0.05;
-        break;
-      case DeviceType.tablet:
-        padding = tablet ?? width * 0.06;
-        break;
-      case DeviceType.desktop:
-        padding = desktop ?? width * 0.08;
-        break;
-    }
-
-    padding = padding.clamp(12.0, 48.0);
-
-    return EdgeInsets.symmetric(horizontal: padding);
-  }
-
-  /// Get responsive vertical padding
-  static EdgeInsets getResponsiveVerticalPadding(
-    BuildContext context, {
-    double? mobile,
-    double? largeMobile,
-    double? tablet,
-    double? desktop,
-  }) {
-    final deviceType = getDeviceType(context);
-    final height = MediaQuery.of(context).size.height;
-
-    double padding;
-    switch (deviceType) {
-      case DeviceType.mobile:
-        padding = mobile ?? height * 0.02;
-        break;
-      case DeviceType.largeMobile:
-        padding = largeMobile ?? height * 0.025;
-        break;
-      case DeviceType.tablet:
-        padding = tablet ?? height * 0.03;
-        break;
-      case DeviceType.desktop:
-        padding = desktop ?? height * 0.04;
-        break;
-    }
-
-    padding = padding.clamp(8.0, 32.0);
-
-    return EdgeInsets.symmetric(vertical: padding);
-  }
-
-  /// Get responsive margin
-  static EdgeInsets getResponsiveMargin(
-    BuildContext context, {
-    double? mobile,
-    double? largeMobile,
-    double? tablet,
-    double? desktop,
-  }) {
-    final deviceType = getDeviceType(context);
-    final width = MediaQuery.of(context).size.width;
-
-    double margin;
-    switch (deviceType) {
-      case DeviceType.mobile:
-        margin = mobile ?? width * 0.03;
-        break;
-      case DeviceType.largeMobile:
-        margin = largeMobile ?? width * 0.04;
-        break;
-      case DeviceType.tablet:
-        margin = tablet ?? width * 0.05;
-        break;
-      case DeviceType.desktop:
-        margin = desktop ?? width * 0.06;
-        break;
-    }
-
-    margin = margin.clamp(6.0, 24.0);
-
-    return EdgeInsets.all(margin);
-  }
-
-  /// Get responsive font size
-  static double getResponsiveFontSize(
-    BuildContext context, {
-    double? mobile,
-    double? largeMobile,
-    double? tablet,
-    double? desktop,
-    double? baseFontSize,
-  }) {
-    final deviceType = getDeviceType(context);
-    final base = baseFontSize ?? 16.0;
-
-    double fontSize;
-    switch (deviceType) {
-      case DeviceType.mobile:
-        fontSize = mobile ?? base * 0.9;
-        break;
-      case DeviceType.largeMobile:
-        fontSize = largeMobile ?? base;
-        break;
-      case DeviceType.tablet:
-        fontSize = tablet ?? base * 1.1;
-        break;
-      case DeviceType.desktop:
-        fontSize = desktop ?? base * 1.2;
-        break;
-    }
-
-    return fontSize.clamp(12.0, 24.0);
-  }
-
-  /// Get responsive border radius
-  static double getResponsiveBorderRadius(
-    BuildContext context, {
-    double? mobile,
-    double? largeMobile,
-    double? tablet,
-    double? desktop,
-    double? baseRadius,
-  }) {
-    final deviceType = getDeviceType(context);
-    final base = baseRadius ?? 12.0;
-
-    switch (deviceType) {
-      case DeviceType.mobile:
-        return mobile ?? base * 0.8;
-      case DeviceType.largeMobile:
-        return largeMobile ?? base;
-      case DeviceType.tablet:
-        return tablet ?? base * 1.2;
-      case DeviceType.desktop:
-        return desktop ?? base * 1.4;
-    }
-  }
-
-  /// Check if device is in landscape orientation
-  static bool isLandscape(BuildContext context) {
-    return MediaQuery.of(context).orientation == Orientation.landscape;
-  }
-
-  /// Get safe area padding
-  static EdgeInsets getSafeAreaPadding(BuildContext context) {
-    return MediaQuery.of(context).padding;
-  }
-
-  /// Get screen size percentage
-  static double getScreenPercentage(BuildContext context, double percentage) {
-    return MediaQuery.of(context).size.width * (percentage / 100);
+    
+    if (width >= desktop) return desktopColumns;
+    if (width >= tablet) return tabletColumns;
+    return mobileColumns;
   }
 }
 
-enum DeviceType {
-  mobile,
-  largeMobile,
+enum ScreenSize {
+  xSmall,
+  small,
+  medium,
+  large,
   tablet,
   desktop,
+}
+
+// Extension to multiply EdgeInsets
+extension EdgeInsetsExtension on EdgeInsets {
+  EdgeInsets operator *(double factor) {
+    return EdgeInsets.only(
+      left: left * factor,
+      top: top * factor,
+      right: right * factor,
+      bottom: bottom * factor,
+    );
+  }
 }

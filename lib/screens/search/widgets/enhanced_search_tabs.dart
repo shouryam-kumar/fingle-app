@@ -239,23 +239,29 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
                 const SizedBox(height: 6),
 
                 // Tab name
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isSmallScreen ? 60 : 80,
-                  ),
-                  child: Text(
-                    displayName,
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 10 : 11,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color:
-                          isSelected ? Colors.white : AppColors.textSecondary,
-                      letterSpacing: 0.3,
+                Flexible(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isSmallScreen ? 60 : 80,
+                      minWidth: 40,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        displayName,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 10 : 11,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w600,
+                          color:
+                              isSelected ? Colors.white : AppColors.textSecondary,
+                          letterSpacing: 0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
                 ),
               ],
