@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
-import 'navigation/main_navigation.dart';
+import 'core/config/supabase_config.dart';
+import 'screens/auth/auth_check.dart';
 import 'providers/app_provider.dart';
 import 'providers/comments_provider.dart';
 import 'providers/video_feed_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Supabase
+  await SupabaseConfig.initialize();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -44,7 +48,7 @@ class FingleApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: appProvider.themeMode,
-            home: const MainNavigation(),
+            home: const AuthCheck(),
           );
         },
       ),

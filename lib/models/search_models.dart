@@ -9,6 +9,15 @@ enum SearchResultType {
   posts,
   communities,
   trending,
+  saved,
+}
+
+enum SearchSuggestionType {
+  general,
+  user,
+  topic,
+  hashtag,
+  recent,
 }
 
 enum ActivityLevel {
@@ -47,6 +56,14 @@ enum SortType {
   alphabetical,
 }
 
+enum DateRange {
+  today,
+  thisWeek,
+  thisMonth,
+  thisYear,
+  allTime,
+}
+
 class SearchFilter {
   final SearchResultType? type;
   final String? category;
@@ -58,6 +75,10 @@ class SearchFilter {
   final SortType sortType;
   final bool showMediaOnly;
   final bool nearbyOnly;
+  final List<SearchResultType>? contentTypes;
+  final List<String>? categories;
+  final DateRange? dateRange;
+  final SortType? sortBy;
 
   SearchFilter({
     this.type,
@@ -70,6 +91,10 @@ class SearchFilter {
     this.sortType = SortType.relevance,
     this.showMediaOnly = false,
     this.nearbyOnly = false,
+    this.contentTypes,
+    this.categories,
+    this.dateRange,
+    this.sortBy,
   });
 
   SearchFilter copyWith({
@@ -83,6 +108,10 @@ class SearchFilter {
     SortType? sortType,
     bool? showMediaOnly,
     bool? nearbyOnly,
+    List<SearchResultType>? contentTypes,
+    List<String>? categories,
+    DateRange? dateRange,
+    SortType? sortBy,
   }) {
     return SearchFilter(
       type: type ?? this.type,
@@ -95,6 +124,10 @@ class SearchFilter {
       sortType: sortType ?? this.sortType,
       showMediaOnly: showMediaOnly ?? this.showMediaOnly,
       nearbyOnly: nearbyOnly ?? this.nearbyOnly,
+      contentTypes: contentTypes ?? this.contentTypes,
+      categories: categories ?? this.categories,
+      dateRange: dateRange ?? this.dateRange,
+      sortBy: sortBy ?? this.sortBy,
     );
   }
 }
@@ -103,16 +136,28 @@ class SearchSuggestion {
   final String id;
   final String text;
   final SearchResultType type;
+  final SearchSuggestionType suggestionType;
   final int popularity;
+  final int searchCount;
+  final bool isPopular;
   final String? iconUrl;
+  final String? category;
 
   SearchSuggestion({
-    required this.id,
+    String? id,
     required this.text,
     required this.type,
-    required this.popularity,
+    SearchSuggestionType? suggestionType,
+    int? popularity,
+    int? searchCount,
+    bool? isPopular,
     this.iconUrl,
-  });
+    this.category,
+  })  : id = id ?? text,
+        suggestionType = suggestionType ?? SearchSuggestionType.general,
+        popularity = popularity ?? 0,
+        searchCount = searchCount ?? 0,
+        isPopular = isPopular ?? false;
 }
 
 class TopicAnalytics {

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Fingle is a fitness-focused social media Flutter application with video feed, comments, reactions, and activity tracking features. The app targets iOS, Android, Web, macOS, Windows, and Linux platforms.
+Fingle is an active lifestyle-focused social media Flutter application with video feed, comments, reactions, and activity tracking features. The app targets iOS, Android, Web, macOS, Windows, and Linux platforms.
 
 ## Build and Development Commands
 
@@ -75,4 +75,48 @@ lib/
 4. The app uses Material Design - follow Material guidelines for new UI components
 5. State changes should go through appropriate providers, not direct widget state
 
-Always make sure to maintain top-notch production grade code quuality without over-engineering things.
+Always make sure to maintain top-notch production grade code quality without over-engineering things.
+
+## Backend Development
+
+### Backend Todo Management
+- **Backend Tasks**: All backend development tasks are tracked in `backend_todos.md`
+- **Progress Tracking**: Use the TodoWrite tool to mark backend tasks as completed
+- **Todo Management Commands**:
+  - Mark task complete: Update status to "completed" with completion timestamp
+  - Add reference links: Include commit hashes and file references for completed tasks
+  - Track dependencies: Note any blocking issues or required prerequisites
+
+### Backend Architecture (Supabase + MCP)
+- **Technology Stack**: Supabase + MCP + TypeScript + Flutter + Real-time APIs
+- **Database**: Supabase PostgreSQL with automatic API generation
+- **Authentication**: Built-in Supabase Auth with JWT tokens
+- **Media Storage**: Supabase Storage with automatic optimization
+- **Real-time**: Native Supabase real-time subscriptions via WebSockets
+- **Development**: AI-assisted with Claude Code MCP integration
+
+### Backend Development Workflow
+1. **MCP-Assisted Development**: Use Claude Code MCP integration for natural language database operations
+2. **Phase-based Development**: Follow backend_todos.md phases (MCP Setup → Content Schema → Interactions → Search → Flutter Integration)
+3. **Real-time First**: Set up Supabase real-time subscriptions for live features
+4. **Task Completion**: Always update backend_todos.md when completing tasks
+5. **API Integration**: Ensure all Supabase APIs return data matching Flutter model structures
+6. **Testing**: Use built-in Supabase tools for testing before Flutter integration
+
+### Backend Integration with Frontend
+- **Data Models**: Backend APIs must return data matching Flutter models exactly
+- **Provider Integration**: Update Flutter providers to use real APIs instead of mock data
+- **Error Handling**: Implement proper error states in both backend and frontend
+- **Loading States**: Coordinate backend response times with frontend loading indicators
+
+### Supabase MCP Setup Instructions
+1. **Create Supabase Project**: Go to supabase.com, create account and new project named "fingle-backend"
+2. **Get Credentials**: Note project reference ID, generate personal access token from Settings → Access Tokens
+3. **Configure MCP**: Run `claude mcp add supabase -s local -e SUPABASE_ACCESS_TOKEN=your_token -- npx -y @supabase/mcp-server-supabase@latest --read-only --project-ref=your_ref`
+4. **Test Connection**: Verify MCP tools work with "list tables" or "show project info"
+
+### Current Backend Status
+- **Phase**: Ready for MCP Setup (Phase 0)
+- **Next Steps**: Begin Phase 0 (Supabase MCP Integration Setup)
+- **Dependencies**: Supabase account, personal access token
+- **Estimated Timeline**: 6-8 weeks for full backend implementation (50% faster with MCP)

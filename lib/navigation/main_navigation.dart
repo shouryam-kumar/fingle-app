@@ -57,13 +57,13 @@ class MainNavigation extends StatelessWidget {
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 selectedItemColor: AppColors.primary,
                 unselectedItemColor: AppColors.textLight,
-                selectedFontSize: ResponsiveUtils.getResponsiveFontSize(
+                selectedFontSize: ResponsiveUtils.getFontSize(
                   context,
-                  baseFontSize: 12,
+                  baseSize: 12,
                 ),
-                unselectedFontSize: ResponsiveUtils.getResponsiveFontSize(
+                unselectedFontSize: ResponsiveUtils.getFontSize(
                       context,
-                      baseFontSize: 12,
+                      baseSize: 12,
                     ) *
                     0.9,
                 elevation: 0,

@@ -60,7 +60,8 @@ class Achievement {
 
 class User {
   final String id;
-  final String name;
+  final String username;
+  final String name; // This is full_name from backend
   final int age;
   final String bio;
   final String profilePic;
@@ -78,6 +79,7 @@ class User {
 
   User({
     required this.id,
+    required this.username,
     required this.name,
     required this.age,
     required this.bio,
@@ -95,8 +97,88 @@ class User {
     required this.following,
   });
 
+  // Factory constructor for Supabase JSON response
+  factory User.fromSupabaseJson(Map<String, dynamic> json) {
+    // Parse the main user data
+    final userData = json['user'] ?? json;
+    
+    // Parse stats
+    UserStats? stats;
+    if (json['stats'] != null) {
+      stats = UserStats(
+        totalPosts: json['stats']['posts_count'] ?? 0,
+        followers: json['stats']['followers_count'] ?? 0,
+        following: json['stats']['following_count'] ?? 0,
+        totalViews: json['stats']['total_views'] ?? 0,
+      );
+    } else {
+      stats = UserStats(
+        totalPosts: 0,
+        followers: userData['followersCount'] ?? 0,
+        following: userData['followingCount'] ?? 0,
+        totalViews: 0,
+      );
+    }
+    
+    // Parse achievements
+    List<Achievement> achievements = [];
+    if (json['achievements'] != null) {
+      achievements = (json['achievements'] as List)
+          .map((a) => Achievement(
+                id: a['id'],
+                title: a['title'],
+                description: a['description'],
+                iconUrl: a['icon_url'] ?? '🏆',
+                unlockedAt: DateTime.parse(a['unlocked_at']),
+                isUnlocked: true,
+              ))
+          .toList();
+    }
+    
+    // Parse profile posts
+    List<Post> posts = [];
+    if (json['profilePosts'] != null) {
+      posts = (json['profilePosts'] as List)
+          .map((p) => Post(
+                id: p['id'],
+                imageUrl: p['imageUrl'] ?? '',
+                category: p['category'] ?? 'General',
+                title: p['title'] ?? '',
+                description: p['content'] ?? '',
+                likes: p['likes'] ?? 0,
+                views: p['views'] ?? 0,
+                comments: p['comments'] ?? 0,
+                shares: p['shares'] ?? 0,
+                createdAt: DateTime.parse(p['createdAt']),
+                tags: List<String>.from(p['tags'] ?? []),
+              ))
+          .toList();
+    }
+    
+    return User(
+      id: userData['id'],
+      username: userData['username'],
+      name: userData['fullName'] ?? userData['full_name'] ?? '',
+      age: userData['age'] ?? 0,
+      bio: userData['bio'] ?? '',
+      profilePic: userData['avatarUrl'] ?? userData['avatar_url'] ?? '',
+      coverImage: userData['coverImage'] ?? userData['cover_image'] ?? '',
+      posts: posts,
+      stats: stats,
+      achievements: achievements,
+      isVerified: userData['isVerified'] ?? userData['is_verified'] ?? false,
+      isFollowing: userData['isFollowing'] ?? false,
+      openToMingle: userData['openToMingle'] ?? userData['open_to_mingle'] ?? false,
+      joinedAt: DateTime.parse(userData['createdAt'] ?? userData['created_at']),
+      interests: List<String>.from(userData['interests'] ?? []),
+      followers: userData['followersCount'] ?? stats.followers,
+      following: userData['followingCount'] ?? stats.following,
+    );
+  }
+
   User copyWith({
     String? id,
+    String? username,
     String? name,
     int? age,
     String? bio,
@@ -115,6 +197,7 @@ class User {
   }) {
     return User(
       id: id ?? this.id,
+      username: username ?? this.username,
       name: name ?? this.name,
       age: age ?? this.age,
       bio: bio ?? this.bio,
@@ -137,6 +220,7 @@ class User {
 // Sample data for testing
 final User sampleUser = User(
   id: '1',
+  username: 'alexjohnson',
   name: 'Alex Johnson',
   age: 28,
   bio:

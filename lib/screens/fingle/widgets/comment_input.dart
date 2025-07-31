@@ -209,7 +209,7 @@ class _CommentInputState extends State<CommentInput>
                   CircleAvatar(
                     radius: 14,
                     backgroundImage:
-                        NetworkImage(commentsProvider.currentUser.profilePic),
+                        NetworkImage(commentsProvider.currentUser?.profilePic ?? 'https://via.placeholder.com/150'),
                     backgroundColor: Colors.grey[800],
                   ),
 

@@ -12,6 +12,7 @@ class MockVideoData {
         thumbnailUrl: 'https://picsum.photos/400/600?random=1',
         creator: User(
           id: '1',
+          username: 'alexfitness',
           name: 'Alex Fitness',
           age: 28,
           bio: 'Fitness enthusiast 💪',
@@ -87,6 +88,7 @@ class MockVideoData {
         thumbnailUrl: 'https://picsum.photos/400/600?random=2',
         creator: User(
           id: '2',
+          username: 'yogaflow',
           name: 'Yoga Flow',
           age: 25,
           bio: 'Yoga instructor 🧘‍♀️',
@@ -146,6 +148,7 @@ class MockVideoData {
         thumbnailUrl: 'https://picsum.photos/400/600?random=3',
         creator: User(
           id: '3',
+          username: 'strengthcoach',
           name: 'Strength Coach',
           age: 32,
           bio: 'Strength & conditioning coach 💪',

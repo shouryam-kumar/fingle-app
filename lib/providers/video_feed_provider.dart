@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/video_models.dart';
 import '../models/reaction_models.dart';
+import '../services/supabase/video_feed_service.dart';
+import '../services/supabase/user_profile_service.dart';
 import '../services/mock_video_data.dart';
 
 class VideoFeedProvider with ChangeNotifier {
@@ -10,6 +13,7 @@ class VideoFeedProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _hasReachedEnd = false;
   bool _isTabVisible = true;
+  String _feedType = 'for_you'; // Default feed type
 
   final Map<String, VideoPlayerController> _controllers = {};
 
@@ -19,6 +23,7 @@ class VideoFeedProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get hasReachedEnd => _hasReachedEnd;
   bool get isTabVisible => _isTabVisible;
+  String get feedType => _feedType;
   bool get shouldLoadMore =>
       _currentIndex >= _videos.length - 3 && !_hasReachedEnd;
 
@@ -49,13 +54,36 @@ class VideoFeedProvider with ChangeNotifier {
   }
 
   Future<void> _loadInitialVideos() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      // Try loading from Supabase first
+      final videos = await VideoFeedService.getVideoFeed(
+        feedType: _feedType,
+        limit: 10,
+        offset: 0,
+      );
 
-    final mockVideos = MockVideoData.getMockVideos();
-    _videos = mockVideos.take(10).toList();
+      if (videos.isNotEmpty) {
+        _videos = videos;
+        debugPrint('✅ Loaded ${videos.length} videos from Supabase');
+      } else {
+        // Fallback to mock data if no videos from API
+        final mockVideos = MockVideoData.getMockVideos();
+        _videos = mockVideos.take(10).toList();
+        debugPrint('📝 Using mock videos as fallback');
+      }
 
-    if (_videos.isNotEmpty) {
-      await _preloadVideos();
+      if (_videos.isNotEmpty) {
+        await _preloadVideos();
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading videos, using mock data: $e');
+      // Fallback to mock data on error
+      final mockVideos = MockVideoData.getMockVideos();
+      _videos = mockVideos.take(10).toList();
+      
+      if (_videos.isNotEmpty) {
+        await _preloadVideos();
+      }
     }
   }
 
@@ -68,21 +96,40 @@ class VideoFeedProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      final additionalVideos =
-          MockVideoData.getMockVideos().skip(_videos.length).take(5).toList();
+      // Try loading from Supabase first
+      final additionalVideos = await VideoFeedService.getVideoFeed(
+        feedType: _feedType,
+        limit: 5,
+        offset: _videos.length,
+      );
 
       if (additionalVideos.isEmpty) {
-        _hasReachedEnd = true;
-        debugPrint('🏁 Reached end of videos');
+        // Fallback to mock data if no more videos from API
+        final mockVideos = MockVideoData.getMockVideos().skip(_videos.length).take(5).toList();
+        
+        if (mockVideos.isEmpty) {
+          _hasReachedEnd = true;
+          debugPrint('🏁 Reached end of videos');
+        } else {
+          _videos.addAll(mockVideos);
+          await _preloadVideos();
+          debugPrint('✅ Loaded ${mockVideos.length} more videos (mock fallback)');
+        }
       } else {
         _videos.addAll(additionalVideos);
         await _preloadVideos();
-        debugPrint('✅ Loaded ${additionalVideos.length} more videos');
+        debugPrint('✅ Loaded ${additionalVideos.length} more videos from Supabase');
       }
     } catch (e) {
       debugPrint('❌ Error loading more videos: $e');
+      
+      // Fallback to mock data on error
+      final mockVideos = MockVideoData.getMockVideos().skip(_videos.length).take(5).toList();
+      if (mockVideos.isNotEmpty) {
+        _videos.addAll(mockVideos);
+        await _preloadVideos();
+        debugPrint('✅ Loaded ${mockVideos.length} more videos (error fallback)');
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -220,9 +267,9 @@ class VideoFeedProvider with ChangeNotifier {
     if (videoIndex == -1) return;
 
     final video = _videos[videoIndex];
-    final currentUserId = 'current_user_id'; // Replace with actual user ID
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? 'current_user_id';
 
-    // Create new reaction
+    // Optimistic update - update UI immediately
     final newReaction = Reaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       userId: currentUserId,
@@ -232,7 +279,6 @@ class VideoFeedProvider with ChangeNotifier {
       createdAt: DateTime.now(),
     );
 
-    // Update reaction summary
     final existingReactions = video.reactionSummary.reactions.values
         .expand((list) => list)
         .where((r) => r.userId != currentUserId)
@@ -246,7 +292,19 @@ class VideoFeedProvider with ChangeNotifier {
     _videos[videoIndex] = video.copyWith(reactionSummary: updatedSummary);
     notifyListeners();
 
-    debugPrint('✅ Added reaction: ${reactionType.name} to video: $videoId');
+    debugPrint('✅ Added reaction: ${reactionType.name} to video: $videoId (optimistic)');
+
+    // Try to update on backend
+    try {
+      final success = await VideoFeedService.toggleVideoReaction(videoId, reactionType);
+      if (!success) {
+        debugPrint('⚠️ Failed to sync reaction to backend, keeping optimistic update');
+      } else {
+        debugPrint('✅ Reaction synced to backend');
+      }
+    } catch (e) {
+      debugPrint('❌ Error syncing reaction to backend: $e');
+    }
   }
 
   Future<void> _removeReaction(
@@ -255,9 +313,9 @@ class VideoFeedProvider with ChangeNotifier {
     if (videoIndex == -1) return;
 
     final video = _videos[videoIndex];
-    final currentUserId = 'current_user_id'; // Replace with actual user ID
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id ?? 'current_user_id';
 
-    // Remove user's reaction
+    // Optimistic update - update UI immediately
     final existingReactions = video.reactionSummary.reactions.values
         .expand((list) => list)
         .where((r) => r.userId != currentUserId)
@@ -269,7 +327,19 @@ class VideoFeedProvider with ChangeNotifier {
     _videos[videoIndex] = video.copyWith(reactionSummary: updatedSummary);
     notifyListeners();
 
-    debugPrint('❌ Removed reaction: ${reactionType.name} from video: $videoId');
+    debugPrint('❌ Removed reaction: ${reactionType.name} from video: $videoId (optimistic)');
+
+    // Try to update on backend
+    try {
+      final success = await VideoFeedService.toggleVideoReaction(videoId, reactionType);
+      if (!success) {
+        debugPrint('⚠️ Failed to sync reaction removal to backend, keeping optimistic update');
+      } else {
+        debugPrint('✅ Reaction removal synced to backend');
+      }
+    } catch (e) {
+      debugPrint('❌ Error syncing reaction removal to backend: $e');
+    }
   }
 
   // NEW: Recommendation handling methods
@@ -346,8 +416,11 @@ class VideoFeedProvider with ChangeNotifier {
     if (videoIndex == -1) return;
 
     final video = _videos[videoIndex];
+    final isCurrentlyFollowing = video.creator.isFollowing;
+
+    // Optimistic update - update UI immediately
     final updatedCreator = video.creator.copyWith(
-      isFollowing: !video.creator.isFollowing,
+      isFollowing: !isCurrentlyFollowing,
     );
 
     _videos[videoIndex] = video.copyWith(
@@ -357,7 +430,53 @@ class VideoFeedProvider with ChangeNotifier {
 
     notifyListeners();
 
-    debugPrint('✅ Toggled follow for user: $userId');
+    debugPrint('✅ Toggled follow for user: $userId (optimistic)');
+
+    // Try to update on backend
+    try {
+      bool success;
+      if (isCurrentlyFollowing) {
+        success = await UserProfileService.unfollowUser(userId);
+      } else {
+        success = await UserProfileService.followUser(userId);
+      }
+
+      if (!success) {
+        // Revert on failure
+        final revertedCreator = updatedCreator.copyWith(
+          isFollowing: isCurrentlyFollowing,
+        );
+        _videos[videoIndex] = video.copyWith(
+          creator: revertedCreator,
+          isFollowing: video.isFollowing,
+        );
+        notifyListeners();
+        debugPrint('❌ Failed to sync follow status, reverted');
+      } else {
+        debugPrint('✅ Follow status synced to backend');
+      }
+    } catch (e) {
+      // Revert on error
+      final revertedCreator = updatedCreator.copyWith(
+        isFollowing: isCurrentlyFollowing,
+      );
+      _videos[videoIndex] = video.copyWith(
+        creator: revertedCreator,
+        isFollowing: video.isFollowing,
+      );
+      notifyListeners();
+      debugPrint('❌ Error syncing follow status: $e');
+    }
+  }
+
+  /// Change feed type and reload videos
+  Future<void> changeFeedType(String feedType) async {
+    if (_feedType == feedType) return;
+
+    debugPrint('🔄 Changing feed type to: $feedType');
+    
+    _feedType = feedType;
+    await refreshFeed();
   }
 
   Future<void> refreshFeed() async {

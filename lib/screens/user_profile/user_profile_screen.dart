@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/user_model.dart';
 import '../../models/video_models.dart';
+import '../../services/supabase/user_profile_service.dart';
 import '../profile/widgets/profile_stats.dart';
 import '../profile/widgets/profile_content_tabs.dart';
 
@@ -55,20 +56,36 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   }
 
   Future<void> _loadUserProfile() async {
-    // Simulate loading user data
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      // Load user profile from Supabase
+      final userProfile = await UserProfileService.getUserProfile(widget.userId);
+      
+      // Check if current user is following this user
+      final followStatus = await UserProfileService.isFollowing(widget.userId);
 
-    if (mounted) {
-      setState(() {
-        _user = _createMockUser();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _user = userProfile ?? _createFallbackUser();
+          _isFollowing = followStatus;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading user profile: $e');
+      
+      if (mounted) {
+        setState(() {
+          _user = _createFallbackUser();
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  User _createMockUser() {
+  User _createFallbackUser() {
     return User(
       id: widget.userId,
+      username: (widget.userName ?? 'User ${widget.userId}').toLowerCase().replaceAll(' ', ''),
       name: widget.userName ?? 'User ${widget.userId}',
       age: 26,
       bio:
@@ -133,22 +150,65 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 
-  void _toggleFollow() {
+  Future<void> _toggleFollow() async {
+    final wasFollowing = _isFollowing;
+    
+    // Optimistic update
     setState(() {
       _isFollowing = !_isFollowing;
     });
 
     HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_isFollowing
-            ? 'Following ${_user?.name}!'
-            : 'Unfollowed ${_user?.name}'),
-        duration: const Duration(seconds: 1),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+
+    try {
+      bool success;
+      if (wasFollowing) {
+        success = await UserProfileService.unfollowUser(widget.userId);
+      } else {
+        success = await UserProfileService.followUser(widget.userId);
+      }
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isFollowing
+                ? 'Following ${_user?.name}!'
+                : 'Unfollowed ${_user?.name}'),
+            duration: const Duration(seconds: 1),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        // Revert on failure
+        setState(() {
+          _isFollowing = wasFollowing;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to ${wasFollowing ? 'unfollow' : 'follow'} user'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      // Revert on error
+      setState(() {
+        _isFollowing = wasFollowing;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Network error. Please try again.'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _buildUserHeader() {

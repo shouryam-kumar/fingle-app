@@ -226,7 +226,7 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
                           child: Text(
                             _formatCount(resultCount),
                             style: const TextStyle(
-                              fontSize: 8,
+                              fontSize: 10, // Improved readability
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -239,23 +239,29 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
                 const SizedBox(height: 6),
 
                 // Tab name
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isSmallScreen ? 60 : 80,
-                  ),
-                  child: Text(
-                    displayName,
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 10 : 11,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color:
-                          isSelected ? Colors.white : AppColors.textSecondary,
-                      letterSpacing: 0.3,
+                Flexible(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isSmallScreen ? 60 : 80,
+                      minWidth: 40,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        displayName,
+                        style: TextStyle(
+                          fontSize: 12, // Improved accessibility - minimum 12px
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w600,
+                          color:
+                              isSelected ? Colors.white : AppColors.textSecondary,
+                          letterSpacing: 0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -317,8 +323,7 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
       onTap: onTap,
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 12,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
           fontWeight: FontWeight.w600,
           color: isSelected ? Colors.white : AppColors.textPrimary,
         ),
@@ -340,6 +345,8 @@ class _EnhancedSearchTabsState extends State<EnhancedSearchTabs>
         return AppColors.success;
       case SearchResultType.trending:
         return AppColors.veryActiveGreen;
+      case SearchResultType.saved:
+        return AppColors.warning;
     }
   }
 

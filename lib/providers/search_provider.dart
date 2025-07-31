@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/search_models.dart';
 import '../services/mock_search_data.dart';
+import '../services/supabase/search_service.dart';
 
 class SearchProvider extends ChangeNotifier {
   // Search state
@@ -12,6 +14,7 @@ class SearchProvider extends ChangeNotifier {
   List<String> _searchHistory = [];
   bool _isSearching = false;
   bool _hasSearched = false;
+  bool _hasInitialContent = false;
 
   // Tab state
   int _selectedTabIndex = 0;
@@ -22,12 +25,46 @@ class SearchProvider extends ChangeNotifier {
     SearchResultType.posts,
     SearchResultType.communities,
     SearchResultType.trending,
+    SearchResultType.saved,
   ];
 
   // Enhanced tab state
   List<MixedContentResult> _mixedContentResults = [];
   List<TrendingMetrics> _trendingMetrics = [];
   Map<SearchResultType, TabBadgeInfo> _tabBadges = {};
+  
+  // Trending suggestions
+  List<String> _trendingSuggestions = [
+    'fitness',
+    'yoga',
+    'HIIT workouts',
+    'nutrition',
+    'morning routine',
+    'strength training',
+    'meditation',
+    'cardio'
+  ];
+
+  // Pagination state
+  int _currentPage = 1;
+  bool _hasMoreResults = true;
+  bool _isLoadingMore = false;
+
+  // Bookmarks and saved searches
+  List<String> _bookmarkedResults = [];
+  List<SearchResult> _savedResults = [];
+
+  // Enhanced suggestions
+  List<String> _relatedSearches = [];
+  String? _didYouMeanSuggestion;
+
+  // Popular searches analytics
+  Map<String, int> _searchAnalytics = {};
+  List<String> _popularSearches = [];
+
+  // Offline caching
+  Map<String, List<SearchResult>> _searchCache = {};
+  Map<String, DateTime> _cacheTimestamps = {};
 
   // Getters
   String get searchQuery => _searchQuery;
@@ -37,6 +74,7 @@ class SearchProvider extends ChangeNotifier {
   List<String> get searchHistory => _searchHistory;
   bool get isSearching => _isSearching;
   bool get hasSearched => _hasSearched;
+  bool get hasInitialContent => _hasInitialContent;
   int get selectedTabIndex => _selectedTabIndex;
   List<SearchResultType> get tabs => _tabs;
   SearchResultType get currentTab => _tabs[_selectedTabIndex];
@@ -45,6 +83,18 @@ class SearchProvider extends ChangeNotifier {
   List<MixedContentResult> get mixedContentResults => _mixedContentResults;
   List<TrendingMetrics> get trendingMetrics => _trendingMetrics;
   Map<SearchResultType, TabBadgeInfo> get tabBadges => _tabBadges;
+  List<String> get trendingSuggestions => _trendingSuggestions;
+
+  // New getters
+  int get currentPage => _currentPage;
+  bool get hasMoreResults => _hasMoreResults;
+  bool get isLoadingMore => _isLoadingMore;
+  List<String> get bookmarkedResults => _bookmarkedResults;
+  List<SearchResult> get savedResults => _savedResults;
+  List<String> get relatedSearches => _relatedSearches;
+  String? get didYouMeanSuggestion => _didYouMeanSuggestion;
+  Map<String, int> get searchAnalytics => _searchAnalytics;
+  List<String> get popularSearches => _popularSearches;
 
   // Filtered results by current tab
   List<SearchResult> get filteredResults {
@@ -67,6 +117,9 @@ class SearchProvider extends ChangeNotifier {
           return _trendingMetrics.any((metric) =>
               metric.trendingScore > 0.7 &&
               DateTime.now().difference(metric.lastUpdated).inHours < 24);
+        case SearchResultType.saved:
+          // Saved results don't use the regular search results
+          return false;
       }
     }).toList();
   }
@@ -86,8 +139,96 @@ class SearchProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _loadSuggestions() {
-    _suggestions = MockSearchData.getSuggestions(_searchQuery);
+  void _loadSuggestions() async {
+    try {
+      // Load suggestions from Supabase
+      final suggestions = await SearchService.getSearchSuggestions(
+        query: _searchQuery,
+        limit: 10,
+      );
+
+      if (suggestions.isNotEmpty) {
+        _suggestions = suggestions;
+      } else {
+        // Fallback to mock data
+        _suggestions = MockSearchData.getSuggestions(_searchQuery);
+      }
+
+      // Load enhanced suggestions
+      await _generateDidYouMeanSuggestion();
+      await _generateRelatedSearches();
+    } catch (e) {
+      debugPrint('Error loading suggestions: $e');
+      // Fallback to mock data
+      _suggestions = MockSearchData.getSuggestions(_searchQuery);
+      _generateDidYouMeanSuggestion();
+      _generateRelatedSearches();
+    }
+    notifyListeners();
+  }
+
+  // History management methods
+  Future<void> loadSearchHistory() async {
+    try {
+      // Load from Supabase first
+      final history = await SearchService.getSearchHistory(limit: 20);
+      
+      if (history.isNotEmpty) {
+        _searchHistory = history;
+      } else {
+        // Fallback to local storage
+        final prefs = await SharedPreferences.getInstance();
+        _searchHistory = prefs.getStringList('search_history') ?? [];
+      }
+    } catch (e) {
+      debugPrint('Error loading search history: $e');
+      // Fallback to local storage
+      final prefs = await SharedPreferences.getInstance();
+      _searchHistory = prefs.getStringList('search_history') ?? [];
+    }
+    notifyListeners();
+  }
+
+  Future<void> _saveSearchHistory() async {
+    try {
+      // Save to Supabase
+      if (_searchHistory.isNotEmpty) {
+        await SearchService.saveSearchToHistory(_searchHistory.first);
+      }
+    } catch (e) {
+      debugPrint('Error saving search history to Supabase: $e');
+    }
+    
+    // Also save locally as backup
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('search_history', _searchHistory);
+  }
+
+  void removeFromHistory(String query) async {
+    _searchHistory.remove(query);
+    
+    try {
+      // Remove from Supabase
+      await SearchService.deleteSearchFromHistory(query);
+    } catch (e) {
+      debugPrint('Error removing search from Supabase: $e');
+    }
+    
+    _saveSearchHistory();
+    notifyListeners();
+  }
+
+  void clearHistory() async {
+    _searchHistory.clear();
+    
+    try {
+      // Clear from Supabase
+      await SearchService.clearSearchHistory();
+    } catch (e) {
+      debugPrint('Error clearing search history from Supabase: $e');
+    }
+    
+    _saveSearchHistory();
     notifyListeners();
   }
 
@@ -100,20 +241,68 @@ class SearchProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Add to search history
+      // Add to search history and analytics
       if (!_searchHistory.contains(searchTerm)) {
         _searchHistory.insert(0, searchTerm);
-        if (_searchHistory.length > 10) {
+        if (_searchHistory.length > 20) {
           _searchHistory.removeLast();
         }
       }
+      
+      // Track search analytics
+      _searchAnalytics[searchTerm] = (_searchAnalytics[searchTerm] ?? 0) + 1;
+      _updatePopularSearches();
+      _saveSearchHistory();
+
+      // Reset pagination
+      _currentPage = 1;
+      _hasMoreResults = true;
 
       // Simulate network delay
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // Perform search
-      _searchResults = MockSearchData.search(searchTerm, _filter);
-      _suggestions.clear();
+      // Check cache first
+      final cacheKey = '${searchTerm}_${_filter.hashCode}';
+      final cachedResults = _getCachedResults(cacheKey);
+      
+      if (cachedResults != null) {
+        _searchResults = cachedResults;
+        _suggestions.clear();
+      } else {
+        // Perform search via Supabase
+        try {
+          final searchResults = await SearchService.performSearch(
+            query: searchTerm,
+            filter: _filter,
+            limit: 20,
+            offset: 0,
+          );
+
+          if (searchResults.isNotEmpty) {
+            _searchResults = searchResults;
+            
+            // Track search analytics
+            await SearchService.trackSearchAnalytics(
+              query: searchTerm,
+              resultType: 'mixed',
+            );
+          } else {
+            // Fallback to mock data
+            _searchResults = MockSearchData.search(searchTerm, _filter);
+          }
+          
+          _suggestions.clear();
+          
+          // Cache the results
+          _cacheResults(cacheKey, _searchResults);
+        } catch (e) {
+          debugPrint('Error performing search via Supabase: $e');
+          // Fallback to mock data
+          _searchResults = MockSearchData.search(searchTerm, _filter);
+          _suggestions.clear();
+          _cacheResults(cacheKey, _searchResults);
+        }
+      }
 
       // Generate mixed content and trending analysis
       await _generateMixedContent();
@@ -151,6 +340,44 @@ class SearchProvider extends ChangeNotifier {
     _isSearching = false;
     _selectedTabIndex = 0;
     notifyListeners();
+  }
+
+  // Load initial trending content
+  Future<void> loadInitialTrendingContent() async {
+    if (_hasInitialContent) return;
+    
+    _isSearching = true;
+    notifyListeners();
+    
+    try {
+      // Load trending topics from Supabase
+      final trendingTopics = await SearchService.getTrendingTopics(limit: 10);
+      
+      // Update trending suggestions based on real data
+      if (trendingTopics.isNotEmpty) {
+        _trendingSuggestions = trendingTopics.map((topic) => topic.name).toList();
+      }
+      
+      // Load popular searches to populate initial content
+      final popularSearches = await SearchService.getPopularSearches(limit: 5);
+      
+      String initialQuery = 'fitness'; // Default fallback
+      if (popularSearches.isNotEmpty) {
+        initialQuery = popularSearches.first;
+      }
+      
+      // Perform a search with most popular or trending term
+      await performSearch(query: initialQuery);
+      _hasInitialContent = true;
+    } catch (e) {
+      debugPrint('Error loading initial content: $e');
+      // Fallback to default search
+      await performSearch(query: 'fitness');
+      _hasInitialContent = true;
+    } finally {
+      _isSearching = false;
+      notifyListeners();
+    }
   }
 
   void selectSuggestion(SearchSuggestion suggestion) {
@@ -246,6 +473,8 @@ class SearchProvider extends ChangeNotifier {
         return 'Communities';
       case SearchResultType.trending:
         return 'Trending';
+      case SearchResultType.saved:
+        return 'Saved';
     }
   }
 
@@ -256,6 +485,9 @@ class SearchProvider extends ChangeNotifier {
     }
     if (type == SearchResultType.trending) {
       return _trendingMetrics.where((m) => m.trendingScore > 0.7).length;
+    }
+    if (type == SearchResultType.saved) {
+      return _savedResults.length;
     }
     return _searchResults.where((result) => result.type == type).length;
   }
@@ -275,6 +507,8 @@ class SearchProvider extends ChangeNotifier {
         return Icons.groups;
       case SearchResultType.trending:
         return Icons.trending_up;
+      case SearchResultType.saved:
+        return Icons.bookmark;
     }
   }
 
@@ -492,5 +726,206 @@ class SearchProvider extends ChangeNotifier {
         activityLevel: activityLevel,
       );
     }
+  }
+
+  // Pagination methods
+  Future<void> loadMoreResults() async {
+    if (!_hasMoreResults || _isLoadingMore) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      await Future.delayed(const Duration(milliseconds: 800));
+      
+      // Simulate loading more results
+      final moreResults = MockSearchData.search(_searchQuery, _filter, page: _currentPage + 1);
+      
+      if (moreResults.isNotEmpty) {
+        _searchResults.addAll(moreResults);
+        _currentPage++;
+        
+        // Simulate no more results after page 3
+        if (_currentPage >= 3) {
+          _hasMoreResults = false;
+        }
+      } else {
+        _hasMoreResults = false;
+      }
+    } catch (e) {
+      debugPrint('Error loading more results: $e');
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  // Bookmark methods
+  void toggleBookmark(String resultId) {
+    if (_bookmarkedResults.contains(resultId)) {
+      _bookmarkedResults.remove(resultId);
+      _savedResults.removeWhere((result) => result.id == resultId);
+    } else {
+      _bookmarkedResults.add(resultId);
+      final result = _searchResults.firstWhere((r) => r.id == resultId);
+      _savedResults.add(result);
+    }
+    _saveBookmarks();
+    notifyListeners();
+  }
+
+  bool isBookmarked(String resultId) {
+    return _bookmarkedResults.contains(resultId);
+  }
+
+  Future<void> _saveBookmarks() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('bookmarked_results', _bookmarkedResults);
+  }
+
+  Future<void> loadBookmarks() async {
+    final prefs = await SharedPreferences.getInstance();
+    _bookmarkedResults = prefs.getStringList('bookmarked_results') ?? [];
+    notifyListeners();
+  }
+
+  // Enhanced suggestions methods
+  Future<void> _generateDidYouMeanSuggestion() async {
+    if (_searchQuery.length < 3) {
+      _didYouMeanSuggestion = null;
+      return;
+    }
+
+    try {
+      // Get suggestion from Supabase
+      final suggestion = await SearchService.getDidYouMeanSuggestion(_searchQuery);
+      _didYouMeanSuggestion = suggestion;
+    } catch (e) {
+      debugPrint('Error getting did you mean suggestion: $e');
+      
+      // Fallback to local suggestions
+      final suggestions = [
+        {'yoga' : 'yoga'},
+        {'fittness': 'fitness'},
+        {'nutrtion': 'nutrition'},
+        {'excersize': 'exercise'},
+        {'meditaion': 'meditation'},
+      ];
+
+      for (final suggestion in suggestions) {
+        final typo = suggestion.keys.first;
+        final correction = suggestion.values.first;
+        if (_searchQuery.toLowerCase().contains(typo)) {
+          _didYouMeanSuggestion = _searchQuery.toLowerCase().replaceAll(typo, correction);
+          return;
+        }
+      }
+
+      _didYouMeanSuggestion = null;
+    }
+  }
+
+  Future<void> _generateRelatedSearches() async {
+    try {
+      // Get related searches from Supabase
+      final related = await SearchService.getRelatedSearches(_searchQuery, limit: 4);
+      
+      if (related.isNotEmpty) {
+        _relatedSearches = related;
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error getting related searches: $e');
+    }
+    
+    // Fallback to local related searches
+    final related = <String>[];
+    final query = _searchQuery.toLowerCase();
+
+    if (query.contains('fitness') || query.contains('workout')) {
+      related.addAll(['strength training', 'cardio', 'HIIT workouts', 'home workout']);
+    } else if (query.contains('yoga')) {
+      related.addAll(['meditation', 'pilates', 'stretching', 'mindfulness']);
+    } else if (query.contains('nutrition')) {
+      related.addAll(['healthy eating', 'meal prep', 'protein', 'vitamins']);
+    } else if (query.contains('running')) {
+      related.addAll(['marathon training', 'jogging', 'sprints', 'cardio']);
+    } else {
+      // Default related searches
+      related.addAll(['fitness', 'wellness', 'health tips', 'exercise']);
+    }
+
+    _relatedSearches = related.take(4).toList();
+  }
+
+  void _updatePopularSearches() async {
+    try {
+      // Get popular searches from Supabase
+      final popularSearches = await SearchService.getPopularSearches(limit: 10);
+      
+      if (popularSearches.isNotEmpty) {
+        _popularSearches = popularSearches;
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error getting popular searches: $e');
+    }
+    
+    // Fallback to local analytics
+    final sortedEntries = _searchAnalytics.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    _popularSearches = sortedEntries
+        .take(10)
+        .map((entry) => entry.key)
+        .toList();
+  }
+
+  // Cache management methods
+  List<SearchResult>? _getCachedResults(String cacheKey) {
+    final timestamp = _cacheTimestamps[cacheKey];
+    if (timestamp == null) return null;
+    
+    // Cache expires after 10 minutes
+    final cacheExpiry = timestamp.add(const Duration(minutes: 10));
+    if (DateTime.now().isAfter(cacheExpiry)) {
+      _searchCache.remove(cacheKey);
+      _cacheTimestamps.remove(cacheKey);
+      return null;
+    }
+    
+    return _searchCache[cacheKey];
+  }
+
+  void _cacheResults(String cacheKey, List<SearchResult> results) {
+    _searchCache[cacheKey] = List.from(results);
+    _cacheTimestamps[cacheKey] = DateTime.now();
+    
+    // Limit cache size to 50 entries
+    if (_searchCache.length > 50) {
+      final oldestKey = _cacheTimestamps.entries
+          .reduce((a, b) => a.value.isBefore(b.value) ? a : b)
+          .key;
+      _searchCache.remove(oldestKey);
+      _cacheTimestamps.remove(oldestKey);
+    }
+  }
+
+  void clearCache() {
+    _searchCache.clear();
+    _cacheTimestamps.clear();
+  }
+
+  int get cacheSize => _searchCache.length;
+  
+  bool isCached(String query) {
+    final cacheKey = '${query}_${_filter.hashCode}';
+    return _getCachedResults(cacheKey) != null;
+  }
+
+  // Initialize provider
+  Future<void> initialize() async {
+    await loadSearchHistory();
+    await loadBookmarks();
   }
 }

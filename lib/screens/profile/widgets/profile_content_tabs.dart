@@ -33,6 +33,11 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
     for (var post in widget.user.posts) {
       groupedPosts.putIfAbsent(post.category, () => []).add(post);
     }
+    
+    // Debug information
+    debugPrint('🔍 ProfileContentTabs: Total posts = ${widget.user.posts.length}');
+    debugPrint('🔍 ProfileContentTabs: Grouped categories = ${groupedPosts.keys.toList()}');
+    debugPrint('🔍 ProfileContentTabs: Posts per category = ${groupedPosts.map((key, value) => MapEntry(key, value.length))}');
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -130,7 +135,8 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
           ),
 
           // Tab Content (removed Likes tab content)
-          Expanded(
+          SizedBox(
+            height: 500, // Fixed height to ensure content renders
             child: TabBarView(
               controller: widget.tabController,
               children: [
@@ -151,6 +157,41 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
   }
 
   Widget _buildPostsTab(Map<String, List<Post>> groupedPosts) {
+    debugPrint('🔍 ProfileContentTabs: _buildPostsTab called with ${groupedPosts.length} categories');
+    
+    if (groupedPosts.isEmpty) {
+      debugPrint('🔍 ProfileContentTabs: No posts found - showing empty state');
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.photo_library_outlined,
+              size: 64,
+              color: AppColors.textSecondary,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'No posts yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Share your fitness journey!',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -583,9 +624,11 @@ class _ProfileContentTabsState extends State<ProfileContentTabs> {
     )
         .then((_) {
       // 🐛 DEBUG: Log return from navigation (✅ Fixed Provider usage)
-      debugPrint('🔙 Returned from PostViewerScreen');
-      debugPrint(
-          '  📊 Current app tab: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
+      if (mounted) {
+        debugPrint('🔙 Returned from PostViewerScreen');
+        debugPrint(
+            '  📊 Current app tab: ${Provider.of<AppProvider>(context, listen: false).currentIndex}');
+      }
       debugPrint('  📊 Expected tab: Profile (4)');
     });
   }

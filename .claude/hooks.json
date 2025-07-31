@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd $CLAUDE_PROJECT_DIR && flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | grep -q 'No issues found!' && (git add -A && git diff --cached --quiet || git commit -m 'Auto-commit: Updated $(git diff --cached --name-only | head -n 1 | xargs basename) via Claude Code' -m 'Files changed: '$(git diff --cached --numstat | wc -l | xargs)) || echo 'Skipping commit due to Flutter analyze issues or no changes'"
+          }
+        ]
+      }
+    ]
+  }
+}

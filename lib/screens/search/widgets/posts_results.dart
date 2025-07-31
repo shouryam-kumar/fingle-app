@@ -25,44 +25,73 @@ class PostsResults extends StatelessWidget {
 
         if (postResults.isEmpty) {
           debugPrint('🔍 PostsResults: Showing empty state');
-          return _buildEmptyState();
+          return _buildEmptyState(context);
         }
 
-        return Padding(
-          padding: const EdgeInsets.all(20),
+        return SingleChildScrollView(
           child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Responsive grid configuration like all_results_feed.dart
-              int crossAxisCount;
-              double spacing;
-
-              if (constraints.maxWidth >= 600) {
-                crossAxisCount = 3;
-                spacing = 16;
-              } else if (constraints.maxWidth >= 360) {
-                crossAxisCount = 2;
-                spacing = 12;
+            builder: (context, outerConstraints) {
+              // Responsive padding based on screen width
+              double horizontalPadding;
+              if (outerConstraints.maxWidth >= 800) {
+                horizontalPadding = 20; // Tablet/Desktop: More padding
+              } else if (outerConstraints.maxWidth >= 400) {
+                horizontalPadding = 16; // Wide phones: Standard padding
               } else {
-                crossAxisCount = 1;
-                spacing = 10;
+                horizontalPadding = 12; // Narrow phones: Less padding
               }
+              
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 20,
+                ),
+                child: Builder(
+                  builder: (context) {
+                    // Use the outer constraints for grid configuration
+                    // Responsive grid configuration optimized for 2-column mobile layout
+                    int crossAxisCount;
+                    double spacing;
 
-              return MasonryGridView.count(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: spacing,
-                crossAxisSpacing: spacing,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: postResults.length,
-                itemBuilder: (context, index) {
-                  final result = postResults[index];
-                  if (result.post != null) {
-                    return _PostCard(post: result.post!);
-                  } else if (result.video != null) {
-                    return _VideoCard(post: result.video!);
-                  }
-                  return const SizedBox.shrink();
-                },
+                    if (outerConstraints.maxWidth >= 1200) {
+                      // Desktop: 4 columns
+                      crossAxisCount = 4;
+                      spacing = 16;
+                    } else if (outerConstraints.maxWidth >= 800) {
+                      // Tablet: 3 columns
+                      crossAxisCount = 3;
+                      spacing = 14;
+                    } else {
+                      // Mobile: Always 2 columns for all phone sizes (320-799px)
+                      crossAxisCount = 2;
+                      
+                      // Adjust spacing based on screen width
+                      if (outerConstraints.maxWidth >= 400) {
+                        spacing = 12; // Standard spacing for wider phones
+                      } else {
+                        spacing = 10; // Tighter spacing for narrow phones
+                      }
+                    }
+
+                    return MasonryGridView.count(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: spacing,
+                      crossAxisSpacing: spacing,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: postResults.length,
+                      itemBuilder: (context, index) {
+                        final result = postResults[index];
+                        if (result.post != null) {
+                          return _PostCard(post: result.post!);
+                        } else if (result.video != null) {
+                          return _VideoCard(post: result.video!);
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    );
+                  },
+                ),
               );
             },
           ),
@@ -71,30 +100,25 @@ class PostsResults extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
-    return const Center(
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.grid_view_outlined,
             size: 64,
             color: AppColors.textSecondary,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'No posts found',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Try searching for workouts or fitness content',
-            style: TextStyle(
-              fontSize: 14,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,

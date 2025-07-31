@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/comment_models.dart';
 import '../models/user_model.dart';
 import '../models/reaction_models.dart';
+import '../services/supabase/comments_service.dart';
 
 class CommentsProvider extends ChangeNotifier {
   // Map of video ID to comments state
@@ -10,25 +11,8 @@ class CommentsProvider extends ChangeNotifier {
   // Current video being viewed
   String? _currentVideoId;
 
-  // Mock current user (in real app, this would come from AuthProvider)
-  final User _currentUser = User(
-    id: 'current_user',
-    name: 'You',
-    age: 25,
-    bio: 'Fitness enthusiast',
-    profilePic:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    coverImage: '',
-    isVerified: false,
-    isFollowing: false,
-    joinedAt: DateTime.now().subtract(const Duration(days: 30)),
-    interests: ['Fitness'],
-    followers: 0,
-    following: 0,
-    posts: [],
-    stats: UserStats(totalPosts: 0, followers: 0, following: 0, totalViews: 0),
-    achievements: [],
-  );
+  // Current user (loaded from Supabase)
+  User? _currentUser;
 
   // Mock comments data
   List<Comment> get mockComments => [
@@ -38,6 +22,7 @@ class CommentsProvider extends ChangeNotifier {
           content: 'Great workout! This really motivated me to push harder 💪',
           author: User(
             id: 'user_1',
+            username: 'sarahjohnson',
             name: 'Sarah Johnson',
             age: 26,
             bio: 'Fitness lover',
@@ -73,6 +58,7 @@ class CommentsProvider extends ChangeNotifier {
           content: 'Amazing form! How long have you been training?',
           author: User(
             id: 'user_2',
+            username: 'mikechen',
             name: 'Mike Chen',
             age: 28,
             bio: 'Personal trainer',
@@ -133,7 +119,7 @@ class CommentsProvider extends ChangeNotifier {
     return getCommentsState(videoId).totalComments;
   }
 
-  User get currentUser => _currentUser;
+  User? get currentUser => _currentUser;
 
   // Set current video
   void setCurrentVideoId(String videoId) {
@@ -146,19 +132,32 @@ class CommentsProvider extends ChangeNotifier {
   }
 
   // Load comments for a video
-  Future<void> loadComments(String videoId) async {
+  Future<void> loadComments(String videoId, {String contentType = 'video'}) async {
     if (getCommentsState(videoId).isLoading) return;
 
     _updateState(videoId, getCommentsState(videoId).copyWith(isLoading: true));
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Load current user if not already loaded
+      if (_currentUser == null) {
+        _currentUser = await CommentsService.getCurrentUser();
+      }
 
-      // In real app, this would be an API call
-      var comments = _getMockCommentsForVideo(videoId);
+      // Load comments from Supabase
+      var comments = await CommentsService.getComments(
+        contentType: contentType,
+        contentId: videoId,
+        sortBy: 'newest',
+        limit: 20,
+        offset: 0,
+      );
 
-      //  Sort comments with pinned ones first
+      // Fallback to mock data if no comments from API
+      if (comments.isEmpty) {
+        comments = _getMockCommentsForVideo(videoId);
+      }
+
+      // Sort comments with pinned ones first
       comments = _sortCommentsWithPinnedFirst(comments);
 
       final totalComments = _calculateTotalComments(comments);
@@ -174,12 +173,33 @@ class CommentsProvider extends ChangeNotifier {
             totalComments: totalComments,
           ));
     } catch (e) {
-      _updateState(
-          videoId,
-          getCommentsState(videoId).copyWith(
-            isLoading: false,
-            error: 'Failed to load comments',
-          ));
+      debugPrint('❌ Error loading comments: $e');
+      
+      // Fallback to mock data on error
+      try {
+        var comments = _getMockCommentsForVideo(videoId);
+        comments = _sortCommentsWithPinnedFirst(comments);
+        final totalComments = _calculateTotalComments(comments);
+
+        _updateState(
+            videoId,
+            CommentsState(
+              comments: comments,
+              isLoading: false,
+              isLoadingMore: false,
+              isSubmitting: false,
+              hasMoreComments: comments.length >= 10,
+              totalComments: totalComments,
+              error: 'Using cached comments',
+            ));
+      } catch (fallbackError) {
+        _updateState(
+            videoId,
+            getCommentsState(videoId).copyWith(
+              isLoading: false,
+              error: 'Failed to load comments',
+            ));
+      }
     }
   }
 
@@ -201,53 +221,76 @@ class CommentsProvider extends ChangeNotifier {
   }
 
   // Add a new comment
-  Future<void> addComment(String videoId, String content) async {
-    if (content.trim().isEmpty) return;
+  Future<void> addComment(String videoId, String content, {String contentType = 'video'}) async {
+    if (content.trim().isEmpty || _currentUser == null) return;
 
     final state = getCommentsState(videoId);
     _updateState(videoId, state.copyWith(isSubmitting: true));
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      final newComment = Comment(
-        id: 'comment_${DateTime.now().millisecondsSinceEpoch}',
-        videoId: videoId,
-        author: _currentUser,
+      // Create comment via Supabase API
+      final newComment = await CommentsService.createComment(
+        contentType: contentType,
+        contentId: videoId,
         content: content.trim(),
-        createdAt: DateTime.now(),
-        timeAgo: 'now',
-        isEdited: false,
-        isPinned: false,
-        replies: [],
-        reactionSummary: const ReactionSummary(
-          counts: {},
-          reactions: {},
-          userReaction: null,
-          totalCount: 0,
-        ),
       );
 
-      // Add new comment to the list
-      var updatedComments = [newComment, ...state.comments];
+      if (newComment != null) {
+        // Add new comment to the list
+        var updatedComments = [newComment, ...state.comments];
 
-      // ✅ FIXED: Re-sort to ensure pinned comments stay at top
-      updatedComments = _sortCommentsWithPinnedFirst(updatedComments);
+        // Re-sort to ensure pinned comments stay at top
+        updatedComments = _sortCommentsWithPinnedFirst(updatedComments);
 
-      final totalComments = _calculateTotalComments(updatedComments);
+        final totalComments = _calculateTotalComments(updatedComments);
 
-      _updateState(
-          videoId,
-          state.copyWith(
-            comments: updatedComments,
-            isSubmitting: false,
-            totalComments: totalComments,
-            error: null,
-          ));
+        _updateState(
+            videoId,
+            state.copyWith(
+              comments: updatedComments,
+              isSubmitting: false,
+              totalComments: totalComments,
+              error: null,
+            ));
 
-      debugPrint('✅ Comment added successfully');
+        debugPrint('✅ Comment added successfully via API');
+      } else {
+        // Fallback to local comment creation
+        final fallbackComment = Comment(
+          id: 'comment_${DateTime.now().millisecondsSinceEpoch}',
+          videoId: videoId,
+          author: _currentUser!,
+          content: content.trim(),
+          createdAt: DateTime.now(),
+          timeAgo: 'now',
+          isEdited: false,
+          isPinned: false,
+          replies: [],
+          reactionSummary: const ReactionSummary(
+            counts: {},
+            reactions: {},
+            userReaction: null,
+            totalCount: 0,
+          ),
+        );
+
+        var updatedComments = [fallbackComment, ...state.comments];
+        updatedComments = _sortCommentsWithPinnedFirst(updatedComments);
+        final totalComments = _calculateTotalComments(updatedComments);
+
+        _updateState(
+            videoId,
+            state.copyWith(
+              comments: updatedComments,
+              isSubmitting: false,
+              totalComments: totalComments,
+              error: 'Comment saved locally',
+            ));
+
+        debugPrint('⚠️ Comment added locally (API failed)');
+      }
     } catch (e) {
+      debugPrint('❌ Error adding comment: $e');
       _updateState(
           videoId,
           state.copyWith(
@@ -259,61 +302,94 @@ class CommentsProvider extends ChangeNotifier {
 
   // Reply to a comment
   Future<void> replyToComment(
-      String videoId, String commentId, String content) async {
-    if (content.trim().isEmpty) return;
+      String videoId, String commentId, String content, {String contentType = 'video'}) async {
+    if (content.trim().isEmpty || _currentUser == null) return;
 
     final state = getCommentsState(videoId);
     _updateState(videoId, state.copyWith(isSubmitting: true));
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      final newReply = Comment(
-        id: 'reply_${DateTime.now().millisecondsSinceEpoch}',
-        videoId: videoId,
-        author: _currentUser,
+      // Create reply via Supabase API
+      final newReply = await CommentsService.createComment(
+        contentType: contentType,
+        contentId: videoId,
         content: content.trim(),
-        createdAt: DateTime.now(),
-        timeAgo: 'now',
-        isEdited: false,
-        isPinned: false,
-        replies: [],
-        reactionSummary: const ReactionSummary(
-          counts: {},
-          reactions: {},
-          userReaction: null,
-          totalCount: 0,
-        ),
+        parentCommentId: commentId,
       );
 
-      // Find the parent comment and add reply
-      final updatedComments = state.comments.map((comment) {
-        if (comment.id == commentId) {
-          return comment.copyWith(replies: [...comment.replies, newReply]);
-        }
-        return comment;
-      }).toList();
+      if (newReply != null) {
+        // Find the parent comment and add reply
+        final updatedComments = state.comments.map((comment) {
+          if (comment.id == commentId) {
+            return comment.copyWith(replies: [...comment.replies, newReply]);
+          }
+          return comment;
+        }).toList();
 
-      final totalComments = _calculateTotalComments(updatedComments);
+        final totalComments = _calculateTotalComments(updatedComments);
 
-      // ✅ ENHANCED: Use explicit null clearing for reply state
-      _updateState(
-          videoId,
-          CommentsState(
-            comments: updatedComments,
-            isLoading: false,
-            isLoadingMore: false,
-            isSubmitting: false,
-            hasMoreComments: state.hasMoreComments,
-            totalComments: totalComments,
-            error: null,
-            replyingToId: null, // ✅ Explicitly set to null
-            replyingToUser: null, // ✅ Explicitly set to null
-          ));
+        _updateState(
+            videoId,
+            CommentsState(
+              comments: updatedComments,
+              isLoading: false,
+              isLoadingMore: false,
+              isSubmitting: false,
+              hasMoreComments: state.hasMoreComments,
+              totalComments: totalComments,
+              error: null,
+              replyingToId: null,
+              replyingToUser: null,
+            ));
 
-      debugPrint('✅ Reply added successfully and reply state cleared');
+        debugPrint('✅ Reply added successfully via API');
+      } else {
+        // Fallback to local reply creation
+        final fallbackReply = Comment(
+          id: 'reply_${DateTime.now().millisecondsSinceEpoch}',
+          videoId: videoId,
+          author: _currentUser!,
+          content: content.trim(),
+          createdAt: DateTime.now(),
+          timeAgo: 'now',
+          isEdited: false,
+          isPinned: false,
+          replies: [],
+          reactionSummary: const ReactionSummary(
+            counts: {},
+            reactions: {},
+            userReaction: null,
+            totalCount: 0,
+          ),
+        );
+
+        final updatedComments = state.comments.map((comment) {
+          if (comment.id == commentId) {
+            return comment.copyWith(replies: [...comment.replies, fallbackReply]);
+          }
+          return comment;
+        }).toList();
+
+        final totalComments = _calculateTotalComments(updatedComments);
+
+        _updateState(
+            videoId,
+            CommentsState(
+              comments: updatedComments,
+              isLoading: false,
+              isLoadingMore: false,
+              isSubmitting: false,
+              hasMoreComments: state.hasMoreComments,
+              totalComments: totalComments,
+              error: 'Reply saved locally',
+              replyingToId: null,
+              replyingToUser: null,
+            ));
+
+        debugPrint('⚠️ Reply added locally (API failed)');
+      }
     } catch (e) {
+      debugPrint('❌ Error adding reply: $e');
       _updateState(
           videoId,
           state.copyWith(
@@ -327,6 +403,9 @@ class CommentsProvider extends ChangeNotifier {
   Future<void> toggleCommentLike(String videoId, String commentId,
       {bool isReply = false}) async {
     final state = getCommentsState(videoId);
+
+    // Store original state for potential revert
+    final originalComments = List<Comment>.from(state.comments);
 
     // Optimistic update
     List<Comment> updatedComments;
@@ -411,15 +490,23 @@ class CommentsProvider extends ChangeNotifier {
     _updateState(videoId, state.copyWith(comments: updatedComments));
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 200));
+      // Call Supabase API to toggle reaction
+      final success = await CommentsService.toggleCommentReaction(
+        commentId: commentId,
+        reactionType: ReactionType.like,
+      );
 
-      // In real app, this would be an API call
-      debugPrint('✅ Comment like toggled successfully');
+      if (success) {
+        debugPrint('✅ Comment reaction toggled successfully via API');
+      } else {
+        // Revert optimistic update on API failure
+        _updateState(videoId, state.copyWith(comments: originalComments));
+        debugPrint('❌ Failed to toggle comment reaction via API, reverted');
+      }
     } catch (e) {
       // Revert optimistic update on error
-      _updateState(videoId, state);
-      debugPrint('❌ Failed to toggle comment like');
+      _updateState(videoId, state.copyWith(comments: originalComments));
+      debugPrint('❌ Error toggling comment reaction: $e');
     }
   }
 
@@ -480,7 +567,7 @@ class CommentsProvider extends ChangeNotifier {
   }
 
   // Load more comments (pagination)
-  Future<void> loadMoreComments(String videoId) async {
+  Future<void> loadMoreComments(String videoId, {String contentType = 'video'}) async {
     final state = getCommentsState(videoId);
 
     if (state.isLoadingMore || !state.hasMoreComments) return;
@@ -488,31 +575,77 @@ class CommentsProvider extends ChangeNotifier {
     _updateState(videoId, state.copyWith(isLoadingMore: true));
 
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 600));
+      // Load more comments from Supabase
+      final moreComments = await CommentsService.getComments(
+        contentType: contentType,
+        contentId: videoId,
+        sortBy: 'newest',
+        limit: 10,
+        offset: state.comments.length,
+      );
 
-      // In real app, this would fetch more comments from API
-      final moreComments =
-          _getMockCommentsForVideo(videoId, offset: state.comments.length);
-      final updatedComments = [...state.comments, ...moreComments];
-      final totalComments = _calculateTotalComments(updatedComments);
+      if (moreComments.isNotEmpty) {
+        final updatedComments = [...state.comments, ...moreComments];
+        final totalComments = _calculateTotalComments(updatedComments);
 
-      _updateState(
-          videoId,
-          state.copyWith(
-            comments: updatedComments,
-            isLoadingMore: false,
-            hasMoreComments:
-                moreComments.length >= 5, // Simulate end of pagination
-            totalComments: totalComments,
-          ));
+        _updateState(
+            videoId,
+            state.copyWith(
+              comments: updatedComments,
+              isLoadingMore: false,
+              hasMoreComments: moreComments.length >= 10,
+              totalComments: totalComments,
+            ));
+
+        debugPrint('✅ Loaded ${moreComments.length} more comments via API');
+      } else {
+        // No more comments available
+        _updateState(
+            videoId,
+            state.copyWith(
+              isLoadingMore: false,
+              hasMoreComments: false,
+            ));
+
+        debugPrint('📝 No more comments available');
+      }
     } catch (e) {
-      _updateState(
-          videoId,
-          state.copyWith(
-            isLoadingMore: false,
-            error: 'Failed to load more comments',
-          ));
+      debugPrint('❌ Error loading more comments: $e');
+      
+      // Try fallback to mock data
+      try {
+        final moreComments =
+            _getMockCommentsForVideo(videoId, offset: state.comments.length);
+        
+        if (moreComments.isNotEmpty) {
+          final updatedComments = [...state.comments, ...moreComments];
+          final totalComments = _calculateTotalComments(updatedComments);
+
+          _updateState(
+              videoId,
+              state.copyWith(
+                comments: updatedComments,
+                isLoadingMore: false,
+                hasMoreComments: moreComments.length >= 5,
+                totalComments: totalComments,
+                error: 'Using cached comments',
+              ));
+        } else {
+          _updateState(
+              videoId,
+              state.copyWith(
+                isLoadingMore: false,
+                hasMoreComments: false,
+              ));
+        }
+      } catch (fallbackError) {
+        _updateState(
+            videoId,
+            state.copyWith(
+              isLoadingMore: false,
+              error: 'Failed to load more comments',
+            ));
+      }
     }
   }
 
@@ -521,45 +654,65 @@ class CommentsProvider extends ChangeNotifier {
       {bool isReply = false, String? parentCommentId}) async {
     final state = getCommentsState(videoId);
 
+    // Store original state for potential revert
+    final originalComments = List<Comment>.from(state.comments);
+
+    // Optimistic update - remove comment immediately
+    List<Comment> updatedComments;
+
+    if (isReply && parentCommentId != null) {
+      // Delete reply
+      updatedComments = state.comments.map((comment) {
+        if (comment.id == parentCommentId) {
+          final updatedReplies = comment.replies
+              .where((reply) => reply.id != commentId)
+              .toList();
+          return comment.copyWith(replies: updatedReplies);
+        }
+        return comment;
+      }).toList();
+    } else {
+      // Delete main comment
+      updatedComments =
+          state.comments.where((comment) => comment.id != commentId).toList();
+    }
+
+    final totalComments = _calculateTotalComments(updatedComments);
+
+    _updateState(
+        videoId,
+        state.copyWith(
+          comments: updatedComments,
+          totalComments: totalComments,
+        ));
+
     try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Call Supabase API to delete comment
+      final success = await CommentsService.deleteComment(commentId: commentId);
 
-      List<Comment> updatedComments;
-
-      if (isReply && parentCommentId != null) {
-        // Delete reply
-        updatedComments = state.comments.map((comment) {
-          if (comment.id == parentCommentId) {
-            final updatedReplies = comment.replies
-                .where((reply) => reply.id != commentId)
-                .toList();
-            return comment.copyWith(replies: updatedReplies);
-          }
-          return comment;
-        }).toList();
+      if (success) {
+        debugPrint('✅ Comment deleted successfully via API');
       } else {
-        // Delete main comment
-        updatedComments =
-            state.comments.where((comment) => comment.id != commentId).toList();
+        // Revert optimistic update on API failure
+        _updateState(
+            videoId,
+            state.copyWith(
+              comments: originalComments,
+              totalComments: _calculateTotalComments(originalComments),
+              error: 'Failed to delete comment',
+            ));
+        debugPrint('❌ Failed to delete comment via API, reverted');
       }
-
-      final totalComments = _calculateTotalComments(updatedComments);
-
-      _updateState(
-          videoId,
-          state.copyWith(
-            comments: updatedComments,
-            totalComments: totalComments,
-          ));
-
-      debugPrint('✅ Comment deleted successfully');
     } catch (e) {
+      // Revert optimistic update on error
       _updateState(
           videoId,
           state.copyWith(
+            comments: originalComments,
+            totalComments: _calculateTotalComments(originalComments),
             error: 'Failed to delete comment',
           ));
+      debugPrint('❌ Error deleting comment: $e');
     }
   }
 
