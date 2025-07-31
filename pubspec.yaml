@@ -27,6 +27,17 @@ dependencies:
   # Storage & Network
   shared_preferences: ^2.2.2
   http: ^1.1.2
+  
+  # Backend & Authentication
+  supabase_flutter: ^2.3.0
+  flutter_dotenv: ^5.1.0
+
+  # Voice & Speech
+  speech_to_text: ^6.6.0
+  permission_handler: ^11.3.1
+
+  # Image & Camera
+  image_picker: ^1.0.7
 
   # wakelock
   wakelock_plus: ^1.2.8
@@ -38,6 +49,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
+  assets:
+    - .env
   
   # fonts:
   #   - family: SpaceMono

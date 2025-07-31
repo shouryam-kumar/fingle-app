@@ -68,6 +68,11 @@ class AllResultsFeed extends StatelessWidget {
               ),
             ),
 
+            // Load more button
+            SliverToBoxAdapter(
+              child: _buildLoadMoreButton(searchProvider),
+            ),
+
             const SliverToBoxAdapter(
               child: SizedBox(height: 20),
             ),
@@ -260,7 +265,6 @@ class AllResultsFeed extends StatelessWidget {
                     ),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         _getContentTypeIcon(result.type),
@@ -308,6 +312,43 @@ class AllResultsFeed extends StatelessWidget {
                           ),
                         ),
                       ],
+                      const Spacer(),
+                      // Actions menu
+                      Consumer<SearchProvider>(
+                        builder: (context, searchProvider, child) {
+                          final isBookmarked = searchProvider.isBookmarked(result.id);
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Bookmark button
+                              GestureDetector(
+                                onTap: () => searchProvider.toggleBookmark(result.id),
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  child: Icon(
+                                    isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                                    size: 12,
+                                    color: isBookmarked ? typeColor : typeColor.withOpacity(0.6),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              // More actions
+                              GestureDetector(
+                                onTap: () => _showResultActions(context, result, searchProvider),
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  child: Icon(
+                                    Icons.more_vert,
+                                    size: 12,
+                                    color: typeColor.withOpacity(0.6),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -893,34 +934,85 @@ class AllResultsFeed extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.dashboard_outlined,
-            size: 64,
-            color: AppColors.textSecondary,
+    return Consumer<SearchProvider>(
+      builder: (context, searchProvider, child) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.dashboard_outlined,
+                size: 64,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Discover trending content',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Search is loading popular fitness content...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (!searchProvider.isSearching) ...[
+                const Text(
+                  'Try searching for:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: searchProvider.trendingSuggestions.take(6).map((suggestion) {
+                    return InkWell(
+                      onTap: () {
+                        searchProvider.performSearch(query: suggestion);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          suggestion,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ] else ...[
+                const SizedBox(height: 16),
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              ],
+            ],
           ),
-          SizedBox(height: 16),
-          Text(
-            'No mixed results to display',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Try searching for something to see mixed content',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -944,5 +1036,353 @@ class AllResultsFeed extends StatelessWidget {
       case ActivityLevel.moderate:
         return 'Moderate';
     }
+  }
+
+  Widget _buildLoadMoreButton(SearchProvider searchProvider) {
+    if (!searchProvider.hasMoreResults) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Center(
+        child: searchProvider.isLoadingMore
+            ? Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Loading more results...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : ElevatedButton(
+                onPressed: () => searchProvider.loadMoreResults(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.surface,
+                  foregroundColor: AppColors.primary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: AppColors.primary.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.refresh,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Load More',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  void _showResultActions(BuildContext context, SearchResult result, SearchProvider searchProvider) {
+    final typeColor = _getContentTypeColor(result.type);
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.textSecondary.withOpacity(0.1),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: typeColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      _getContentTypeIcon(result.type),
+                      color: typeColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _getResultTitle(result),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _getContentTypeName(result.type),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: typeColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Actions
+            Column(
+              children: [
+                // Share action
+                _buildActionItem(
+                  icon: Icons.share,
+                  label: 'Share',
+                  color: AppColors.info,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _shareResult(result);
+                  },
+                ),
+                
+                // Open action
+                _buildActionItem(
+                  icon: Icons.open_in_new,
+                  label: 'Open',
+                  color: AppColors.success,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openResult(result);
+                  },
+                ),
+                
+                // Copy link action
+                _buildActionItem(
+                  icon: Icons.link,
+                  label: 'Copy Link',
+                  color: AppColors.accent,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _copyResultLink(result);
+                  },
+                ),
+                
+                // Report action
+                _buildActionItem(
+                  icon: Icons.flag,
+                  label: 'Report',
+                  color: AppColors.error,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _reportResult(context, result);
+                  },
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getResultTitle(SearchResult result) {
+    switch (result.type) {
+      case SearchResultType.people:
+        return result.user?.name ?? 'Unknown User';
+      case SearchResultType.topics:
+        return result.topic?.name ?? 'Unknown Topic';
+      case SearchResultType.posts:
+        return result.post?.content ?? result.video?.title ?? 'Unknown Post';
+      case SearchResultType.communities:
+        return result.community?.name ?? 'Unknown Community';
+      default:
+        return 'Unknown Result';
+    }
+  }
+
+  void _shareResult(SearchResult result) {
+    // Implementation for sharing result
+    // Could integrate with Flutter's share plugin
+    final title = _getResultTitle(result);
+    print('Sharing: $title');
+    // share.share('Check out this ${_getContentTypeName(result.type)}: $title');
+  }
+
+  void _openResult(SearchResult result) {
+    // Implementation for opening result
+    // Navigate to detailed view based on result type
+    print('Opening: ${_getResultTitle(result)}');
+  }
+
+  void _copyResultLink(SearchResult result) {
+    // Implementation for copying result link
+    // Could use clipboard to copy link
+    print('Copying link for: ${_getResultTitle(result)}');
+  }
+
+  void _reportResult(BuildContext context, SearchResult result) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Report Content',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Why are you reporting this ${_getContentTypeName(result.type).toLowerCase()}?',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...[
+              'Inappropriate content',
+              'Spam or misleading',
+              'Copyright violation',
+              'Harassment',
+              'Other',
+            ].map((reason) => InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                _submitReport(result, reason);
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                child: Text(
+                  reason,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            )),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _submitReport(SearchResult result, String reason) {
+    // Implementation for submitting report
+    print('Reporting ${_getResultTitle(result)} for: $reason');
+    // In real app, would send to backend
   }
 }

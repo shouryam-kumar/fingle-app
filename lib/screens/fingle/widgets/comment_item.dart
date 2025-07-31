@@ -103,7 +103,7 @@ class _CommentItemState extends State<CommentItem>
   Widget build(BuildContext context) {
     final commentsProvider = Provider.of<CommentsProvider>(context);
     final currentUser = commentsProvider.currentUser;
-    final isOwnComment = widget.comment.author.id == currentUser.id;
+    final isOwnComment = widget.comment.author.id == currentUser?.id;
     final isVideoCreator = widget.comment.author.id == widget.video.creator.id;
 
     return Container(

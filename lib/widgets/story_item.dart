@@ -55,7 +55,7 @@ class _StoryItemState extends State<StoryItem>
   }
 
   Widget _buildGradientRing() {
-    final double storySize = MediaQuery.of(context).size.width * 0.18;
+    final double storySize = (MediaQuery.of(context).size.width * 0.18).clamp(0.0, 65.0);
 
     if (widget.story.isOwn) {
       // Add icon for own story
@@ -111,7 +111,7 @@ class _StoryItemState extends State<StoryItem>
   }
 
   Widget _buildAvatar() {
-    final double avatarSize = MediaQuery.of(context).size.width * 0.16;
+    final double avatarSize = ((MediaQuery.of(context).size.width * 0.18).clamp(0.0, 65.0)) * 0.89; // Slightly smaller than story size
 
     return ClipOval(
       child: CachedNetworkImage(
@@ -151,6 +151,10 @@ class _StoryItemState extends State<StoryItem>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Constrain story width to prevent overflow on larger screens
+    final storyWidth = (screenWidth * 0.18).clamp(0.0, 65.0);
+    
     return GestureDetector(
       onTap: _onTap,
       child: AnimatedBuilder(
@@ -160,24 +164,46 @@ class _StoryItemState extends State<StoryItem>
             scale: _scaleAnimation.value,
             child: Container(
               margin: const EdgeInsets.only(right: 12),
+              // Add explicit constraints to prevent overflow
+              constraints: BoxConstraints(
+                maxWidth: storyWidth,
+                maxHeight: 100, // Constrained to prevent overflow
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  _buildGradientRing(),
-                  const SizedBox(height: 6),
+                  // Story ring with constrained size
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.18,
-                    child: Text(
-                      widget.story.isOwn ? 'Your Story' : widget.story.name,
-                      style: AppTextStyles.storyName.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: widget.story.viewed
-                            ? FontWeight.w400
-                            : FontWeight.w600,
+                    width: storyWidth,
+                    height: storyWidth,
+                    child: _buildGradientRing(),
+                  ),
+                  
+                  const SizedBox(height: 5), // Reduced spacing
+                  
+                  // Text with better constraints
+                  SizedBox(
+                    height: 25, // Reduced height for text area
+                    child: Container(
+                      width: storyWidth,
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Center(
+                        child: Text(
+                          widget.story.isOwn ? 'Your Story' : widget.story.name,
+                          style: AppTextStyles.storyName.copyWith(
+                            color: AppColors.textPrimary,
+                            fontSize: 11, // Slightly smaller to prevent overflow
+                            fontWeight: widget.story.viewed
+                                ? FontWeight.w400
+                                : FontWeight.w600,
+                            height: 1.1, // Tighter line height
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2, // Allow 2 lines for longer names
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

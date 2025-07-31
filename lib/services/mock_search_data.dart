@@ -9,6 +9,7 @@ class MockSearchData {
   static final List<User> _sampleUsers = [
     User(
       id: '2',
+      username: 'mayachen',
       name: 'Maya Chen',
       age: 25,
       bio:
@@ -40,6 +41,7 @@ class MockSearchData {
     ),
     User(
       id: '3',
+      username: 'marcusrodriguez',
       name: 'Marcus Rodriguez',
       age: 32,
       bio:
@@ -77,6 +79,7 @@ class MockSearchData {
     ),
     User(
       id: '4',
+      username: 'emmathompson',
       name: 'Emma Thompson',
       age: 28,
       bio:
@@ -108,6 +111,7 @@ class MockSearchData {
     ),
     User(
       id: '5',
+      username: 'davidkim',
       name: 'David Kim',
       age: 30,
       bio:
@@ -136,6 +140,7 @@ class MockSearchData {
     ),
     User(
       id: '6',
+      username: 'sarahjohnson',
       name: 'Sarah Johnson',
       age: 26,
       bio: 'Swimming coach 🏊‍♀️ | Former collegiate athlete | Water is my element',
@@ -163,6 +168,7 @@ class MockSearchData {
     ),
     User(
       id: '7',
+      username: 'jakemartinez',
       name: 'Jake Martinez',
       age: 29,
       bio: 'Cyclist & bike mechanic 🚴‍♂️ | Road warrior | Always ready for long rides',
@@ -181,6 +187,7 @@ class MockSearchData {
     ),
     User(
       id: '8',
+      username: 'lunarodriguez',
       name: 'Luna Rodriguez',
       age: 24,
       bio: 'Dance fitness instructor 💃 | Zumba certified | Movement is medicine',
@@ -208,6 +215,7 @@ class MockSearchData {
     ),
     User(
       id: '9',
+      username: 'alexchen',
       name: 'Alex Chen',
       age: 31,
       bio: 'Martial arts sensei 🥋 | Karate & Jiu-Jitsu | Discipline through practice',
@@ -226,6 +234,7 @@ class MockSearchData {
     ),
     User(
       id: '10',
+      username: 'miathompson',
       name: 'Mia Thompson',
       age: 27,
       bio: 'Pilates instructor ✨ | Mind-body connection | Helping you find your center',
@@ -253,6 +262,7 @@ class MockSearchData {
     ),
     User(
       id: '11',
+      username: 'ryanfoster',
       name: 'Ryan Foster',
       age: 33,
       bio: 'Powerlifter & strength coach 💪 | Raw lifting enthusiast | Heavy is the way',
@@ -271,6 +281,7 @@ class MockSearchData {
     ),
     User(
       id: '12',
+      username: 'sophiewilson',
       name: 'Sophie Wilson',
       age: 25,
       bio: 'Tennis player & coach 🎾 | Former junior champion | Serve and volley style',
@@ -298,6 +309,7 @@ class MockSearchData {
     ),
     User(
       id: '13',
+      username: 'carlosmendez',
       name: 'Carlos Mendez',
       age: 30,
       bio: 'Basketball trainer 🏀 | Former college player | Elevating your game',
@@ -316,6 +328,7 @@ class MockSearchData {
     ),
     User(
       id: '14',
+      username: 'isabellagarcia',
       name: 'Isabella Garcia',
       age: 26,
       bio: 'Nutritionist & meal prep expert 🥗 | Plant-based athlete | Food is fuel',
@@ -343,6 +356,7 @@ class MockSearchData {
     ),
     User(
       id: '15',
+      username: 'tylerbrooks',
       name: 'Tyler Brooks',
       age: 28,
       bio: 'Track & field athlete 🏃‍♂️ | Sprinter | Speed is everything',
@@ -361,6 +375,7 @@ class MockSearchData {
     ),
     User(
       id: '16',
+      username: 'rachelkim',
       name: 'Rachel Kim',
       age: 32,
       bio: 'Fitness photographer 📸 | Capturing strength & beauty | Visual storyteller',
@@ -388,6 +403,7 @@ class MockSearchData {
     ),
     User(
       id: '17',
+      username: 'jordanlee',
       name: 'Jordan Lee',
       age: 24,
       bio: 'Calisthenics athlete 🤸‍♂️ | Bodyweight movement specialist | No gym needed',
@@ -406,6 +422,7 @@ class MockSearchData {
     ),
     User(
       id: '18',
+      username: 'amandadavis',
       name: 'Amanda Davis',
       age: 29,
       bio: 'Functional fitness trainer 💪 | Movement quality expert | Real world strength',
@@ -433,6 +450,7 @@ class MockSearchData {
     ),
     User(
       id: '19',
+      username: 'kevinpark',
       name: 'Kevin Park',
       age: 27,
       bio: 'Boxing coach & trainer 🥊 | Former amateur boxer | Sweet science enthusiast',
@@ -451,6 +469,7 @@ class MockSearchData {
     ),
     User(
       id: '20',
+      username: 'zoemitchell',
       name: 'Zoe Mitchell',
       age: 25,
       bio: 'Wellness coach & mindset mentor 🌟 | Holistic health approach | Mind-body balance',
@@ -478,6 +497,7 @@ class MockSearchData {
     ),
     User(
       id: '21',
+      username: 'marcuswilliams',
       name: 'Marcus Williams',
       age: 34,
       bio: 'Triathlete & endurance coach 🏊‍♂️🚴‍♂️🏃‍♂️ | Iron distance finisher | Push your limits',
@@ -1159,7 +1179,7 @@ class MockSearchData {
   ];
 
   // Search method
-  static List<SearchResult> search(String query, SearchFilter filter) {
+  static List<SearchResult> search(String query, SearchFilter filter, {int page = 1, int pageSize = 20}) {
     final List<SearchResult> results = [];
     final lowerQuery = query.toLowerCase();
 
@@ -1307,7 +1327,15 @@ class MockSearchData {
     // Sort by relevance score (highest first)
     results.sort((a, b) => b.relevanceScore.compareTo(a.relevanceScore));
 
-    return results;
+    // Apply pagination
+    final startIndex = (page - 1) * pageSize;
+    final endIndex = startIndex + pageSize;
+    
+    if (startIndex >= results.length) {
+      return []; // No more results
+    }
+    
+    return results.sublist(startIndex, endIndex.clamp(0, results.length));
   }
 
   // Get search suggestions

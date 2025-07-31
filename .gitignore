@@ -5,6 +5,9 @@
 .pub/
 build/
 
+#ToDos
+backend_todos.md
+
 # O/S and IDE files
 .DS_Store
 .idea/
@@ -61,6 +64,12 @@ web/.dart_tool/
 # Other
 *.log
 *.lock
+
+# MCP Configuration (contains sensitive credentials)
+.mcp.json
+
+# Environment variables
+.env
 
 # Coverage
 coverage/

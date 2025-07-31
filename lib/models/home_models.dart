@@ -140,6 +140,86 @@ class FeedPost {
     ReactionSummary? reactionSummary,
   }) : reactionSummary = reactionSummary ?? ReactionSummary.empty();
 
+  /// Factory constructor for creating FeedPost from JSON
+  factory FeedPost.fromSupabaseJson(Map<String, dynamic> json) {
+    // Parse post type
+    final postTypeStr = json['post_type'] ?? 'photo';
+    final postType = PostType.values.firstWhere(
+      (type) => type.name == postTypeStr,
+      orElse: () => PostType.photo,
+    );
+
+    // Parse media items
+    List<MediaItem>? mediaItems;
+    if (json['media_items'] != null) {
+      final mediaList = json['media_items'] as List;
+      mediaItems = mediaList.map((media) => MediaItem(
+        url: media['url'] ?? '',
+        type: media['type'] == 'video' ? MediaType.video : MediaType.image,
+        aspectRatio: media['aspect_ratio'],
+        thumbnail: media['thumbnail'],
+        duration: media['duration'],
+      )).toList();
+    }
+
+    // Parse canvas data
+    CanvasPost? canvasData;
+    if (json['canvas_data'] != null) {
+      final canvas = json['canvas_data'];
+      canvasData = CanvasPost(
+        text: canvas['text'] ?? '',
+        backgroundColor: canvas['background_color'],
+        backgroundImageUrl: canvas['background_image_url'],
+        fontFamily: canvas['font_family'],
+        textColor: canvas['text_color'] != null 
+          ? Color(int.parse(canvas['text_color'].substring(1), radix: 16) + 0xFF000000)
+          : null,
+      );
+    }
+
+    return FeedPost(
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      userId: json['user_id'] ?? '',
+      userName: json['user_name'] ?? json['creator_name'] ?? 'Unknown',
+      userAvatar: json['user_avatar'] ?? json['creator_avatar'] ?? '',
+      userVerified: json['user_verified'] ?? false,
+      userOpenToMingle: json['user_open_to_mingle'] ?? false,
+      content: json['content'] ?? json['description'] ?? '',
+      imageUrl: json['image_url'] ?? json['thumbnail_url'],
+      timeAgo: _formatTimeAgo(DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now()),
+      category: json['category'] ?? json['workout_type'] ?? 'General',
+      likes: json['likes_count'] ?? 0,
+      comments: json['comments_count'] ?? 0,
+      shares: json['shares_count'] ?? 0,
+      isLiked: json['is_liked'] ?? false,
+      isBookmarked: json['is_bookmarked'] ?? false,
+      tags: List<String>.from(json['tags'] ?? []),
+      postType: postType,
+      mediaItems: mediaItems,
+      canvasData: canvasData,
+      recommendations: json['recommendations_count'] ?? 0,
+      isRecommended: json['is_recommended'] ?? false,
+    );
+  }
+
+  /// Format time ago string
+  static String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${(difference.inDays / 7).floor()}w ago';
+    }
+  }
+
   FeedPost copyWith({
     int? id,
     String? userId,
