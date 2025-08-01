@@ -29,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _isLoading = true;
   bool _isLoadingMore = false;
   bool _hasReachedEnd = false;
-  String? _error;
 
   @override
   void initState() {
@@ -66,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> _loadInitialData() async {
     setState(() {
       _isLoading = true;
-      _error = null;
     });
 
     try {
@@ -94,7 +92,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           // Fallback to sample data on error
           _feedPosts = List.from(sampleFeedPosts);
           _trendingTopics = sampleTrendingTopics;
-          _error = 'Failed to load feed';
           _isLoading = false;
         });
       }
