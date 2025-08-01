@@ -14,6 +14,7 @@ import 'topics_results.dart';
 import 'posts_results.dart';
 import 'community_results.dart';
 import 'trending_results.dart';
+import 'saved_results.dart';
 
 class SearchContainer extends StatefulWidget {
   const SearchContainer({Key? key}) : super(key: key);
@@ -446,6 +447,8 @@ class _SearchContainerState extends State<SearchContainer>
         return const CommunityResults();
       case SearchResultType.trending:
         return const TrendingResults();
+      case SearchResultType.saved:
+        return const SavedResults();
     }
   }
 }

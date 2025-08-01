@@ -33,7 +33,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
 
   # Voice & Speech
-  speech_to_text: ^6.6.0
+  speech_to_text: ^7.2.0
   permission_handler: ^11.3.1
 
   # Image & Camera

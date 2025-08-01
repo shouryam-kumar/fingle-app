@@ -175,7 +175,7 @@ class _SearchHeaderState extends State<SearchHeader>
     return GlassContainer(
       borderRadius: 28,
       padding: EdgeInsets.zero,
-      enableRipple: false,
+      hasRippleEffect: false,
       child: Container(
         height: 56,
         child: Row(
@@ -290,6 +290,18 @@ class _SearchHeaderState extends State<SearchHeader>
       case SearchResultType.communities:
         suggestionIcon = Icons.groups;
         iconColor = AppColors.success;
+        break;
+      case SearchResultType.all:
+        suggestionIcon = Icons.search;
+        iconColor = AppColors.primary;
+        break;
+      case SearchResultType.trending:
+        suggestionIcon = Icons.trending_up;
+        iconColor = AppColors.warning;
+        break;
+      case SearchResultType.saved:
+        suggestionIcon = Icons.bookmark;
+        iconColor = AppColors.info;
         break;
     }
 

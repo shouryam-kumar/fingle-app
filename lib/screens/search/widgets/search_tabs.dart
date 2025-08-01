@@ -55,6 +55,12 @@ class _SearchTabsState extends State<SearchTabs> with TickerProviderStateMixin {
         return AppColors.accent;
       case SearchResultType.communities:
         return AppColors.success;
+      case SearchResultType.all:
+        return AppColors.primary;
+      case SearchResultType.trending:
+        return AppColors.warning;
+      case SearchResultType.saved:
+        return AppColors.info;
     }
   }
 
@@ -68,6 +74,12 @@ class _SearchTabsState extends State<SearchTabs> with TickerProviderStateMixin {
         return Icons.grid_view;
       case SearchResultType.communities:
         return Icons.groups;
+      case SearchResultType.all:
+        return Icons.search;
+      case SearchResultType.trending:
+        return Icons.trending_up;
+      case SearchResultType.saved:
+        return Icons.bookmark;
     }
   }
 
